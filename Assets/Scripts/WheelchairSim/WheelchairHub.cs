@@ -12,10 +12,13 @@ namespace WheelchairSim
     ///                                        |               +--> StepCommander（步进式，脑电链路）
     ///                                        +--> 状态帧回传
     ///
-    /// 指令语义按链路区分：远程链路（蓝牙/串口/TCP）默认走"步进式"——
-    /// 一条指令只走固定距离/角度，走完自动停，适合离散的 SSVEP 指令；
-    /// 本地键盘/HUD 默认走"状态保持式"——手动操作需要连续控制。
-    /// 上位机可以随时用 MODE:LATCH / MODE:STEP 改自己那条链路的语义。
+    /// 指令语义按链路区分，两条链路默认都是"步进式"（一条指令只走固定距离/角度，走完自动停）：
+    /// 远程链路是给离散的 SSVEP 脑电指令用的；本地键盘也默认步进，
+    /// 这样按一下 Q/E/A/D 就是一次 30° 转向、按一下 W/S 就是一次 1 米。
+    /// 需要连续控制时有两条路：键盘按住 Shift 再按键（只影响那一下），
+    /// 或者由上位机用 MODE:LATCH / MODE:STEP 改自己那条链路的语义。
+    /// HUD 上的运动按钮始终是状态保持式（按住意思明确：想连续就点它），
+    /// HUD 的"步进"按钮走的是显式一步指令。
     /// </summary>
     [DisallowMultipleComponent]
     public sealed class WheelchairHub : MonoBehaviour
@@ -36,13 +39,16 @@ namespace WheelchairSim
         [Header("指令语义")]
         [Tooltip("远程链路（蓝牙/串口/TCP）默认的指令语义。脑电指令是离散的，所以默认步进式")]
         public CommandMode RemoteCommandMode = CommandMode.Step;
-        [Tooltip("本地键盘 / HUD 按钮是否也用步进式。默认关闭：手动操作需要连续控制")]
-        public bool StepModeForLocalInput = false;
+        [Tooltip("本地键盘默认的指令语义。默认步进式：按一下走一步（前进/后退 1 m、左转/右转 30°）。" +
+                 "想连续走就按住 Shift 再按键，按住期间那一下按状态保持式执行；本开关在运行时改也立刻生效")]
+        public bool StepModeForLocalInput = true;
 
         private readonly List<ICommandSource> _sources = new List<ICommandSource>();
         private readonly Queue<CommandMessage> _inbox = new Queue<CommandMessage>();
         private readonly Queue<CommandMessage> _sourceInbox = new Queue<CommandMessage>();
-        private readonly Dictionary<ICommandSource, CommandMode> _sourceModes =
+        // 只记录"被 MODE: 指令显式改过"的链路；没记录的链路每次实时回落到默认值，
+        // 这样 Inspector 里的 StepModeForLocalInput / RemoteCommandMode 改完立刻生效。
+        private readonly Dictionary<ICommandSource, CommandMode> _modeOverrides =
             new Dictionary<ICommandSource, CommandMode>();
         private readonly RaycastHit[] _hitBuffer = new RaycastHit[16];
 
@@ -57,16 +63,28 @@ namespace WheelchairSim
         /// <summary>查询某条链路当前的指令语义（HUD 显示用）。</summary>
         public CommandMode GetSourceMode(ICommandSource source)
         {
+            return GetSourceMode(source, CommandModeOverride.FollowLink);
+        }
+
+        /// <summary>
+        /// 解析一条指令该按什么语义执行：
+        /// 指令自带的临时覆盖（Shift）&gt; 该链路被 MODE: 显式改过的设置 &gt; 链路默认值。
+        /// </summary>
+        public CommandMode GetSourceMode(ICommandSource source, CommandModeOverride modeOverride)
+        {
+            if (modeOverride == CommandModeOverride.Latch) return CommandMode.Latch;
+            if (modeOverride == CommandModeOverride.Step) return CommandMode.Step;
+
             CommandMode mode;
-            if (source != null && _sourceModes.TryGetValue(source, out mode)) return mode;
+            if (source != null && _modeOverrides.TryGetValue(source, out mode)) return mode;
             return DefaultModeFor(source);
         }
 
         private CommandMode DefaultModeFor(ICommandSource source)
         {
-            if (source == null) return CommandMode.Latch;                 // 本地 HUD 按钮
+            if (source == null) return CommandMode.Latch;                 // HUD 按钮：手动点按就该连续
             if (source.RequiresHeartbeat) return RemoteCommandMode;       // 远程链路
-            return StepModeForLocalInput ? CommandMode.Step : CommandMode.Latch;
+            return StepModeForLocalInput ? CommandMode.Step : CommandMode.Latch; // 本地键盘
         }
 
         private void Awake()
@@ -104,10 +122,9 @@ namespace WheelchairSim
         {
             if (source == null) return;
             _sources.Add(source);
-            _sourceModes[source] = DefaultModeFor(source);
             try { source.Connect(); } catch (System.Exception e) { Debug.LogWarning("[Hub] 连接失败 " + source.DisplayName + ": " + e.Message); }
             Debug.Log(string.Format("[Hub] 注册指令源：{0}（指令语义：{1}）",
-                source.DisplayName, GetSourceMode(source) == CommandMode.Step ? "步进式" : "状态保持式"));
+                source.DisplayName, GetSourceMode(source) == CommandMode.Step ? "步进式（走完自动停）" : "状态保持式（按一下就一直走）"));
         }
 
         public void RemoveSource(ICommandSource source)
@@ -115,7 +132,7 @@ namespace WheelchairSim
             if (source == null) return;
             try { source.Disconnect(); } catch (System.Exception) { }
             _sources.Remove(source);
-            _sourceModes.Remove(source);
+            _modeOverrides.Remove(source);
         }
 
         /// <summary>HUD 按钮 / 键盘走这条入口。</summary>
@@ -220,13 +237,15 @@ namespace WheelchairSim
                     // 脑电上位机发 MODE:STEP，电脑调试工具发 MODE:LATCH。
                     if (source != null)
                     {
-                        _sourceModes[source] = message.Arg >= 0.5f ? CommandMode.Step : CommandMode.Latch;
+                        _modeOverrides[source] = message.Arg >= 0.5f ? CommandMode.Step : CommandMode.Latch;
                         Debug.Log(string.Format("[Hub] {0} 指令语义切换为 {1}",
                             source.DisplayName, GetSourceMode(source) == CommandMode.Step ? "步进式" : "状态保持式"));
                     }
                     else
                     {
                         StepModeForLocalInput = message.Arg >= 0.5f;
+                        Debug.Log(string.Format("[Hub] 本地键盘指令语义切换为 {0}",
+                            StepModeForLocalInput ? "步进式（按一下走一步）" : "状态保持式（按一下就一直走）"));
                     }
                     return;
             }
@@ -253,7 +272,8 @@ namespace WheelchairSim
             }
 
             // 先给步进执行器：脑电链路的运动指令在这里被翻译成"走固定距离后自动停"
-            if (Steps != null && Steps.TryHandle(new CommandMessage(message.Command, arg, message.Seq), GetSourceMode(source)))
+            CommandMode mode = GetSourceMode(source, message.ModeOverride);
+            if (Steps != null && Steps.TryHandle(new CommandMessage(message.Command, arg, message.Seq), mode))
             {
                 return;
             }

@@ -113,7 +113,7 @@ namespace WheelchairSim
             DrawStepSection();
 
             GUILayout.Space(6f);
-            GUILayout.Label("键盘：W/S 前进后退 · A/D 转向 · Q 逆时针原地左旋 · E 顺时针原地右旋 · 空格 停止 · X 急停 · Z 解除", _labelStyle);
+            GUILayout.Label("键盘：W/S 走一步 1 m · Q/E/A/D 转一步 30° · 按住 Shift 再按 = 连续 · 空格 停止 · X 急停 · Z 解除", _labelStyle);
 
             GUILayout.EndArea();
         }
@@ -131,6 +131,8 @@ namespace WheelchairSim
             }
 
             GUILayout.Label(steps.Enabled ? "步进功能：已开启" : "步进功能：已关闭（全部按状态保持式执行）", _labelStyle);
+            GUILayout.Label(string.Format("键盘语义：{0}（按住 Shift 的那一下 = 连续）",
+                Hub.StepModeForLocalInput ? "一步一停" : "按下即连续"), _labelStyle);
             GUILayout.Label(string.Format("步进量：{0:F1} m / {1:F0}°    速度 {2:F2} m/s    转速 {3:F0} °/s",
                 steps.StepDistance, steps.StepTurnAngle, steps.StepSpeed, steps.StepTurnDegreesPerSecond), _labelStyle);
             GUILayout.Label(string.Format("执行中：{0}", steps.StatusText),

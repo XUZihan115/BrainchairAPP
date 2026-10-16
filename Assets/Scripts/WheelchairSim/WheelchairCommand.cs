@@ -43,25 +43,44 @@ namespace WheelchairSim
         StepRight        = 0x17, // 原地右转一步（默认步转角）
     }
 
+    /// <summary>
+    /// 单条指令的语义临时覆盖。
+    /// 链路本身有默认语义（远程链路默认步进式、本地键盘默认步进式），
+    /// 但本地调试时经常需要"这一下我想连续走"——按住 Shift 就是走这个通道，
+    /// 只影响当前这条指令，不改链路设置。
+    /// </summary>
+    public enum CommandModeOverride : byte
+    {
+        FollowLink = 0, // 不覆盖，按链路自己的语义执行
+        Latch      = 1, // 这条指令强制按"状态保持式"执行（连续）
+        Step       = 2, // 这条指令强制按"步进式"执行（走完自动停）
+    }
+
     /// <summary>一条已经解析完成的指令。</summary>
     public struct CommandMessage
     {
         public WheelchairCommand Command;
         public float Arg;
         public byte Seq;
+        public CommandModeOverride ModeOverride;
 
-        public CommandMessage(WheelchairCommand command, float arg = 0f, byte seq = 0)
+        public CommandMessage(WheelchairCommand command, float arg = 0f, byte seq = 0,
+                              CommandModeOverride modeOverride = CommandModeOverride.FollowLink)
         {
             Command = command;
             Arg = arg;
             Seq = seq;
+            ModeOverride = modeOverride;
         }
 
         public override string ToString()
         {
-            return Arg == 0f
+            string text = Arg == 0f
                 ? Command.ToString()
                 : string.Format("{0}({1:F2})", Command, Arg);
+            if (ModeOverride == CommandModeOverride.Latch) text += " [强制连续]";
+            else if (ModeOverride == CommandModeOverride.Step) text += " [强制一步]";
+            return text;
         }
     }
 

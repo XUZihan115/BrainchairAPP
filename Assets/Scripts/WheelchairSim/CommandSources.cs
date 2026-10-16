@@ -65,16 +65,21 @@ namespace WheelchairSim
 
     /// <summary>
     /// 本地输入源：键盘 + HUD 按钮。不需要任何外部设备，用来随时验证运动逻辑。
-    /// 指令是"状态保持"式的：按一次前进会一直前进，直到收到 Stop / EmergencyStop。
+    /// 键盘的语义由 WheelchairHub.StepModeForLocalInput 决定，默认是"步进式"：
+    /// 按一下 W/S 走 1 m、按一下 Q/E/A/D 转 30° 后自动停。
+    /// 想连续走就按住 Shift 再按键——那一下会按"状态保持式"发出去。
     /// </summary>
     public sealed class LocalCommandSource : CommandSourceBase
     {
         private readonly Queue<CommandMessage> _pending = new Queue<CommandMessage>();
 
+        private const string KeyHelp =
+            "键盘 W/S 一步 1 m、Q/E/A/D 一步 30°（按住 Shift = 连续）\n空格=停止、X=急停、Z=解除";
+
         public LocalCommandSource() : base("本地输入")
         {
             IsConnected = true;
-            StatusDetail = "键盘 W/S/A/D、Q/E、空格=停止、X=急停、Z=解除";
+            StatusDetail = KeyHelp;
         }
 
         public override bool RequiresHeartbeat { get { return false; } }
@@ -82,7 +87,7 @@ namespace WheelchairSim
         public override void Connect()
         {
             IsConnected = true;
-            StatusDetail = "键盘 W/S/A/D、Q/E、空格=停止、X=急停、Z=解除";
+            StatusDetail = KeyHelp;
         }
 
         public override void Disconnect() { IsConnected = false; }
@@ -100,18 +105,24 @@ namespace WheelchairSim
 
             // 键盘是轮询式的，直接写进 output，避免走 _pending 白白延迟一帧。
 #if ENABLE_LEGACY_INPUT_MANAGER
+            // 按住 Shift = 这一下要连续走：给运动指令打上"强制状态保持式"的标记。
+            // 只在按下 Shift 的那一瞬间生效，松开就回到链路的默认语义（一步）。
+            CommandModeOverride hold = (Input.GetKey(KeyCode.LeftShift) || Input.GetKey(KeyCode.RightShift))
+                ? CommandModeOverride.Latch
+                : CommandModeOverride.FollowLink;
+
             if (Input.GetKeyDown(KeyCode.W) || Input.GetKeyDown(KeyCode.UpArrow))
-                output.Enqueue(new CommandMessage(WheelchairCommand.Forward));
+                output.Enqueue(new CommandMessage(WheelchairCommand.Forward, 0f, 0, hold));
             if (Input.GetKeyDown(KeyCode.S) || Input.GetKeyDown(KeyCode.DownArrow))
-                output.Enqueue(new CommandMessage(WheelchairCommand.Backward));
+                output.Enqueue(new CommandMessage(WheelchairCommand.Backward, 0f, 0, hold));
             if (Input.GetKeyDown(KeyCode.A) || Input.GetKeyDown(KeyCode.LeftArrow))
-                output.Enqueue(new CommandMessage(WheelchairCommand.SteerLeft));
+                output.Enqueue(new CommandMessage(WheelchairCommand.SteerLeft, 0f, 0, hold));
             if (Input.GetKeyDown(KeyCode.D) || Input.GetKeyDown(KeyCode.RightArrow))
-                output.Enqueue(new CommandMessage(WheelchairCommand.SteerRight));
+                output.Enqueue(new CommandMessage(WheelchairCommand.SteerRight, 0f, 0, hold));
             if (Input.GetKeyDown(KeyCode.Q))
-                output.Enqueue(new CommandMessage(WheelchairCommand.RotateLeft));
+                output.Enqueue(new CommandMessage(WheelchairCommand.RotateLeft, 0f, 0, hold));
             if (Input.GetKeyDown(KeyCode.E))
-                output.Enqueue(new CommandMessage(WheelchairCommand.RotateRight));
+                output.Enqueue(new CommandMessage(WheelchairCommand.RotateRight, 0f, 0, hold));
             if (Input.GetKeyDown(KeyCode.Space))
                 output.Enqueue(new CommandMessage(WheelchairCommand.Stop));
             if (Input.GetKeyDown(KeyCode.X))

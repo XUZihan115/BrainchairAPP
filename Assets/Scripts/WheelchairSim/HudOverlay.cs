@@ -133,6 +133,10 @@ namespace WheelchairSim
             GUILayout.Label(steps.Enabled ? "步进功能：已开启" : "步进功能：已关闭（全部按状态保持式执行）", _labelStyle);
             GUILayout.Label(string.Format("键盘语义：{0}（按住 Shift 的那一下 = 连续）",
                 Hub.StepModeForLocalInput ? "一步一停" : "按下即连续"), _labelStyle);
+            GUILayout.Label(steps.ChainSameDirection
+                ? string.Format("无缝衔接：已开启（同向预输入不停车，最多再并入 {0} 条，当前已并入 {1} 条）",
+                    Mathf.Max(0, steps.MaxChainExtraSteps), steps.ChainedCount)
+                : "无缝衔接：已关闭（每步之间都停车再起步）", _labelStyle);
             GUILayout.Label(string.Format("步进量：{0:F1} m / {1:F0}°    速度 {2:F2} m/s    转速 {3:F0} °/s",
                 steps.StepDistance, steps.StepTurnAngle, steps.StepSpeed, steps.StepTurnDegreesPerSecond), _labelStyle);
             GUILayout.Label(string.Format("执行中：{0}", steps.StatusText),

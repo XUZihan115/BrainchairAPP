@@ -34,6 +34,13 @@ namespace WheelchairSim
     ///        → 立即执行，或进"预输入"队列（最多 QueueDepth 条，等待超过 CommandTtl 就被丢弃）
     ///        → 走满距离 / 角度 → 平滑停车 → 恢复原来的速度参数
     ///
+    /// 无缝衔接（ChainSameDirection）：
+    ///   走满一步时如果队列里还有**同向**指令，就不刹车，直接把它并进当前动作，
+    ///   连成一整段"有界位移 / 转角"（两条前进 1 m = 一口气 2 m），避免每步之间
+    ///   都"刹车→停稳→重新起步"的一顿一顿。合并仍然有上限（MaxChainExtraSteps），
+    ///   并且延长目标量之前会**重新探一次障碍物余量**——不然就突破了
+    ///   "每一步都不超过可用余量"这条保证。
+    ///
     /// 本组件只负责"把离散指令变成有界动作"，不碰限速与急停：
     /// 那些仍然由 SafetyGuard + WheelchairHub 负责，这里是串在它们之间的一层。
     /// </summary>
@@ -68,6 +75,16 @@ namespace WheelchairSim
         [Tooltip("排队指令最长等待多少秒，超时丢弃。必须大于一步的实际耗时（1 m / 0.3 m/s ≈ 3.3 s），" +
                  "否则指令还没来得及执行就先过期了，队列等于没用")]
         public float CommandTtl = 5.0f;
+
+        [Header("无缝衔接（同向指令不停车）")]
+        [Tooltip("预输入队列里出现**同一方向**的指令时，不刹车、直接并进当前动作，连成一整段" +
+                 "有界位移 / 转角（例如两条\"前进 1 m\"变成一口气走 2 m）。" +
+                 "反向指令（前进→后退）、以及平移与转向互换，仍然会先停稳再走")]
+        public bool ChainSameDirection = true;
+        [Tooltip("一段连续动作里最多再并入几条同向预输入指令。1 = 最多两步合一（默认）；" +
+                 "0 = 关闭衔接，退回\"每步之间都停车再起步\"。" +
+                 "这是防误判叠加的安全阀：调大等于允许一次连续走更远，别随手改")]
+        public int MaxChainExtraSteps = 1;
 
         [Header("防误触")]
         [Tooltip("两条步进指令之间的最小间隔 s：间隔内重复来的指令一律丢弃，" +
@@ -110,6 +127,7 @@ namespace WheelchairSim
         private float _stopIssuedAt;
         private StepRequest _active;
         private bool _activeIsMove;
+        private int _chainedCount;              // 当前这一段连续动作里，已经无缝并入了几条预输入指令
         private Vector3 _activeStartPosition;
         private Vector3 _activeDirection;       // 起步瞬间的车头方向（平移步不会转向，可以用它做投影）
         private float _activeStartHeading;
@@ -140,6 +158,8 @@ namespace WheelchairSim
         public bool IsExecuting { get { return _executing; } }
         public bool IsSettling { get { return _settling; } }
         public int QueuedCount { get { return _queue.Count; } }
+        /// <summary>当前这一段连续动作里已无缝并入的预输入指令条数。</summary>
+        public int ChainedCount { get { return _chainedCount; } }
         public string StatusText { get { return _statusText; } }
         public string LastRejectReason { get { return _lastRejectReason; } }
         public int CompletedSteps { get { return _completedSteps; } }
@@ -322,6 +342,7 @@ namespace WheelchairSim
                 _settling = true;
                 _stopIssuedAt = _clock;
                 _lastStepEndTime = _clock;
+                _chainedCount = 0;      // 被中止的衔接指令不计入完成数
                 _statusText = "已中止，停车中…";
             }
         }
@@ -416,6 +437,7 @@ namespace WheelchairSim
 
             _active = request;
             _activeIsMove = Mathf.Abs(request.Distance) >= 0.001f;
+            _chainedCount = 0;
             _activeStartedAt = _clock;
             _activeStartPosition = Controller.transform.position;
             _activeDirection = Controller.transform.forward;
@@ -490,6 +512,7 @@ namespace WheelchairSim
                 _stopIssuedAt = _clock;
                 _lastStepEndTime = _clock;
                 _rejectedSteps++;
+                _chainedCount = 0;
                 _lastRejectReason = "单步超时中止";
                 _statusText = "超时中止，停车中…";
                 PlayCue(_cueReject);
@@ -508,9 +531,9 @@ namespace WheelchairSim
                 stopThreshold = Mathf.Max(0.005f,
                     _activeSpeed * _activeSpeed / (2f * Mathf.Max(0.05f, StepAcceleration)));
 
-                _statusText = string.Format("{0} {1:F2} m（剩余 {2:F2} m）",
+                _statusText = string.Format("{0} {1:F2} m（剩余 {2:F2} m）{3}",
                     _active.Distance > 0f ? "前进" : "后退",
-                    _activeTargetAmount, Mathf.Max(0f, _activeTargetAmount - done));
+                    _activeTargetAmount, Mathf.Max(0f, _activeTargetAmount - done), ChainedSuffix());
             }
             else
             {
@@ -520,24 +543,111 @@ namespace WheelchairSim
                 float a = Mathf.Max(0.1f, Controller.angularAcceleration);
                 stopThreshold = Mathf.Max(0.2f, w * w / (2f * a) * Mathf.Rad2Deg);
 
-                _statusText = string.Format("{0} {1:F0} °（剩余 {2:F0} °）",
+                _statusText = string.Format("{0} {1:F0} °（剩余 {2:F0} °）{3}",
                     _active.Angle > 0f ? "左转" : "右转",
-                    _activeTargetAmount, Mathf.Max(0f, _activeTargetAmount - done));
+                    _activeTargetAmount, Mathf.Max(0f, _activeTargetAmount - done), ChainedSuffix());
             }
 
             if (done + stopThreshold >= _activeTargetAmount)
             {
+                // 队列里还有同向指令？那就别停车，并进来连成一整段（无缝衔接）。
+                // 反向指令、平移/转向互换、余量不足、超过合并上限这几种情况都会返回 false，
+                // 于是照旧刹停——安全性由"能不能并"的判定本身保证。
+                if (TryChainNextStep(done)) return;
+
                 Controller.ApplyCommand(WheelchairCommand.Stop);
                 _executing = false;
                 _settling = true;
                 _stopIssuedAt = _clock;
                 _lastStepEndTime = _clock;
-                _completedSteps++;
-                _statusText = string.Format("到位（{0}），停车中…", Describe(_active));
+                _completedSteps += 1 + _chainedCount;
+                _statusText = string.Format("到位（{0}{1}），停车中…", Describe(_active), ChainedSuffix());
                 PlayCue(_cueDone);
                 Debug.Log(string.Format("[Step] 到位：{0}，实际完成 {1:F2}{2}",
                     Describe(_active), done, _activeIsMove ? " m" : " °"));
+                _chainedCount = 0;
             }
+        }
+
+        // ------------------------------------------------------------ 无缝衔接
+
+        /// <summary>
+        /// 试着把队列头的同向指令并进当前动作：不刹车，直接把目标量加上去，接着走。
+        /// 合并后必须重算单步超时，否则会被误判成"卡住"而假中止。
+        /// </summary>
+        /// <param name="done">当前这一步已经完成的量（m 或 °），用于检查剩余余量。</param>
+        /// <returns>true = 已并入，调用方继续执行；false = 不衔接，照旧刹车。</returns>
+        private bool TryChainNextStep(float done)
+        {
+            if (!ChainSameDirection) return false;
+            if (MaxChainExtraSteps <= 0) return false;
+            if (_chainedCount >= MaxChainExtraSteps) return false;
+            if (QueueDepth <= 0 || _queue.Count == 0) return false;
+
+            StepRequest next = _queue[0];
+
+            if (_activeIsMove)
+            {
+                // 类型不同（平移 ↔ 转向）或方向相反（前进 ↔ 后退）：不衔接，先停稳再说
+                if (Mathf.Abs(next.Distance) < 0.001f) return false;
+                if (next.Distance * _active.Distance <= 0f) return false;
+
+                float added = Mathf.Abs(next.Distance);
+                float needed = Mathf.Max(0f, _activeTargetAmount - done) + added;
+
+                // 目标量变长 = 要走得更远，必须重新确认前方余量还够，
+                // 否则就突破了"每步都不超过可用余量"这条保证
+                if (!HasRoomFor(needed)) return false;
+
+                _activeTargetAmount += added;
+                _active.Distance = Mathf.Sign(_active.Distance) * _activeTargetAmount;
+            }
+            else
+            {
+                if (Mathf.Abs(next.Angle) < 0.001f) return false;
+                if (next.Angle * _active.Angle <= 0f) return false;
+
+                _activeTargetAmount += Mathf.Abs(next.Angle);
+                _active.Angle = Mathf.Sign(_active.Angle) * _activeTargetAmount;
+            }
+
+            _queue.RemoveAt(0);
+            _chainedCount++;
+
+            // 目标量变长了，单步超时要跟着放宽，否则一段正常的连续动作会被当成"卡住"
+            float rate = _activeIsMove ? _activeSpeed : _activeTurnRate * Mathf.Rad2Deg;
+            _activeTimeout = _activeTargetAmount / Mathf.Max(0.05f, rate) * 2f + 1.5f;
+
+            Debug.Log(string.Format("[Step] 无缝衔接：并入 {0}，本段合计 {1:F2}{2}（再并入 {3} 条即到上限）",
+                Describe(next), _activeTargetAmount, _activeIsMove ? " m" : " °",
+                Mathf.Max(0, MaxChainExtraSteps - _chainedCount)));
+
+            return true;
+        }
+
+        /// <summary>朝当前这一段的运动方向，检查还剩多少可用余量，够不够再走 needed 米。</summary>
+        private bool HasRoomFor(float needed)
+        {
+            SafetyGuard safety = Hub != null ? Hub.Safety : null;
+            if (safety == null || !safety.ObstacleSensorEnabled) return true;
+
+            Vector3 direction = _active.Distance > 0f ? Controller.transform.forward : -Controller.transform.forward;
+            float gap = ProbeObstacle(direction);
+            if (float.IsPositiveInfinity(gap)) return true;
+
+            float allowed = gap - ObstacleMargin;
+            if (allowed >= needed) return true;
+
+            Debug.Log("[Step] 前方余量不足（可用 " + allowed.ToString("F2") + " m < 需要 " +
+                      needed.ToString("F2") + " m），本条预输入不衔接，改为停车后再走");
+            return false;
+        }
+
+        private string ChainedSuffix()
+        {
+            return _chainedCount > 0
+                ? string.Format(" · 已无缝并入 {0} 条", _chainedCount)
+                : string.Empty;
         }
 
         // ------------------------------------------------------------ 障碍物联动

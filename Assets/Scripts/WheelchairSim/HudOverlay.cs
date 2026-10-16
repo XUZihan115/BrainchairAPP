@@ -108,7 +108,7 @@ namespace WheelchairSim
             }
 
             GUILayout.Space(6f);
-            GUILayout.Label("键盘：W/S 前进后退 · A/D 转向 · Q/E 原地旋转 · 空格 停止 · X 急停 · Z 解除", _labelStyle);
+            GUILayout.Label("键盘：W/S 前进后退 · A/D 转向 · Q 逆时针原地左旋 · E 顺时针原地右旋 · 空格 停止 · X 急停 · Z 解除", _labelStyle);
 
             GUILayout.EndArea();
         }

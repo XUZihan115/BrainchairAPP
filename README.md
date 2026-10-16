@@ -10,15 +10,28 @@
 ## 一、3 步跑起来
 
 1. 用 Unity Hub 打开本目录（或者新建一个 3D 工程，把本目录的 `Assets/` 内容复制进去）。
-2. 新建一个空场景，在 Hierarchy 里 `Create Empty`，把这个脚本挂上去：
-   `Assets/Scripts/WheelchairSim/WheelchairBootstrap.cs`
+2. 双击打开场景 `Assets/Scenes/Main.unity`（里面已经挂好了 `WheelchairBootstrap`）。
 3. 按 **Play**。
 
-地面、灯光、相机、轮椅、HUD 面板、指令来源都会自动创建。
-用键盘 `W/S/A/D/Q/E/空格/X/Z`，或点屏幕左下角的面板按钮，就能看到轮椅动起来。
+地面、灯光、相机、轮椅、**坡道**、障碍物、HUD 面板、指令来源都会自动创建。
 
-> 如果要换成本工程自己的场景：把 `WheelchairBootstrap` 挂到任意空物体上即可，
-> 不需要手动建任何其它对象。
+| 按键 | 动作 | 按键 | 动作 |
+|---|---|---|---|
+| `W` / `S` | 前进 / 后退 | `Q` | 原地左旋（俯视**逆时针**） |
+| `A` / `D` | 行进中左转 / 右转 | `E` | 原地右旋（俯视**顺时针**） |
+| `空格` | 停车 | `X` / `Z` | 急停（锁存）/ 解除急停 |
+| `F` | 编辑器专属：收起多余窗口（专注模式） | | |
+
+按一下 `W` 车会一直前进，必须按 `空格` 或 `X` 才停（**状态保持式**，和真轮椅一致）。
+正前方就是一条约 9.5° 的坡道，直行即可测试爬坡。
+
+> 场景被弄乱了？点菜单 **Tools > Wheelchair > 重新生成仿真场景** 一键重建。
+> 也可以把 `WheelchairBootstrap` 挂到任意空物体上，效果一样。
+
+> **真实模型的贴图**：编辑器里 Play 会自动加载
+> `Assets/Models/Wheelchair/Wheelchair_LOW_POLY.fbx` 并自动缩放摆正，
+> 但**贴图要点一次菜单** **Tools > Wheelchair > 自动挂贴图** 才会挂上。
+> 详见 `docs/unity-wheelchair-sim-guide.md` 第 12 节。
 
 ---
 
@@ -40,9 +53,14 @@ Assets/Scripts/WheelchairSim/
 ├─ HudOverlay.cs             屏幕调试面板（OnGUI，零依赖）
 └─ WheelchairBootstrap.cs    一键搭建场景
 
-Assets/Editor/
-└─ WheelchairTextureImporter.cs  PBR 贴图导入设置自动化（编辑器专用）
-└─ WheelchairMaterialSetup.cs    一键自动挂 PBR 贴图（菜单 Tools > Wheelchair）
+Assets/Editor/                     ← 编辑器专用，打包后不参与编译
+├─ WheelchairTextureImporter.cs  PBR 贴图导入设置自动化
+├─ WheelchairMaterialSetup.cs    一键自动挂 PBR 贴图（菜单 Tools > Wheelchair）
+├─ WheelchairSceneBuilder.cs     一键重新生成仿真场景（菜单 Tools > Wheelchair）
+└─ WheelchairFocusMode.cs        专注模式：按 F 收起多余窗口
+
+Assets/Scenes/
+└─ Main.unity                    唯一的场景：一个空物体 + WheelchairBootstrap 组件
 
 Assets/Models/Wheelchair/
 ├─ Wheelchair_LOW_POLY.fbx   真实轮椅模型（合并网格，轮子不独立）
@@ -144,12 +162,23 @@ python Tools/host_test_client.py --host 127.0.0.1 --port 8888 --demo
   工程默认会自动降级成空实现（不影响编译运行）；要用串口就把
   `Api Compatibility Level` 改成 `.NET Framework` 再按 Ctrl+R。
 * **画面是粉红色**：材质 shader 没匹配到渲染管线，检查项目用的是 Built-in 还是 URP。
+* **上坡时被「撞墙」拦停**：坡面法线曾被当成障碍物，已修正
+  （`SafetyGuard.MaxClimbableSlopeAngle` 默认 30°，比它更缓的坡面不再算障碍）。
+* **轮椅像玩具 / 原地转圈时绕到车身外面**：模型自身比例与原点问题，已由
+  `autoFitModel` + `modelTargetHeight` 自动修正，Console 会打印适配日志。
+* **`Q` / `E` 转向相反**：历史版本角速度符号与左右手坐标系不一致，已修正
+  （`Q` 逆时针、`E` 顺时针）。
+* **按 `F` 没反应**：`F` 只在编辑器里有效，打包后没有该功能。
 
 ---
 
 ## 七、下一步
 
-* 真实模型已导入。把它挂到 wheelchairPrefab 字段，然后点菜单 **Tools > Wheelchair > 自动挂贴图** 一键挂好三张 PBR 贴图。详见 docs/unity-wheelchair-sim-guide.md 第 12 节（注意：合并网格的模型轮子不会转）。
+* 真实模型已导入并**自动接入**：编辑器里 `wheelchairPrefab` 留空时会自动加载那个 FBX，
+  自动缩放到 0.95 m 高、底部贴地、车心对齐出生点。贴图点一次菜单
+  **Tools > Wheelchair > 自动挂贴图** 即可。注意合并网格的模型**轮子不会转**。
+  打包 exe / APK 前记得把 FBX 资源本身拖到 `wheelchairPrefab` 字段上
+  （编辑器自动加载那套打包后不生效）。详见 `docs/unity-wheelchair-sim-guide.md` 第 12 节。
 * 按企业协议文档修改 `WheelchairProtocol`（帧头、指令码、CRC 算法、字节序）。
 * 第二阶段：把 EEG 意图识别结果接到 `WheelchairHub.SubmitLocalCommand(...)`，
   即可完成 `EEG → 意图识别 → APP → 协议 → 轮椅` 闭环。

@@ -1,4 +1,5 @@
 using System;
+using UnityEngine;
 
 namespace WheelchairSim
 {
@@ -21,6 +22,9 @@ namespace WheelchairSim
         public bool  ObstacleSensorEnabled = true;
         public float ObstacleStopDistance = 0.40f;
         public float SensorMaxDistance = 2.0f;
+
+        [Tooltip("能爬上去的最大坡角（度）。比这更陡的面会被当成障碍物挡停，避免轮椅顺着墙爬上墙顶。")]
+        public float MaxClimbableSlopeAngle = 30f;
 
         public float SpeedLimit = 1.0f;
         public float AngularLimit = 1.5f;

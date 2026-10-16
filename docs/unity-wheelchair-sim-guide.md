@@ -34,8 +34,10 @@
 | Python（可选） | 3.8 以上 | 只用来跑 PC 端测试客户端，方便不发硬件就验证协议 |
 | 串口/蓝牙（可选） | HC-05 / HC-06 之类 | 验证真链路时才需要 |
 
-> **注意**：工程里没有 `.unity` 场景文件。这是故意的——场景由 `WheelchairBootstrap.cs`
-> 在运行时自动搭出来，避免场景文件在 Unity 版本之间损坏导致合并冲突。
+> **注意**：工程里只有一个**极简**场景文件 `Assets/Scenes/Main.unity`，
+> 里面只有**一个空物体 + 一个 `WheelchairBootstrap` 组件**，别的什么都没有。
+> 地面、灯光、相机、轮椅、坡道、障碍物、HUD 全部由 `WheelchairBootstrap.cs`
+> 在运行时自动搭出来——这样场景文件只有 5KB，不会在 Unity 版本之间损坏，也不会产生合并冲突。
 
 ---
 
@@ -47,21 +49,37 @@
 2. 如果 Hub 提示版本不匹配，选 `6000.6.6f1` 打开即可（脚本兼容范围很宽）。
 3. 第一次打开会编译脚本，等右下角进度条跑完。
 
-### 2.2 挂上引导脚本
+### 2.2 打开场景（推荐做法）
+
+在 Project 窗口里双击 `Assets/Scenes/Main.unity` 打开即可。
+场景里已经放好了一个空物体、并挂上了 `WheelchairBootstrap` 组件，什么都不用建。
+
+> 找不到场景、或者被弄乱了？点菜单 **Tools > Wheelchair > 重新生成仿真场景** 一键重建。
+
+<details>
+<summary>备选做法：从空场景手工搭（不想用现成场景时看这里）</summary>
 
 1. `File → New Scene`，选 `Basic (Built-in)` 或空场景都行。
-2. 在 Hierarchy 面板空白处右键 → `Create Empty`，改名叫 `Bootstrap`。
-3. 把这个脚本拖到 `Bootstrap` 上：
+2. 在 Hierarchy 面板空白处右键 → `Create Empty`，改名叫 `WheelchairSim`。
+3. 把这个脚本拖到 `WheelchairSim` 上：
    `Assets/Scripts/WheelchairSim/WheelchairBootstrap.cs`
+4. `Ctrl + S` 保存。
+
+</details>
 
 ### 2.3 按 Play
 
-地面、灯光、跟随相机、轮椅、HUD 面板、障碍物、各路指令来源都会**自动创建**。
-不需要手动建任何对象。
+场景里缺的东西会**全部自动创建**，你不需要手动建任何对象：
 
-### 2.4 保存场景（可选但建议）
-
-`Ctrl + S` 保存到 `Assets/Scenes/Main.unity`，下次直接打开就能跑。
+| 自动创建 | 说明 |
+|---|---|
+| 地面 | 80m × 80m 平面，够跑很久 |
+| **坡道** | 正前方：上坡（约 9.5°）→ 平台 → 下坡，用来测爬坡和下坡 |
+| 障碍物 | 3 面墙 + 2 个锥桶，用来测障碍物急停 |
+| 轮椅 | 真实模型（找不到时退化成几何体拼的） |
+| 跟随相机、灯光 | 相机自动跟车 |
+| HUD 面板 | 右下角，显示速度、航向、电量、链路状态 |
+| 各路指令来源 | 键盘、模拟蓝牙、（可选）TCP、串口、Android 蓝牙 |
 
 ---
 
@@ -73,14 +91,18 @@
 
 | 按键 | 动作 | 按键 | 动作 |
 |---|---|---|---|
-| `W` 或 `↑` | 前进 | `Q` | 原地左旋 |
-| `S` 或 `↓` | 后退 | `E` | 原地右旋 |
+| `W` 或 `↑` | 前进 | `Q` | 原地左旋（俯视**逆时针**） |
+| `S` 或 `↓` | 后退 | `E` | 原地右旋（俯视**顺时针**） |
 | `A` 或 `←` | 行进中左转 | `空格` | 停车 |
 | `D` 或 `→` | 行进中右转 | `X` | 急停（锁存） |
 | `Z` | 解除急停 | | |
 
 > 指令是**状态保持式**的：按一下 `W` 轮椅会一直前进，必须按 `空格`/`X` 才停。
 > 这是故意设计的，和真轮椅的行为一致。
+
+> **`Q` / `E` 的左右是按「从上往下俯视」定义的**，和方向盘的直觉一致：
+> `Q` = 车头向左偏（逆时针），`E` = 车头向右偏（顺时针）。
+> `A` / `D` 是**行进中**转向，会自带一点前进速度；`Q` / `E` 是**原地**转，不前进。
 
 ### 3.2 用屏幕按钮
 
@@ -101,6 +123,41 @@ python Tools/host_test_client.py --host 127.0.0.1 --port 8888 --demo
 
 想手动一条条发就去掉 `--demo`，然后输入 `F`、`SPD:0.6`、`X` 这类指令；
 想验证二进制帧就加 `--binary`；想验证「心跳超时自动停车」就加 `--no-heartbeat`。
+
+### 3.4 爬坡测试
+
+Play 之后**车头正前方就是一条坡道**（`Ramp_Up` → `Ramp_Platform` → `Ramp_Down`），
+按一下 `W` 直行开过去即可。坡道参数：
+
+| 参数 | 值 |
+|---|---|
+| 坡度 | 约 **9.5°**（升 0.5m / 水平 3.0m，即约 1:6，比无障碍坡道标准略缓） |
+| 半宽 | 1.0m（左右各 1m） |
+| 平台高度 | 0.5m |
+
+轮椅会**自动贴着坡面起伏**（`WheelchairController.followGround`，默认开启），
+上下坡时车不会陷进坡里、也不会悬在半空。
+
+两个关键设计：
+
+1. **坡面不会被误判成障碍物**。安全模块默认「比 `MaxClimbableSlopeAngle`（30°）更陡的面
+   才算障碍物」，所以 9.5° 的坡能正常爬上去。否则车一碰坡就被急停拦住了。
+2. **爬不上去的陡面仍然挡停**。如果前面是一堵墙（90°）或超过 30° 的陡坡，
+   仍然会被判定为障碍物锁停——这正是安全机制要的效果。
+
+### 3.5 专注模式（一键收起多余窗口）
+
+演示／录屏的时候，Unity 编辑器里一堆面板很挡视线。按 **`F`** 即可：
+
+- 收起 `Hierarchy`、`Project`、`Inspector`、`Console`、`Profiler`、`Animation` 等面板
+- 只留下 **Scene 和 Game** 两个窗口
+- 再按一次 `F` 恢复原样
+
+`F` 只对**编辑器**生效（打包成 exe / APK 后没有这个功能，也不影响运行）。
+也可以在菜单里点：**Tools > Wheelchair > 专注模式（隐藏多余窗口）**。
+
+> 小细节：如果你正要在 Scene 窗口里按 `F`（Unity 自带「聚焦选中物体」），
+> 界面会自动让路给 Unity 原本的功能；在输入框里打字时按 `F` 也不会被抢走。
 
 ---
 
@@ -277,7 +334,12 @@ C# 端和 Python 端已经互相验证过，**字节完全一致**。你写 Andr
 | 轮椅动了一下就停 | 触发了心跳看门狗 | 远程源要持续发 `HB` 或任意指令；或去掉 `--no-heartbeat` |
 | 轮椅不动，HUD 显示「急停」 | 之前按过 `X` 或撞到障碍 | 按 `Z`（或发 `REL`）解除，并把障碍物移开 |
 | 轮子转轴方向不对 | 模型朝向不同 | 调 `WheelchairController` 的 `wheelSpinAxis`（默认 Y）、`wheelSpinSign`（默认 -1） |
-| 想换真实轮椅模型 | — | 把预制体拖到 `Bootstrap` 的 `wheelchairPrefab` 上（留空才自动拼几何体） |
+| 想换真实轮椅模型 | — | 把预制体拖到 `Bootstrap` 的 `wheelchairPrefab` 上（留空时编辑器里会自动加载工程自带的那台） |
+| 直行上坡时被「撞墙」拦停 | 坡面法线被当成了障碍物 | 已修正：`SafetyGuard.MaxClimbableSlopeAngle`（默认 30°），比这更缓的坡面不再算障碍 |
+| 轮椅上下坡时陷进坡里或浮在半空 | 贴地探测没生效 | `WheelchairController.followGround` 默认开；坡太高超过 `maxStepUp`（0.25m）也会被挡住 |
+| 轮椅看起来像玩具、或原地转圈时绕到车身外面 | 模型自身比例／原点不在车身上 | 已由 `autoFitModel` + `modelTargetHeight` 自动修正，Console 会打印适配日志 |
+| 按 `Q` / `E` 转向和直觉相反 | 历史版本角速度正负号与左右手坐标系不一致 | 已修正（`Q` 逆时针、`E` 顺时针）。若仍相反，先确认没误按 `A` / `D` |
+| 按 `F` 没反应 | `F` 只在**编辑器**里有效 | 打包后没有这个功能；编辑器里也可以走菜单 `Tools > Wheelchair > 专注模式（隐藏多余窗口）` |
 
 ---
 
@@ -304,6 +366,8 @@ C# 端和 Python 端已经互相验证过，**字节完全一致**。你写 Andr
 | 验证项 | 方法 | 结果 |
 |---|---|---|
 | 编辑器编译 | Unity 自带 .NET SDK 8 编译全部脚本 | **0 错误** |
+| Unity 本体编译 | 直接读 Unity 自己的 `Logs/Editor.log` | **无 `error CS` / `warning CS`** |
+| 本轮 4 项需求改动 | 复用 Unity 生成的 `.rsp` 重新编译运行时 + 编辑器两个程序集 | **0 错误 0 警告** |
 | 旧版输入兼容 | 关掉新版 Input System 条件重新编译 | **0 错误** |
 | Android 分支 | 用 `UNITY_ANDROID` 条件编译 `AndroidSppLink` | **0 错误** |
 | 协议单元测试 | C# 回环测试（CRC / 编解码 / 分片粘包 / 抗干扰 / ASCII / 状态帧） | **60+ 断言全部通过** |
@@ -314,8 +378,8 @@ C# 端和 Python 端已经互相验证过，**字节完全一致**。你写 Andr
 
 ## 11. 下一步（怎么接到课题第二阶段）
 
-1. **换模型**：把 `WheelchairModelFactory` 换成企业给的真实轮椅模型
-   （拖到 `wheelchairPrefab`）。
+1. **换模型**：企业给了新的轮椅模型就把它拖到 `wheelchairPrefab` 上
+   （现有的 FBX 已按第 12 节接好，留空时编辑器里会自动加载它）。
 2. **换协议**：拿到企业的协议文档后，改 `WheelchairProtocol.cs`
    （帧头、指令码、CRC 算法、字节序都在这一个文件里）。
 3. **接脑电**：把 EEG 意图识别的输出，调
@@ -327,8 +391,9 @@ C# 端和 Python 端已经互相验证过，**字节完全一致**。你写 Andr
 
 ## 12. 导入真实轮椅模型（FBX + PBR 贴图）
 
-工程默认用基本几何体拼一辆轮椅（`WheelchairModelFactory`），只是为了先把逻辑跑通。
-拿到真实模型后按下面做。
+工程里已经放好了一台真实轮椅模型 `Wheelchair_LOW_POLY.fbx` + 5 张 PBR 贴图，
+在编辑器里按 Play 会自动加载并使用它（找不到时才退化成 `WheelchairModelFactory`
+用几何体拼的那台）。下面说明文件怎么放、贴图怎么挂、以及这个模型的几个坑。
 
 ### 12.1 文件放哪
 
@@ -347,8 +412,8 @@ Assets/Models/Wheelchair/
 
 ### 12.2 贴图导入设置（已自动处理）
 
-`Assets/Editor/WheelchairTextureImporter.cs` 是编辑器脚本，会在导入时自动套用正确设置：
-`Assets/Editor/WheelchairMaterialSetup.cs   一键把 PBR 贴图自动挂到材质上（编辑器专用）
+`Assets/Editor/WheelchairTextureImporter.cs` 是编辑器脚本，会在导入时自动套用正确设置；
+`Assets/Editor/WheelchairMaterialSetup.cs` 是「一键挂贴图」菜单，见 12.4。
 
 | 贴图 | Texture Type | sRGB | 说明 |
 |---|---|---|---|
@@ -374,14 +439,33 @@ Assets/Models/Wheelchair/
 
 ### 12.4 让它变成轮椅车身
 
-1. 把 `Wheelchair_LOW_POLY.fbx` 拖进场景看一眼：
-   - 朝向：这个 FBX 是 **Y-up、厘米制**（实测 `UnitScaleFactor = 1.0`），
-     Unity 默认导入设置就是对的，**不用调**
-   - 比例：正常应该约 1.1m 高。差太多就调 `Model` 页的 `Scale Factor`
-   - 若模型是趴着的或侧躺的，那说明朝向和实测不符，调 `Model` 页的 `Rotation`
-2. 确认没问题后，把 **Project 窗口里的 FBX 资源本身**（不是场景里的实例）
+> **这个模型工程已经自动接好了**：`wheelchairPrefab` 留空时，
+> `WheelchairBootstrap`（`useRealModelInEditor` 默认开启）会在编辑器里自动加载
+> `Assets/Models/Wheelchair/Wheelchair_LOW_POLY.fbx`，并自动摆正尺寸和位置。
+> 你**什么都不用拖**，直接按 Play 就是真实模型。
+
+实测这个 FBX 的三个坑，以及工程的处理方式：
+
+| 实测结果 | 直接拖进场景会怎样 | 工程怎么处理 |
+|---|---|---|
+| **朝向**：`UpAxis=1`（Y 向上）、`FrontAxis=2` 正向（车头朝 +Z） | 无问题，和 Unity 约定一致 | 不用处理。以后换模型若车头朝后，把 `modelYawOffset` 填 `180` |
+| **尺寸**：顶点包围盒 `30.0 × 37.6 × 41.1`，`UnitScaleFactor = 1.0`（厘米制） | Unity 里只有约 **0.38m 高**，像台玩具 | `autoFitModel`（默认开）自动缩放到 `modelTargetHeight`（默认 0.95m，真轮椅高度） |
+| **原点**：不在车身上（水平方向偏约 12cm） | 原地旋转时会绕车身**外面**甩 | `autoFitModel` 把**水平中心对齐出生点、底部贴地** |
+
+运行时会打印一行确认日志：
+
+```
+[Bootstrap] 模型自动适配：原始高度 0.376 m -> 0.95 m（缩放 2.52 倍），底部已对齐地面
+```
+
+觉得太大／太小就改 `modelTargetHeight`（例如改成 `1.05`）；想自己手工调就把
+`autoFitModel` 的勾去掉，再去改模型 `Model` 页的 `Scale Factor`。
+
+**打包 exe 时必须手动拖一次**（编辑器自动加载那套在打包后不生效）：
+
+1. 把 **Project 窗口里的 FBX 资源本身**（不是场景里的实例）
    拖到场景中 `WheelchairBootstrap` 的 `wheelchairPrefab` 字段上。
-3. 运行：`WheelchairBootstrap` 会自动 `Instantiate` 这个模型、给它挂上 `WheelchairController`
+2. 运行：`WheelchairBootstrap` 会自动 `Instantiate` 这个模型、给它挂上 `WheelchairController`
    和 `Rigidbody`，并递归查找名叫 `WheelL` / `Wheel_L` / `LeftWheel` / `DriveWheelL`
    的子物体作为左驱动轮（右轮同理）。找不到也不会报错，只是轮子不转。
 
@@ -450,8 +534,14 @@ Assets/Scripts/WheelchairSim/
 ├─ HudOverlay.cs               屏幕调试面板（OnGUI，零依赖）
 └─ WheelchairBootstrap.cs      一键搭建场景
 
-Assets/Editor/
-└─ WheelchairTextureImporter.cs  PBR 贴图导入设置自动化（编辑器专用）
+Assets/Editor/                     （都是编辑器专用，打包后不参与编译）
+├─ WheelchairTextureImporter.cs  PBR 贴图导入设置自动化
+├─ WheelchairMaterialSetup.cs    一键把 PBR 贴图挂到材质上
+├─ WheelchairSceneBuilder.cs     一键重新生成仿真场景
+└─ WheelchairFocusMode.cs        专注模式：按 F 收起多余窗口
+
+Assets/Scenes/
+└─ Main.unity                    唯一的场景：一个空物体 + WheelchairBootstrap 组件
 
 Assets/Models/Wheelchair/
 ├─ Wheelchair_LOW_POLY.fbx     真实轮椅模型（合并网格，轮子不独立）

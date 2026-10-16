@@ -18,6 +18,8 @@ namespace WheelchairSim
         [Header("场景自动搭建")]
         public bool buildGround = true;
         public bool buildObstacles = true;
+        [Tooltip("在正前方搭一段上坡 -> 平台 -> 下坡的小坡道")]
+        public bool buildRamp = true;
         public bool createCameraIfMissing = true;
         public bool createLightIfMissing = true;
         public bool followCamera = true;
@@ -25,8 +27,16 @@ namespace WheelchairSim
         public float cameraSmoothing = 6f;
 
         [Header("轮椅")]
-        [Tooltip("留空 = 用基本几何体自动拼一辆；有真实模型时把预制体拖进来")]
+        [Tooltip("留空 = 用基本几何体自动拼一辆；有真实模型时把预制体（或 FBX 资源本身）拖进来")]
         public GameObject wheelchairPrefab;
+        [Tooltip("上面留空时，编辑器里自动去加载下面的真实模型，方便直接看到贴图效果。打包成 exe 时必须手动指定上面的预制体。")]
+        public bool useRealModelInEditor = true;
+        [Tooltip("真实模型自带的朝向和『车头』对不上时，用这个角度把它转正（度）")]
+        public float modelYawOffset = 0f;
+        [Tooltip("自动把真实模型缩放成 modelTargetHeight 米高，并让底部贴地、车心对准出生点")]
+        public bool autoFitModel = true;
+        [Tooltip("自动适配后的目标高度（米）。正常轮椅约 0.95")]
+        public float modelTargetHeight = 0.95f;
         public Vector3 spawnPosition = Vector3.zero;
 
         [Header("指令来源开关")]
@@ -156,17 +166,35 @@ namespace WheelchairSim
 
         // ---------------------------------------------------------- 场景
 
+        /// <summary>真实轮椅模型的工程内路径（只在编辑器里用来自动加载）。</summary>
+        private const string RealModelPath = "Assets/Models/Wheelchair/Wheelchair_LOW_POLY.fbx";
+
         private GameObject BuildWheelchair(out Transform leftWheel, out Transform rightWheel, out float wheelRadius)
         {
             GameObject wheelchair;
 
-            if (wheelchairPrefab != null)
+            GameObject prefab = wheelchairPrefab;
+
+#if UNITY_EDITOR
+            // 编辑器里没手动指定预制体时，自动加载工程里的真实模型（贴图会一起带进来）。
+            // 用 #if 包起来是因为 AssetDatabase 只存在于编辑器，打包后这段不参与编译。
+            if (prefab == null && useRealModelInEditor)
             {
-                wheelchair = Instantiate(wheelchairPrefab, spawnPosition, Quaternion.identity);
+                prefab = UnityEditor.AssetDatabase.LoadAssetAtPath<GameObject>(RealModelPath);
+                if (prefab != null) Debug.Log("[Bootstrap] 自动加载真实模型：" + RealModelPath);
+                else Debug.LogWarning("[Bootstrap] 找不到真实模型：" + RealModelPath + "，改用基本几何体拼装");
+            }
+#endif
+
+            if (prefab != null)
+            {
+                wheelchair = Instantiate(prefab, spawnPosition, Quaternion.Euler(0f, modelYawOffset, 0f));
                 wheelchair.name = "Wheelchair";
                 leftWheel = FindChildByName(wheelchair.transform, "DriveWheelL", "WheelL", "Wheel_L", "LeftWheel");
                 rightWheel = FindChildByName(wheelchair.transform, "DriveWheelR", "WheelR", "Wheel_R", "RightWheel");
                 wheelRadius = 0.30f;
+
+                FitModelToSpawn(wheelchair);
             }
             else
             {
@@ -181,6 +209,55 @@ namespace WheelchairSim
             return wheelchair;
         }
 
+        /// <summary>
+        /// 把真实模型"摆正"。
+        ///
+        /// 网上下的模型经常有三个坑：尺寸不是米（例如按厘米或英寸做的）、
+        /// 原点不在车身上（旋转时会绕着车身外面转）、底部悬空或陷进地面。
+        /// 这里统一处理：先量出模型的世界包围盒，整体缩放到 modelTargetHeight 米高，
+        /// 再把底部对齐到出生点的地面、水平中心对齐到出生点。
+        /// </summary>
+        private void FitModelToSpawn(GameObject wheelchair)
+        {
+            if (!autoFitModel) return;
+
+            Bounds bounds;
+            if (!TryGetRendererBounds(wheelchair, out bounds)) return;
+
+            float rawHeight = bounds.size.y;
+            if (rawHeight <= 0.0001f) return;
+
+            float scale = modelTargetHeight / rawHeight;
+            wheelchair.transform.localScale *= scale;
+
+            // 缩放之后包围盒变了，重新量一次再对齐。
+            if (!TryGetRendererBounds(wheelchair, out bounds)) return;
+
+            wheelchair.transform.position += new Vector3(
+                spawnPosition.x - bounds.center.x,
+                spawnPosition.y - bounds.min.y,
+                spawnPosition.z - bounds.center.z);
+
+            Debug.Log(string.Format(
+                "[Bootstrap] 模型自动适配：原始高度 {0:F3} m -> {1:F2} m（缩放 {2:F2} 倍），底部已对齐地面",
+                rawHeight, modelTargetHeight, scale));
+        }
+
+        /// <summary>把所有渲染器的世界包围盒合起来。没有任何渲染器时返回 false。</summary>
+        private static bool TryGetRendererBounds(GameObject root, out Bounds bounds)
+        {
+            bounds = new Bounds();
+            Renderer[] renderers = root.GetComponentsInChildren<Renderer>();
+            bool any = false;
+            for (int i = 0; i < renderers.Length; i++)
+            {
+                if (renderers[i] == null) continue;
+                if (!any) { bounds = renderers[i].bounds; any = true; }
+                else bounds.Encapsulate(renderers[i].bounds);
+            }
+            return any;
+        }
+
         private void BuildEnvironment()
         {
             if (buildGround)
@@ -192,18 +269,71 @@ namespace WheelchairSim
                 ApplyMaterial(ground, MakeMaterial(new Color(0.30f, 0.32f, 0.35f)));
             }
 
+            if (buildRamp)
+            {
+                BuildRamp(MakeMaterial(new Color(0.42f, 0.46f, 0.50f)));
+            }
+
             if (buildObstacles)
             {
                 Material wallMat = MakeMaterial(new Color(0.82f, 0.52f, 0.20f));
                 Material coneMat = MakeMaterial(new Color(0.90f, 0.28f, 0.24f));
 
-                CreateBox(new Vector3(0f, 0.6f, 6.0f), new Vector3(2.0f, 1.2f, 1.2f), wallMat, "Obstacle_Wall_1");
+                // 障碍物都挪到坡道两侧，把正前方让出来给坡道，直行就能上坡。
+                CreateBox(new Vector3(-5.0f, 0.6f, 6.0f), new Vector3(2.0f, 1.2f, 1.2f), wallMat, "Obstacle_Wall_1");
                 CreateBox(new Vector3(-3.5f, 0.6f, 9.0f), new Vector3(1.4f, 1.2f, 1.4f), wallMat, "Obstacle_Wall_2");
                 CreateBox(new Vector3(3.5f, 0.6f, 12.0f), new Vector3(1.4f, 1.2f, 1.4f), wallMat, "Obstacle_Wall_3");
 
-                CreateCylinder(new Vector3(-1.6f, 0.35f, 3.5f), new Vector3(0.5f, 0.35f, 0.5f), coneMat, "Obstacle_Cone_1");
-                CreateCylinder(new Vector3(1.6f, 0.35f, 4.5f), new Vector3(0.5f, 0.35f, 0.5f), coneMat, "Obstacle_Cone_2");
+                CreateCylinder(new Vector3(-2.9f, 0.35f, 3.0f), new Vector3(0.5f, 0.35f, 0.5f), coneMat, "Obstacle_Cone_1");
+                CreateCylinder(new Vector3(2.9f, 0.35f, 4.0f), new Vector3(0.5f, 0.35f, 0.5f), coneMat, "Obstacle_Cone_2");
             }
+        }
+
+        /// <summary>
+        /// 在正前方搭一段"上坡 -> 平台 -> 下坡"的小坡道，用来演示上下坡。
+        /// 坡道宽 2m、抬高 0.5m、水平长 3m，坡度约 9.5 度（1:6），
+        /// 远小于 SafetyGuard.MaxClimbableSlopeAngle，所以能正常爬上去而不会被当成障碍物。
+        /// </summary>
+        private void BuildRamp(Material material)
+        {
+            const float halfWidth  = 1.0f;    // 半宽 -> 坡道宽 2m
+            const float rise       = 0.5f;    // 抬高 0.5m
+            const float runLength  = 3.0f;    // 水平长度 3m
+            const float thickness  = 0.25f;   // 板厚
+
+            float slopeLength = Mathf.Sqrt(runLength * runLength + rise * rise);
+            float angleDeg = Mathf.Atan2(rise, runLength) * Mathf.Rad2Deg;
+
+            // 上坡：坡面从 z=2（y=0）升到 z=5（y=0.5）
+            CreateSlab(new Vector3(0f, rise * 0.5f, 2f + runLength * 0.5f),
+                new Vector3(halfWidth * 2f, thickness, slopeLength), angleDeg, material, "Ramp_Up");
+
+            // 平台：顶面 y=0.5，z 从 5 到 7
+            CreateBox(new Vector3(0f, rise * 0.5f, 2f + runLength + 1f),
+                new Vector3(halfWidth * 2f, rise, 2f), material, "Ramp_Platform");
+
+            // 下坡：坡面从 z=7（y=0.5）降到 z=10（y=0）
+            CreateSlab(new Vector3(0f, rise * 0.5f, 2f + runLength + 2f + runLength * 0.5f),
+                new Vector3(halfWidth * 2f, thickness, slopeLength), -angleDeg, material, "Ramp_Down");
+        }
+
+        /// <summary>
+        /// 造一块"倾斜的板"。surfaceCenter 是板**上表面**的中心点，
+        /// size.y 是板厚，angleDeg 是绕 X 轴向上抬起的角度（正值 = +Z 那头抬起来）。
+        /// </summary>
+        private static void CreateSlab(Vector3 surfaceCenter, Vector3 size, float angleDeg, Material material, string name)
+        {
+            GameObject go = GameObject.CreatePrimitive(PrimitiveType.Cube);
+            go.name = name;
+            go.transform.localScale = size;
+
+            Quaternion rotation = Quaternion.Euler(-angleDeg, 0f, 0f);
+            // 上表面要落在 surfaceCenter 上，所以整体沿着法线方向往下沉半个板厚。
+            Vector3 normal = rotation * Vector3.up;
+            go.transform.rotation = rotation;
+            go.transform.position = surfaceCenter - normal * (size.y * 0.5f);
+
+            ApplyMaterial(go, material);
         }
 
         private void EnsureCamera()

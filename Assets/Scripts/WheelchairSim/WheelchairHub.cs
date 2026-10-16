@@ -195,6 +195,9 @@ namespace WheelchairSim
                 Collider collider = _hitBuffer[i].collider;
                 if (collider == null) continue;
                 if (collider.transform.IsChildOf(body)) continue;   // 跳过自己
+                // 坡面（含斜坡和地面）不能算障碍物，否则一上坡就会被"前方有障碍"拦停。
+                // 只有比 MaxClimbableSlopeAngle 更陡的面（立着的墙）才当障碍物。
+                if (Vector3.Angle(_hitBuffer[i].normal, Vector3.up) <= Safety.MaxClimbableSlopeAngle) continue;
                 if (_hitBuffer[i].distance < nearest) nearest = _hitBuffer[i].distance;
             }
 

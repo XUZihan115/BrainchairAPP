@@ -7,9 +7,15 @@ namespace WheelchairSim
     /// 系统中枢：把所有指令来源汇总成一条指令流，经过安全守卫后交给运动控制器，
     /// 并定时把轮椅状态回传给所有可发送的来源。
     ///
-    ///   指令源(蓝牙/串口/TCP/本地) --&gt; WheelchairHub --&gt; SafetyGuard --&gt; WheelchairController
-    ///                                        |
-    ///                                        +--&gt; 状态帧回传
+    ///   指令源(蓝牙/串口/TCP/本地) --> WheelchairHub --> SafetyGuard --> WheelchairController
+    ///                                        |               |
+    ///                                        |               +--> StepCommander（步进式，脑电链路）
+    ///                                        +--> 状态帧回传
+    ///
+    /// 指令语义按链路区分：远程链路（蓝牙/串口/TCP）默认走"步进式"——
+    /// 一条指令只走固定距离/角度，走完自动停，适合离散的 SSVEP 指令；
+    /// 本地键盘/HUD 默认走"状态保持式"——手动操作需要连续控制。
+    /// 上位机可以随时用 MODE:LATCH / MODE:STEP 改自己那条链路的语义。
     /// </summary>
     [DisallowMultipleComponent]
     public sealed class WheelchairHub : MonoBehaviour
@@ -19,14 +25,25 @@ namespace WheelchairSim
         [Header("引用")]
         public WheelchairController Controller;
         public SafetyGuard Safety = new SafetyGuard();
+        [Tooltip("步进执行器。留空会在运行时自动挂上（脑电链路的指令靠它变成有界动作）")]
+        public StepCommander Steps;
 
         [Header("状态")]
         public float BatteryPercent = 78f;
         public float TelemetryInterval = 0.25f;
         public bool  LogCommands = true;
 
+        [Header("指令语义")]
+        [Tooltip("远程链路（蓝牙/串口/TCP）默认的指令语义。脑电指令是离散的，所以默认步进式")]
+        public CommandMode RemoteCommandMode = CommandMode.Step;
+        [Tooltip("本地键盘 / HUD 按钮是否也用步进式。默认关闭：手动操作需要连续控制")]
+        public bool StepModeForLocalInput = false;
+
         private readonly List<ICommandSource> _sources = new List<ICommandSource>();
         private readonly Queue<CommandMessage> _inbox = new Queue<CommandMessage>();
+        private readonly Queue<CommandMessage> _sourceInbox = new Queue<CommandMessage>();
+        private readonly Dictionary<ICommandSource, CommandMode> _sourceModes =
+            new Dictionary<ICommandSource, CommandMode>();
         private readonly RaycastHit[] _hitBuffer = new RaycastHit[16];
 
         private float _telemetryTimer;
@@ -37,9 +54,38 @@ namespace WheelchairSim
         public string LastCommandText { get { return _lastCommandText; } }
         public bool AnyRemoteConnected { get; private set; }
 
+        /// <summary>查询某条链路当前的指令语义（HUD 显示用）。</summary>
+        public CommandMode GetSourceMode(ICommandSource source)
+        {
+            CommandMode mode;
+            if (source != null && _sourceModes.TryGetValue(source, out mode)) return mode;
+            return DefaultModeFor(source);
+        }
+
+        private CommandMode DefaultModeFor(ICommandSource source)
+        {
+            if (source == null) return CommandMode.Latch;                 // 本地 HUD 按钮
+            if (source.RequiresHeartbeat) return RemoteCommandMode;       // 远程链路
+            return StepModeForLocalInput ? CommandMode.Step : CommandMode.Latch;
+        }
+
         private void Awake()
         {
             Instance = this;
+        }
+
+        private void Start()
+        {
+            EnsureSteps();
+        }
+
+        /// <summary>保证步进执行器存在并接好线（运行期自动挂载，不需要手工拖引用）。</summary>
+        private void EnsureSteps()
+        {
+            if (Steps == null) Steps = GetComponent<StepCommander>();
+            if (Steps == null) Steps = gameObject.AddComponent<StepCommander>();
+            Steps.Hub = this;
+            if (Steps.Controller == null) Steps.Controller = Controller;
         }
 
         private void OnDestroy()
@@ -58,8 +104,10 @@ namespace WheelchairSim
         {
             if (source == null) return;
             _sources.Add(source);
+            _sourceModes[source] = DefaultModeFor(source);
             try { source.Connect(); } catch (System.Exception e) { Debug.LogWarning("[Hub] 连接失败 " + source.DisplayName + ": " + e.Message); }
-            Debug.Log("[Hub] 注册指令源：" + source.DisplayName);
+            Debug.Log(string.Format("[Hub] 注册指令源：{0}（指令语义：{1}）",
+                source.DisplayName, GetSourceMode(source) == CommandMode.Step ? "步进式" : "状态保持式"));
         }
 
         public void RemoveSource(ICommandSource source)
@@ -67,6 +115,7 @@ namespace WheelchairSim
             if (source == null) return;
             try { source.Disconnect(); } catch (System.Exception) { }
             _sources.Remove(source);
+            _sourceModes.Remove(source);
         }
 
         /// <summary>HUD 按钮 / 键盘走这条入口。</summary>
@@ -80,14 +129,22 @@ namespace WheelchairSim
         private void Update()
         {
             float deltaTime = Time.deltaTime;
+            EnsureSteps();
 
+            // 每条链路单独收指令：这样才知道"这条指令是谁发来的"，
+            // 才能按链路决定它该按步进式还是状态保持式执行。
             for (int i = 0; i < _sources.Count; i++)
             {
-                try { _sources[i].Tick(deltaTime, _inbox); }
-                catch (System.Exception e) { Debug.LogWarning("[Hub] 指令源异常 " + _sources[i].DisplayName + ": " + e.Message); }
+                ICommandSource source = _sources[i];
+                _sourceInbox.Clear();
+                try { source.Tick(deltaTime, _sourceInbox); }
+                catch (System.Exception e) { Debug.LogWarning("[Hub] 指令源异常 " + source.DisplayName + ": " + e.Message); }
+
+                while (_sourceInbox.Count > 0) Handle(_sourceInbox.Dequeue(), source);
             }
 
-            while (_inbox.Count > 0) Handle(_inbox.Dequeue());
+            // HUD 按钮 / 键盘走的本地入口
+            while (_inbox.Count > 0) Handle(_inbox.Dequeue(), null);
 
             // 只有当存在"远程链路且已连接"时才启用看门狗，
             // 否则纯本地键盘调试会被误判成失联。
@@ -106,8 +163,11 @@ namespace WheelchairSim
 
                 if (Safety.Tick(deltaTime))
                 {
+                    if (Steps != null) Steps.AbortStep(true);
                     Controller.EmergencyStop();
                 }
+
+                if (Steps != null) Steps.Tick(deltaTime);
 
                 Controller.Tick(deltaTime);
             }
@@ -115,12 +175,15 @@ namespace WheelchairSim
             BroadcastTelemetry(deltaTime, false);
         }
 
-        private void Handle(CommandMessage message)
+        private void Handle(CommandMessage message, ICommandSource source)
         {
             if (Controller == null) return;
 
             _lastCommandText = message.ToString();
-            if (LogCommands) Debug.Log("[Hub] <- " + message);
+            if (LogCommands)
+            {
+                Debug.Log("[Hub] <- " + message + (source != null ? "  [" + source.DisplayName + "]" : "  [本地]"));
+            }
 
             switch (message.Command)
             {
@@ -129,6 +192,7 @@ namespace WheelchairSim
                     return;
 
                 case WheelchairCommand.EmergencyStop:
+                    if (Steps != null) Steps.AbortStep(true);
                     Safety.Latch("收到上位机急停指令");
                     Controller.EmergencyStop();
                     return;
@@ -147,7 +211,23 @@ namespace WheelchairSim
 
                 case WheelchairCommand.Stop:
                     Safety.NotifyHeartbeat();
+                    if (Steps != null) Steps.AbortStep(true);
                     Controller.ApplyCommand(WheelchairCommand.Stop);
+                    return;
+
+                case WheelchairCommand.SetCommandMode:
+                    // 只影响发这条指令的那条链路：上位机连上来自报家门，
+                    // 脑电上位机发 MODE:STEP，电脑调试工具发 MODE:LATCH。
+                    if (source != null)
+                    {
+                        _sourceModes[source] = message.Arg >= 0.5f ? CommandMode.Step : CommandMode.Latch;
+                        Debug.Log(string.Format("[Hub] {0} 指令语义切换为 {1}",
+                            source.DisplayName, GetSourceMode(source) == CommandMode.Step ? "步进式" : "状态保持式"));
+                    }
+                    else
+                    {
+                        StepModeForLocalInput = message.Arg >= 0.5f;
+                    }
                     return;
             }
 
@@ -157,6 +237,7 @@ namespace WheelchairSim
             if (!Safety.AllowsMotion)
             {
                 // 急停锁定期间忽略一切运动指令，必须发 ReleaseEmergency
+                if (Steps != null) Steps.AbortStep(true);
                 return;
             }
 
@@ -169,6 +250,12 @@ namespace WheelchairSim
             {
                 // 角速度同样要限幅，否则上位机发一个大角度就能把轮椅甩翻。
                 arg = Mathf.Clamp(arg, -Safety.AngularLimit, Safety.AngularLimit);
+            }
+
+            // 先给步进执行器：脑电链路的运动指令在这里被翻译成"走固定距离后自动停"
+            if (Steps != null && Steps.TryHandle(new CommandMessage(message.Command, arg, message.Seq), GetSourceMode(source)))
+            {
+                return;
             }
 
             Controller.ApplyCommand(message.Command, arg);
@@ -221,6 +308,8 @@ namespace WheelchairSim
             // 目前没有独立的故障模型：急停已经由 EmergencyStop 标志单独上报，
             // 这里恒为 false，避免上位机把"急停锁存"误判成"硬件故障"。
             state.Fault = false;
+            // 步进忙标志：上位机靠 busy 的 1→0 跳变判断"这一步走完了，可以看下一眼"
+            state.Stepping = Steps != null && (Steps.IsExecuting || Steps.IsSettling);
             state.ActiveCommand = Controller.ActiveCommand;
 
             byte[] frame = WheelchairProtocol.EncodeStateFrame(state, _telemetrySeq++);

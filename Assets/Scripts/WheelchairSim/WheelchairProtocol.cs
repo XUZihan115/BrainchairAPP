@@ -20,6 +20,7 @@ namespace WheelchairSim
     ///
     ///   状态回传帧 CMD = 0x80，LEN = 10：
     ///     SEQ(1) CMD(1) 电量(1) 线速度(2) 角速度(2) 航向(2) 标志(1)
+    ///     标志位：bit0 = 急停锁存，bit1 = 故障，bit2 = 正在执行步进（busy）
     ///
     /// 二、ASCII 行（方便用串口助手 / 网络调试助手 / 蓝牙串口 App 手工测试）
     ///   以 \n 或 \r\n 结尾，大小写不敏感，斜杠后为等价写法：
@@ -37,6 +38,20 @@ namespace WheelchairSim
     ///     TURN:0.80            设定角速度 rad/s
     ///     HB / PING            心跳
     ///     Q / STATUS / ?       请求回传状态
+    ///
+    ///   步进模式（脑电）专用：
+    ///     MODE:STEP / MODE:LATCH        切换"发这条指令的链路"的指令语义
+    ///     STEP:1.0 / SETSTEP:1.0        设定默认步长 m
+    ///     SETSTEPANGLE:30               设定默认步转角 °
+    ///     SF / SB                       前进一步 / 后退一步
+    ///     SL / SR / SRL / SRR           原地左转一步 / 原地右转一步
+    ///     STEPMOVE:-0.5                 带距离的一步（负值 = 后退）
+    ///     STEPTURN:45                   带角度的一步（正值 = 左转）
+    ///    注意：SF/SB/SL/SR/SRL/SRR 与单独的 S（停车）是不同 key，
+    ///          解析用的是整数精确匹配，不会互相干扰。
+    ///    注意：STEPMOVE / STEPTURN 与二进制指令 StepMove(0x10) / StepTurn(0x11) 一一对应；
+    ///          SETSTEP / SETSTEPANGLE 对应 SetStepDistance(0x12) / SetStepAngle(0x13)，
+    ///          前者是"立刻走一步"，后者是"改默认步进量"，别混。
     /// </summary>
     public static class WheelchairProtocol
     {
@@ -108,6 +123,7 @@ namespace WheelchairSim
             byte flags = 0;
             if (state.EmergencyStop) flags |= 0x01;
             if (state.Fault)         flags |= 0x02;
+            if (state.Stepping)      flags |= 0x04;   // 正在执行步进
             frame[p++] = flags;
 
             frame[p] = Crc8(frame, 2, payloadLen + 1);
@@ -126,14 +142,32 @@ namespace WheelchairSim
 
             string upper = text.ToUpperInvariant();
             string key = upper;
+            string argText = string.Empty;
             float arg = 0f;
 
             int colon = upper.IndexOf(':');
             if (colon >= 0)
             {
                 key = upper.Substring(0, colon).Trim();
-                string argText = upper.Substring(colon + 1).Trim();
+                argText = upper.Substring(colon + 1).Trim();
                 float.TryParse(argText, NumberStyles.Float, CultureInfo.InvariantCulture, out arg);
+            }
+
+            // MODE 的参数是字符串而不是数字，必须在通用数字解析之外单独处理，
+            // 否则 MODE:STEP 会被解析成 arg=0（也就是 LATCH），语义会静默反转。
+            if (key == "MODE" || key == "CMDMODE")
+            {
+                if (argText == "STEP" || argText == "S" || argText == "1")
+                {
+                    message = new CommandMessage(WheelchairCommand.SetCommandMode, 1f);
+                    return true;
+                }
+                if (argText == "LATCH" || argText == "HOLD" || argText == "L" || argText == "0")
+                {
+                    message = new CommandMessage(WheelchairCommand.SetCommandMode, 0f);
+                    return true;
+                }
+                return false;
             }
 
             switch (key)
@@ -166,6 +200,24 @@ namespace WheelchairSim
                     message = new CommandMessage(WheelchairCommand.Heartbeat); return true;
                 case "Q":     case "STATUS": case "?":
                     message = new CommandMessage(WheelchairCommand.RequestStatus); return true;
+
+                // ---- 步进模式（脑电）----
+                case "SF": case "STEPFORWARD":
+                    message = new CommandMessage(WheelchairCommand.StepForward); return true;
+                case "SB": case "STEPBACK": case "STEPBACKWARD":
+                    message = new CommandMessage(WheelchairCommand.StepBackward); return true;
+                case "SL": case "SRL": case "STEPLEFT": case "STEPROTATELEFT":
+                    message = new CommandMessage(WheelchairCommand.StepLeft); return true;
+                case "SR": case "SRR": case "STEPRIGHT": case "STEPROTATERIGHT":
+                    message = new CommandMessage(WheelchairCommand.StepRight); return true;
+                case "STEP": case "STEPDISTANCE": case "SETSTEP":
+                    message = new CommandMessage(WheelchairCommand.SetStepDistance, arg); return true;
+                case "SETSTEPANGLE": case "SETSTEPTURN":
+                    message = new CommandMessage(WheelchairCommand.SetStepAngle, arg); return true;
+                case "STEPMOVE":
+                    message = new CommandMessage(WheelchairCommand.StepMove, arg); return true;
+                case "STEPTURN":
+                    message = new CommandMessage(WheelchairCommand.StepTurn, arg); return true;
             }
 
             return false;

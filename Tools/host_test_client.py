@@ -9,7 +9,7 @@
     # 1) 交互模式（推荐先玩这个）
     python host_test_client.py --host 127.0.0.1 --port 8888
 
-    # 2) 自动演示：前进 -> 左转 -> 停止 -> 原地右旋 -> 停车 -> 急停 -> 解除
+    # 2) 自动演示：连续动作一遍 + 步进模式一遍
     python host_test_client.py --demo
 
     # 3) 发二进制帧（验证 CRC 与帧解析），默认发 ASCII 行
@@ -28,6 +28,13 @@
     LIMIT:1.0      设定限速 m/s
     Q              请求回传一次状态
     quit           退出
+
+步进模式（脑电语义：一条指令 = 走完就停）：
+    MODE:STEP      本链路改成步进式（默认就是它）      MODE:LATCH  改回状态保持式
+    SF / SB        前进一步 / 后退一步（默认 1.0 m）
+    SL / SR        左转一步 / 右转一步（默认 30°）
+    STEP:1.0       设定默认步长 m                      SETSTEPANGLE:30  设定默认步转角 °
+    STEPMOVE:-0.5  走一段带符号位移 m                  STEPTURN:45      转一段带符号角度 °
 """
 
 import argparse
@@ -67,6 +74,23 @@ COMMAND_IDS = {
     "SETTURNRATE": 0x0C, "TURN": 0x0C,
     "HEARTBEAT": 0x0D, "HB": 0x0D,
     "REQUESTSTATUS": 0x0E, "Q": 0x0E,
+    # 步进相关（脑电链路）
+    "SETCOMMANDMODE": 0x0F,
+    "STEPMOVE": 0x10,
+    "STEPTURN": 0x11,
+    "STEP": 0x12, "STEPDISTANCE": 0x12, "SETSTEP": 0x12,
+    "SETSTEPANGLE": 0x13, "SETSTEPTURN": 0x13,
+    "STEPFORWARD": 0x14, "SF": 0x14,
+    "STEPBACKWARD": 0x15, "SB": 0x15,
+    "STEPLEFT": 0x16, "SL": 0x16,
+    "STEPRIGHT": 0x17, "SR": 0x17,
+}
+
+# MODE:xxx 的参数是文字而不是数字，单独列一张表
+# （二进制下发时转成 SetCommandMode 的 ARG：1 = 步进式，0 = 状态保持式）
+MODE_ARGS = {
+    "STEP": 1.0, "S": 1.0, "1": 1.0,
+    "LATCH": 0.0, "HOLD": 0.0, "L": 0.0, "0": 0.0,
 }
 
 ACTIVE_COMMAND_NAMES = {
@@ -104,8 +128,16 @@ def parse_line(line: str):
     if ":" in text:
         key, _, arg_text = text.partition(":")
         key = key.strip()
+        arg_text = arg_text.strip()
+
+        # MODE:STEP / MODE:LATCH 的参数是文字，不能按 float 解析
+        if key in ("MODE", "CMDMODE"):
+            if arg_text not in MODE_ARGS:
+                return None
+            return COMMAND_IDS["SETCOMMANDMODE"], MODE_ARGS[arg_text]
+
         try:
-            arg = float(arg_text.strip())
+            arg = float(arg_text)
         except ValueError:
             arg = 0.0
 
@@ -151,6 +183,9 @@ def decode_status_stream(buffer: bytearray):
                 "heading": heading,
                 "emergency": bool(flags & 0x01),
                 "fault": bool(flags & 0x02),
+                # bit2：步进执行中（busy）。
+                # 脑电上位机的节奏就是：发一步 -> 等它由 1 跳回 0 -> 再判下一次意图。
+                "stepping": bool(flags & 0x04),
             })
 
         del buffer[:total]
@@ -191,11 +226,17 @@ class WheelchairClient:
                 self.rx_buffer.extend(chunk)
                 states, self.rx_buffer = decode_status_stream(self.rx_buffer)
                 for state in states:
-                    flag = "  !!急停!!" if state["emergency"] else ""
+                    flags = ""
+                    if state["emergency"]:
+                        flags += "  !!急停!!"
+                    if state["fault"]:
+                        flags += "  !!故障!!"
+                    if state["stepping"]:
+                        flags += "  [步进执行中]"
                     print("[status] v={:+.2f} m/s  w={:+.2f} rad/s  heading={:5.1f}°  "
                           "battery={}%  last_sent={}{}".format(
                               state["linear"], state["angular"], state["heading"],
-                              state["battery"], self.last_sent_name, flag))
+                              state["battery"], self.last_sent_name, flags))
             except socket.timeout:
                 continue
             except OSError:
@@ -255,14 +296,29 @@ class WheelchairClient:
 
 
 def run_demo(client):
+    # 远程链路默认是"步进式"（脑电语义）：发一条 F 只走 1 米就停。
+    # 前半段要演示的是连续动作，所以先声明本链路为状态保持式；
+    # 后半段再切回步进式，演示"一条指令 = 走完就停"的脑电节奏。
     script = [
-        (0.0, "LIMIT:1.0"), (0.2, "SPD:0.5"), (0.6, "F"),
-        (2.6, "L"), (4.6, "F"), (6.0, "S"),
-        (7.0, "RR"), (9.0, "RL"), (10.5, "S"),
-        (11.5, "B"), (13.0, "S"),
-        (14.0, "X"), (16.0, "REL"), (17.0, "S"),
+        (0.0, "MODE:LATCH"),
+        (0.3, "LIMIT:1.0"), (0.5, "SPD:0.5"), (0.9, "F"),
+        (2.9, "L"), (4.9, "F"), (6.3, "S"),
+        (7.3, "RR"), (9.3, "RL"), (10.8, "S"),
+        (11.8, "B"), (13.3, "S"),
+        (14.3, "X"), (16.3, "REL"), (17.3, "S"),
+        # ↓ 脑电步进演示
+        (18.3, "MODE:STEP"),
+        (18.6, "STEP:1.0"), (18.9, "SETSTEPANGLE:30"),
+        (19.4, "SF"),    # 前进 1 m，走完自动停
+        (23.8, "SL"),    # 左转 30°
+        (25.2, "SR"),    # 右转 30°
+        (26.6, "SB"),    # 后退 1 m
+        (31.0, "MODE:LATCH"),
+        (31.3, "S"),
     ]
     print("[demo] 开始自动演示，请观察 Unity 里的轮椅……")
+    print("[demo] 0~18 s 连续动作（状态保持式）；18 s 之后是步进式（脑电语义：走完就停）")
+    print("[demo] 注意看状态回传里的 [步进执行中]（flags bit2），它的 1->0 跳变就是「这一步走完了」")
     start = time.time()
     for offset, line in script:
         time.sleep(max(0.0, start + offset - time.time()))

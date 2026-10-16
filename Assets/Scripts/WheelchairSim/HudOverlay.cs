@@ -63,7 +63,7 @@ namespace WheelchairSim
             SafetyGuard safety = Hub.Safety;
 
             // 放在右上角，和左下角的控制面板互不遮挡
-            GUILayout.BeginArea(new Rect(screenWidth - 384f, 12f, 372f, 480f), GUI.skin.box);
+            GUILayout.BeginArea(new Rect(screenWidth - 384f, 12f, 372f, 660f), GUI.skin.box);
 
             GUILayout.Label("脑控轮椅 · Unity 仿真", _titleStyle);
             GUILayout.Space(4f);
@@ -104,8 +104,13 @@ namespace WheelchairSim
             {
                 ICommandSource source = Hub.Sources[i];
                 string state = source.IsConnected ? "已连接" : "未连接";
-                GUILayout.Label(string.Format("{0}  [{1}]  {2}", source.DisplayName, state, source.StatusDetail), _labelStyle);
+                string mode = Hub.GetSourceMode(source) == CommandMode.Step ? "步进式" : "状态保持式";
+                GUILayout.Label(string.Format("{0}  [{1}]  {2}", source.DisplayName, state, mode), _labelStyle);
+                GUILayout.Label("    " + source.StatusDetail, _labelStyle);
             }
+
+            GUILayout.Space(6f);
+            DrawStepSection();
 
             GUILayout.Space(6f);
             GUILayout.Label("键盘：W/S 前进后退 · A/D 转向 · Q 逆时针原地左旋 · E 顺时针原地右旋 · 空格 停止 · X 急停 · Z 解除", _labelStyle);
@@ -113,10 +118,38 @@ namespace WheelchairSim
             GUILayout.EndArea();
         }
 
+        /// <summary>脑电步进模式的状态面板：模式、当前步、预输入队列、不应期。</summary>
+        private void DrawStepSection()
+        {
+            GUILayout.Label("—— 脑电步进 ——", _labelStyle);
+
+            StepCommander steps = Hub.Steps;
+            if (steps == null)
+            {
+                GUILayout.Label("未挂载 StepCommander（步进功能不可用）", _warnStyle);
+                return;
+            }
+
+            GUILayout.Label(steps.Enabled ? "步进功能：已开启" : "步进功能：已关闭（全部按状态保持式执行）", _labelStyle);
+            GUILayout.Label(string.Format("步进量：{0:F1} m / {1:F0}°    速度 {2:F2} m/s    转速 {3:F0} °/s",
+                steps.StepDistance, steps.StepTurnAngle, steps.StepSpeed, steps.StepTurnDegreesPerSecond), _labelStyle);
+            GUILayout.Label(string.Format("执行中：{0}", steps.StatusText),
+                steps.IsExecuting ? _warnStyle : _labelStyle);
+            GUILayout.Label(string.Format("预输入队列：{0} / {1} 条    排队超时 {2:F1} s",
+                steps.QueuedCount, steps.QueueDepth, steps.CommandTtl), _labelStyle);
+            GUILayout.Label(steps.InRefractory
+                ? string.Format("不应期：剩余 {0:F1} s（这期间的重复指令一律丢弃）", steps.RefractoryRemaining)
+                : string.Format("不应期：空闲（两条指令最小间隔 {0:F1} s）", steps.RefractoryPeriod), _labelStyle);
+            GUILayout.Label(string.Format("累计：完成 {0} 步 / 丢弃 {1} 条", steps.CompletedSteps, steps.RejectedSteps), _labelStyle);
+
+            if (!string.IsNullOrEmpty(steps.LastRejectReason))
+                GUILayout.Label("最近丢弃：" + steps.LastRejectReason, _warnStyle);
+        }
+
         private void DrawControlPanel(float screenWidth, float screenHeight)
         {
             const float panelWidth = 372f;
-            float panelHeight = MockLink != null ? 330f : 268f;
+            float panelHeight = (MockLink != null ? 330f : 268f) + 96f;
             float top = screenHeight - panelHeight - 12f;
 
             GUILayout.BeginArea(new Rect(12f, top, panelWidth, panelHeight), GUI.skin.box);
@@ -148,6 +181,24 @@ namespace WheelchairSim
             GUILayout.EndHorizontal();
 
             if (GUILayout.Button("解除急停锁", GUILayout.Height(24f))) Submit(WheelchairCommand.ReleaseEmergency);
+
+            GUILayout.Space(6f);
+            GUILayout.Label("步进（脑电语义：走完自动停）", _labelStyle);
+
+            GUILayout.BeginHorizontal();
+            if (GUILayout.Button("⇧ 步进前进", GUILayout.Height(26f))) Submit(WheelchairCommand.StepForward);
+            if (GUILayout.Button("⇩ 步进后退", GUILayout.Height(26f))) Submit(WheelchairCommand.StepBackward);
+            GUILayout.EndHorizontal();
+
+            GUILayout.BeginHorizontal();
+            if (GUILayout.Button("⟲ 步转左", GUILayout.Height(26f))) Submit(WheelchairCommand.StepLeft);
+            if (GUILayout.Button("⟳ 步转右", GUILayout.Height(26f))) Submit(WheelchairCommand.StepRight);
+            GUILayout.EndHorizontal();
+
+            GUILayout.Label(Hub != null && Hub.Steps != null
+                ? string.Format("当前步进量 {0:F1} m / {1:F0}°（可用 STEP: / SETSTEPANGLE: 修改）",
+                    Hub.Steps.StepDistance, Hub.Steps.StepTurnAngle)
+                : "未挂载 StepCommander", _labelStyle);
 
             GUILayout.Space(6f);
 

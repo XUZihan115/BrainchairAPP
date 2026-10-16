@@ -27,6 +27,20 @@ namespace WheelchairSim
 
         Heartbeat        = 0x0D, // 心跳（喂看门狗）
         RequestStatus    = 0x0E, // 请求立刻回传一次状态
+
+        // ---- 以下为步进模式（SSVEP 脑电）专用指令 ----
+        // 步进量指令（StepForward .. StepRight）用当前配置的默认步长/步转角；
+        // StepMove / StepTurn 则用报文里的 ARG 指定这一步走多远 / 转多少。
+
+        SetCommandMode   = 0x0F, // 参数：0 = 状态保持式，1 = 步进式（只影响发这条指令的那条链路）
+        StepMove         = 0x10, // 参数：本步前进距离 m，负值 = 后退
+        StepTurn         = 0x11, // 参数：本步旋转角度 °，正值 = 左转（逆时针）
+        SetStepDistance  = 0x12, // 参数：默认步长 m
+        SetStepAngle     = 0x13, // 参数：默认步转角 °
+        StepForward      = 0x14, // 前进一步（默认步长）
+        StepBackward     = 0x15, // 后退一步（默认步长）
+        StepLeft         = 0x16, // 原地左转一步（默认步转角）
+        StepRight        = 0x17, // 原地右转一步（默认步转角）
     }
 
     /// <summary>一条已经解析完成的指令。</summary>
@@ -61,6 +75,8 @@ namespace WheelchairSim
         public float Heading;          // 度，0 - 360
         public bool  EmergencyStop;
         public bool  Fault;
+        /// <summary>正在执行一步步进（走完自动清零）。上位机靠它的 1→0 跳变判断"这一步走完了，可以看下一眼"。</summary>
+        public bool  Stepping;
         public WheelchairCommand ActiveCommand;
     }
 }

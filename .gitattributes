@@ -1,0 +1,17 @@
+# 二进制资源：禁止任何换行/编码转换
+# （本机 core.autocrlf=true，不写这几行 git 有可能对贴图做 CRLF 转换）
+*.png   binary
+*.jpg   binary
+*.jpeg  binary
+*.tga   binary
+*.fbx   binary
+
+# 文本资源：统一存 LF，避免 .cs/.meta 反复显示为已修改
+*.cs      text eol=lf
+*.meta    text eol=lf
+*.asset   text eol=lf
+*.mat     text eol=lf
+*.json    text eol=lf
+*.md      text eol=lf
+*.py      text eol=lf
+*.txt     text eol=lf

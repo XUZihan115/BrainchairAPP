@@ -1,0 +1,28 @@
+# Unity 生成的缓存与构建产物（不该提交，也不该进交付包）
+/[Ll]ibrary/
+/[Tt]emp/
+/[Oo]bj/
+/[Bb]uild/
+/[Bb]uilds/
+/[Ll]ogs/
+/[Uu]ser[Ss]ettings/
+/[Mm]emoryCaptures/
+/[Rr]ecordings/
+
+# IDE / 工程文件
+*.csproj
+*.unityproj
+*.sln
+*.suo
+*.user
+*.userprefs
+.vs/
+.idea/
+
+# Python（Tools 下的测试客户端）
+__pycache__/
+*.pyc
+
+# 系统
+.DS_Store
+Thumbs.db

@@ -408,6 +408,65 @@ PC 上其实**不需要蓝牙插件**：蓝牙模块和电脑配对成功后，�
 > Android 12+ 还要 `BLUETOOTH_CONNECT` / `BLUETOOTH_SCAN`）。
 > 直接在编辑器里跑时，`AndroidSppLink` 会自动空转，不会报错。
 
+### 4.4 WiFi / UDP（手机开热点，演示最省事）
+
+和 4.3 的蓝牙相比，这条链路**不用配对、不用驱动、不用虚拟串口**，手机上开个热点就能演示。
+数据流向：**手机 App（客户端）→ 电脑上的 Unity（服务端，监听 UDP 9001）**。
+
+1. `WheelchairBootstrap` 上勾 **`enableWifiUdp`**（默认已勾），`wifiListenPort` 默认 `9001`。
+2. 手机开「个人热点」，**电脑连上这个热点**（电脑此时没有外网是正常的）。
+3. 在电脑上查热点网卡地址：`ipconfig`，找无线网卡里那个 `192.168.43.x`
+   （网关一般是手机的 `192.168.43.1`）。
+4. **放行入站 UDP**（Windows 防火墙默认会拦下来；状态回发的 9002 是电脑主动外发，不用放行）。
+   管理员 PowerShell：
+
+   ```powershell
+   New-NetFirewallRule -DisplayName "Wheelchair UDP 9001" -Direction Inbound -Protocol UDP -LocalPort 9001 -Action Allow
+   ```
+
+5. 手机 App 里把目标地址填第 3 步查到的 IP、端口填 `9001`。
+6. 确认生效：HUD 上出现 **`WiFi/UDP :9001`** 一行，收到第一包后变成「已连接」，
+   同时会显示**识别到的校验算法**（累加和 / 异或 / CRC8）和**长度字段语义**。
+
+**没有手机也能自测**（建议先这么验一遍）：
+
+```bash
+python Tools/wifi_udp_client.py --host 127.0.0.1 --interactive
+```
+
+`w` / `s` / `a` / `d` 前后左右、空格停、`x` 急停、`+` / `-` 调速、`q` 退出；
+加 `--print-only` 只打印不发送（用来看标准帧长什么样）。
+
+**帧格式**（任务书 2.2；与第 5 节的企业协议**并存**，两套解码器按帧头自动分流，互不干扰）：
+
+```
+0xAA 0x55 | 类型 | 长度 | 数据… | 校验 | 0x0D 0x0A
+```
+
+| 指令码 | 含义 | 数据区 |
+|---|---|---|
+| `0x01` | 前进 | 指令码，后面可跟速度 0~100 |
+| `0x02` | 后退 | 同上 |
+| `0x03` | 左转 | 同上 |
+| `0x04` | 右转 | 同上 |
+| `0x05` | 停止 | 指令码 |
+| `0x06` | 急停 | 指令码 |
+
+任务书没写清楚的两处，工程做成了**自动兼容**，所以对方怎么写都不会「收不到」：
+
+* **校验算法**：`累加和 / 异或 / CRC8` × 覆盖范围（`类型+长度+数据` 或 `仅数据`）共六种组合全部参与识别，
+  命中后锁定并在 HUD 上显示；对端中途换算法也能自动重新识别。
+* **长度字段语义**：`数据长度`、`数据长度+3`、`数据长度+7` 三种都接受，HUD 会显示实际采用哪一种。
+
+默认是 **Latch（连续控制）**：收到「前进」就一直走，直到收到「停止」——
+这和 SSVEP 连续渐进的手感一致。想改成「一条指令 = 一步」（与 3.6 的脑电步进链路一致），勾 `wifiStepMode`。
+`0x06` 急停会锁死；`0x05` 停止默认**不**解除急停（`wifiStopReleasesEmergency` 可改）。
+
+> **状态回发（可选）**：勾 `wifiSendStatus` 后，电脑每 0.2 s（5 Hz）往对端发一帧 `0x03` 状态帧，
+> 数据区 15 字节：`标志 | 动作码 | 线速度(mm/s) | 角速度(0.001 rad/s) | x(cm) | z(cm) | 速度百分比 | 时间戳(ms)`，
+> 全部小端。**这份字段布局是本工程按「要回传什么」自定的，任务书没有给定义** ——
+> 接真 App 时要和对方对齐；本机自测时 `wifi_udp_client.py` 会把它解析并打印出来。
+
 ---
 
 ## 5. 通信协议完整规范
@@ -566,6 +625,20 @@ C# 端和 Python 端已经互相验证过，**字节完全一致**。你写 Andr
 
 ## 7. 打包到 Android
 
+### 7.1 先装 Android 开发支持（**这台电脑目前还没装**）
+
+Unity 编辑器本体不等于能打 APK，必须额外装 Android 模块，否则 `Build Settings` 里
+`Android` 是灰的、`Build` 按钮也点不动：
+
+1. 打开 **Unity Hub** → 左侧 `Installs` → 找到 `6000.6.6f1` → 右侧齿轮 → `Add modules`。
+2. 勾选（三个是一套，缺一不可）：
+   - **Android Build Support**
+   - ├ **Android SDK & NDK Tools**
+   - └ **OpenJDK**
+3. 点 `Install`（约 3～6 GB，视网速要等一会儿），装完**重启 Unity**。
+
+### 7.2 出 APK 的设置
+
 1. `File → Build Settings` → 选 `Android` → `Switch Platform`。
 2. `Player Settings`：
    - `Other Settings → Api Compatibility Level` = `.NET Standard 2.1`（Android 蓝牙走 JNI，不需要 `System.IO.Ports`）
@@ -573,6 +646,78 @@ C# 端和 Python 端已经互相验证过，**字节完全一致**。你写 Andr
    - `Other Settings → Target Architectures` 勾 `ARM64`
    - `Active Input Handling` = `Both`（键盘功能才会编译进去）
 3. `Build` 出 APK，装到手机。
+
+### 7.3 蓝牙权限：已经自动配好了，你不需要动手
+
+经典蓝牙（HC-05 / HC-06 这类 SPP 模块）要 4 条权限，老安卓和新安卓**不是同一套**：
+
+| Android 版本 | 需要的权限 | 类型 |
+|---|---|---|
+| 11 及以下（API ≤ 30） | `BLUETOOTH`、`BLUETOOTH_ADMIN` | 安装时自动获得 |
+| 12 及以上（API ≥ 31） | `BLUETOOTH_CONNECT`、`BLUETOOTH_SCAN` | **运行时弹框申请** |
+
+本工程用 Unity 官方的 **Android Library 插件（`.androidlib`）** 方式声明，文件在这里：
+
+```
+Assets/Plugins/Android/BluetoothPermissions.androidlib/src/main/AndroidManifest.xml
+```
+
+它**不需要你记住、也不需要你去 Player Settings 里勾任何东西**：打包时 Unity 会把
+这个文件夹当成一个 Gradle 模块，把里面的权限**增量合并**进最终的 App manifest。
+之所以不直接手写 `Assets/Plugins/Android/AndroidManifest.xml`，是因为手动覆盖整份
+manifest 时要自己写全 Unity 的 Activity / 主题 / 启动入口点，漏一条打出来的 APK 就是黑屏
+——而 `.androidlib` 只做加法，碰不到 Unity 自己那部分。
+
+怎么确认真的写进去了？两种办法，任选一种：
+
+* Build 完成后，用 **Android Studio 的 APK Analyzer** 打开 APK → `AndroidManifest.xml`，
+  能看到上面 4 条 `uses-permission` 就对了；
+* 或者到 Gradle 工程里看合并结果：
+  `Library/Bee/Android/Prj/.../unityLibrary/build/.../merged_manifests/AndroidManifest.xml`。
+
+### 7.4 第一次连蓝牙会弹权限框（这是设计如此，不是 bug）
+
+Android 12 及以上，权限必须由用户在系统弹框里点「允许」，而这个弹框是**异步**的
+——用户看到弹框、点下去，中间隔着好几帧。所以本工程做成两步：
+
+1. 第一次点「连接」：`AndroidSppLink` 只负责**弹出权限框**，并在状态栏提示
+   「请在系统弹框里允许"附近的设备"权限，然后再次点「连接」」；
+2. 你在弹框上点「允许」后，**再点一次「连接」**，这次才真正建立连接。
+
+如果第一次点连接时**直接往下连**，会立刻抛 `SecurityException`，状态栏显示
+「连接失败：…」，用户会以为设备坏了——现在这个坑已经被堵上了。
+
+如果误点了「拒绝」：去手机的 `设置 → 应用 → 脑控轮椅 → 权限 → 附近的设备` 手动打开，
+或者干脆卸载重装（重装后权限回到未申请状态）。
+
+### 7.5 已配对设备列表是空的？
+
+在 Android 12+ 上，没有 `BLUETOOTH_CONNECT` 权限时 `getBondedDevices()` 会直接抛异常，
+表现就是"列表空空的、什么提示都没有"。本工程已经改成：这种情况会在 Console 打印
+`[Wheelchair] 还没有蓝牙权限（BLUETOOTH_CONNECT）…` 并顺手把弹框弹出来，
+不再是静默失败。
+
+另外提醒：**必须先在手机系统的蓝牙设置里和模块配对**，App 只列已配对设备，
+不做扫描配对（这是刻意的——省掉定位权限，也避免和系统蓝牙抢连接）。
+
+### 7.6 备用方案：手写 Custom Main Manifest（一般不需要）
+
+只有当你后面要加**自定义 Activity、改主题、加启动 Intent** 这类需求时，才需要动它。
+做法：`Player Settings → Publishing Settings → Custom Main Manifest` 打勾，
+Unity 会生成 `Assets/Plugins/Android/AndroidManifest.xml`（**这是 Unity 生成的完整文件，
+不要手写整份**），然后在 `<application>` 之前把下面这段加进去：
+
+```xml
+    <uses-permission android:name="android.permission.BLUETOOTH" android:maxSdkVersion="30" />
+    <uses-permission android:name="android.permission.BLUETOOTH_ADMIN" android:maxSdkVersion="30" />
+    <uses-permission android:name="android.permission.BLUETOOTH_CONNECT" />
+    <uses-permission android:name="android.permission.BLUETOOTH_SCAN"
+                     android:usesPermissionFlags="neverForLocation" />
+    <uses-feature android:name="android.hardware.bluetooth" android:required="false" />
+```
+
+> 注意：如果 `Custom Main Manifest` 和 `.androidlib` 同时存在，权限声明会**重复**。
+> 功能上无害（合并时去重），但没必要，二选一即可——默认保持 `.androidlib`。
 
 ---
 
@@ -603,6 +748,18 @@ C# 端和 Python 端已经互相验证过，**字节完全一致**。你写 Andr
 | 不想要「连成 2 米不停」，想回到每步都停车 | — | 把 `StepCommander` 的 **`ChainSameDirection` 去勾**（运行时生效）；或把 `MaxChainExtraSteps` 设为 0 |
 | 为什么连发三条「前进」只在 2 米处停一下，第三条要等一会儿才走 | 合并上限 `MaxChainExtraSteps = 1`：一段连续动作最多再并入 1 条 | 这是防误判叠加的安全阀。要连更远就调大它，但要同时接受"一次误判多走的距离也按同样倍数变大" |
 
+| 打 APK 时 `Android` 是灰的 / `Build` 点不动 | 没装 **Android Build Support** 模块（本机当前就是这种情况） | Unity Hub → `Installs` → `6000.6.6f1` 齿轮 → `Add modules` → 勾 Android Build Support（含 SDK & NDK Tools、OpenJDK）→ 装完重启 Unity。见 7.1 |
+| 手机上「已配对设备」列表是空的 | Android 12+ 缺 `BLUETOOTH_CONNECT` 运行时权限，`getBondedDevices()` 抛异常被吞掉 | 先点一次「连接」把权限框弹出来并同意；仍为空就到 `设置 → 应用 → 权限 → 附近的设备` 手动打开。见 7.4 / 7.5 |
+| 第一次点「连接」提示「请在系统弹框里允许…权限」 | 这是**设计如此**：Android 12+ 的权限申请是异步的 | 在弹框上点「允许」，然后**再点一次**「连接」。见 7.4 |
+| 第一次点「连接」直接显示「连接失败：…」 | 旧版本会在用户还没点「允许」时就往下连 | 已修正为"先要权限、要到再连"；若你还看到这个，说明装的是旧 APK，重新 Build |
+| 想确认权限到底有没有打进 APK | — | 用 Android Studio 的 APK Analyzer 打开 APK 看 `AndroidManifest.xml`：应看到 4 条蓝牙 `uses-permission` + 1 条 `uses-feature`。见 7.3 |
+| 手机上发的指令 Unity 收不到 | 电脑连的是手机热点，但发去了错误的 IP / 端口 | 在电脑上 `ipconfig` 看热点网卡的 IPv4，指令发到 `该IP:9001`；端口要和 `wifiListenPort` 一致。见 4.4 |
+| HUD 里没有 WiFi 那一行 | `enableWifiUdp` 没勾，或场景里的值被改过 | 在 `WheelchairBootstrap` 的 Inspector 里勾上 `enableWifiUdp`，重新进 Play |
+| 第一包能收到，过一会儿收不到了 | 手机热点重启后电脑 IP 被重新分配 | 手机端改成新 IP；或在热点设置里给电脑保留固定 IP |
+| 状态帧收到了但字段值看着不对 | 15 字节布局是本工程自定的，未与 App 端对齐 | 改 `WifiUdpProtocol.EncodeStatusData`，或改用第 5 节的企业状态帧 |
+| HUD 显示校验失败一直在涨 | 帧头 / 帧尾 / 校验方式与这里都对不上 | 先用 `python Tools/wifi_udp_client.py --host 127.0.0.1 --print-only` 看标准帧长什么样，再和 App 抓包逐字节对比 |
+| 电脑上抓不到 UDP 包 | Windows 防火墙拦了入站 | 按 4.4 第 4 步放行入站 UDP 9001 |
+
 ---
 
 ## 9. 材料清单（采购建议）
@@ -632,10 +789,16 @@ C# 端和 Python 端已经互相验证过，**字节完全一致**。你写 Andr
 | 本轮 4 项需求改动 | 复用 Unity 生成的 `.rsp` 重新编译运行时 + 编辑器两个程序集 | **0 错误 0 警告** |
 | 本轮步进模式改动 | 同上（新增 `StepCommander.cs`，共 442 行源文件的运行时代码集） | **0 错误 0 警告**，`A.dll` 44,544 → 60,416 字节 |
 | 旧版输入兼容 | 关掉新版 Input System 条件重新编译 | **0 错误** |
-| Android 分支 | 用 `UNITY_ANDROID` 条件编译 `AndroidSppLink` | **0 错误** |
+| Android 分支编译 | 把**整份运行时代码集**按 Android 目标重新编译（`UNITY_EDITOR` 换成 `UNITY_ANDROID`，补 `UnityEngine.AndroidJNIModule.dll` 引用） | **0 错误 0 警告**，`An.dll` 64,000 字节 |
+| Android 分支隔离性 | 符号比对：`An.dll`（Android）含 `HasBluetoothPermissions`/`getBondedDevices`/`EnsurePermissions` 及权限提示文案；`A.dll`（Windows）**全部不含** | 通过（证明 `#if` 边界正确，Windows 版没被污染） |
+| Android 权限 manifest | XML 解析 + 权限清单核对（`.androidlib` 增量 manifest） | 4 条 `uses-permission` + 1 条 `uses-feature` 全部解析正确 |
 | 协议单元测试 | C# 回环测试（CRC / 编解码 / 分片粘包 / 抗干扰 / ASCII / 状态帧） | **60+ 断言全部通过** |
 | 跨语言一致性 | Python 客户端复现 C# 全部协议向量 | **字节完全一致** |
 | 端到端链路 | Python 客户端真实 TCP 连接仿真端，二进制模式心跳 | **全部为合法帧，无脏数据** |
+| WiFi/UDP 协议层单测 | C# 离线单测：帧编解码、三种校验自动识别与锁定、粘包与半包、数据区含 `0D 0A` 与 `AA 55`、长度语义三种、算法中途切换、状态帧布局 | **211 项断言全部通过** |
+| 跨语言一致性（UDP 帧） | 同一段字节流分别喂给 C# 解析器与 `Tools/wifi_udp_client.py`（按 7 / 11 字节交替分块），逐帧逐字段比对 | **66 帧完全一致，0 差异** |
+| WiFi / UDP 编译验证 | 运行时程序集、编辑器程序集、以及 Android 目标视角分别重新编译 | **0 错误 0 警告**（`A.dll` = `An.dll` = 79,360 B） |
+| 帧解析健壮性 | 半包恰好切在「假帧尾」（数据区里的 `0D 0A`）与真帧尾之间 | 修复后不再丢帧，等待补全即完整解析（已加回归断言） |
 
 ---
 
@@ -790,11 +953,13 @@ Assets/Models/Wheelchair/
 Assets/Scripts/WheelchairSim/
 ├─ WheelchairCommand.cs        指令枚举 + 指令/状态数据结构
 ├─ WheelchairProtocol.cs       二进制帧 + ASCII 行 + CRC8 + 流解析与自动识别
+├─ WifiUdpProtocol.cs         任务书 2.2 的 WiFi/UDP 帧：帧尾定界 + 校验自动识别 + 状态帧编解码（纯 C#）
 ├─ CommandSources.cs           指令源接口 + 本地键盘/按钮源
 ├─ TcpCommandSource.cs         TCP 指令源（内置服务器）
 ├─ SerialCommandSource.cs      串口指令源（PC 上蓝牙的虚拟 COM 口）
 ├─ BluetoothCommandSource.cs   蓝牙源抽象 + 模拟链路
 ├─ AndroidSppLink.cs           Android 经典蓝牙 SPP（真机）
+├─ UdpCommandSource.cs        UDP 指令源（监听 9001，可选回发 9002）
 ├─ WheelchairController.cs     差速运动模型
 ├─ StepCommander.cs            步进执行器（脑电链路：一条指令 = 一段有界动作）
 ├─ SafetyGuard.cs              心跳看门狗 / 障碍急停 / 急停锁存 / 限速限幅
@@ -820,6 +985,10 @@ Assets/Models/Wheelchair/
 ├─ Wheelchair_LOW_POLY.fbx     真实轮椅模型（合并网格，轮子不独立）
 └─ Textures/                    5 张 PBR 贴图（BaseColor/Normal/Metallic/Roughness/AO）
 
+Assets/Plugins/Android/
+└─ BluetoothPermissions.androidlib/  Android 蓝牙权限的增量 manifest（打包时自动合并）
+
 Tools/
-└─ host_test_client.py         PC 端测试客户端（发指令 + 收状态）
+├─ host_test_client.py         PC 端测试客户端（发指令 + 收状态）
+└─ wifi_udp_client.py          WiFi/UDP 测试客户端（本机自测 / 当手机端替身）
 ```

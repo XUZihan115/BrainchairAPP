@@ -194,6 +194,19 @@ python Tools/host_test_client.py --host 127.0.0.1 --port 8888 --demo
 3. 想手动一条条发，去掉 `--demo`；想测二进制帧加 `--binary`；
    想验证"心跳超时自动停车"加 `--no-heartbeat`。
 
+### 还想用 WiFi / UDP（手机热点，演示最省事）
+
+勾 `enableWifiUdp`（默认已勾）后，电脑会**监听 UDP 9001**：手机开热点、电脑连上，
+指令发到「电脑在热点里的 IP : 9001」即可（在电脑上 `ipconfig` 查 `192.168.43.x`）。
+
+* **先放行 Windows 防火墙的入站 UDP 9001**（管理员 PowerShell）：
+  `New-NetFirewallRule -DisplayName "Wheelchair UDP 9001" -Direction Inbound -Protocol UDP -LocalPort 9001 -Action Allow`
+* 本机自测：`python Tools/wifi_udp_client.py --host 127.0.0.1 --interactive`
+* 帧格式 `AA 55 | 类型 | 长度 | 数据 | 校验 | 0D 0A`，指令码 `01` 前进 / `02` 后退 / `03` 左转 / `04` 右转 / `05` 停止 / `06` 急停。
+* 校验算法（累加和 / 异或 / CRC8 × 两种覆盖范围）与长度字段语义（三种）**全部自动识别**，HUD 上会显示结果。
+* 勾 `wifiSendStatus` 会以 5 Hz 回发状态帧（字段布局为本地自定，接真 App 前需与对方对齐）。
+* 完整说明见 `docs/unity-wheelchair-sim-guide.md` 第 4.4 节。
+
 ---
 
 ## 五、安全机制（验收重点）

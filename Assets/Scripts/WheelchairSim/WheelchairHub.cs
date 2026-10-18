@@ -7,7 +7,7 @@ namespace WheelchairSim
     /// 系统中枢：把所有指令来源汇总成一条指令流，经过安全守卫后交给运动控制器，
     /// 并定时把轮椅状态回传给所有可发送的来源。
     ///
-    ///   指令源(蓝牙/串口/TCP/本地) --> WheelchairHub --> SafetyGuard --> WheelchairController
+    ///   指令源(蓝牙/串口/TCP/WiFi-网络) --> WheelchairHub --> SafetyGuard --> WheelchairController
     ///                                        |               |
     ///                                        |               +--> StepCommander（步进式，脑电链路）
     ///                                        +--> 状态帧回传
@@ -83,6 +83,12 @@ namespace WheelchairSim
         private CommandMode DefaultModeFor(ICommandSource source)
         {
             if (source == null) return CommandMode.Latch;                 // HUD 按钮：手动点按就该连续
+
+            // 链路自己声明了语义就用它的（WiFi/UDP 是"按住就走"的连续控制，
+            // 但任务书里它不需要心跳看门狗，光看 RequiresHeartbeat 会误判成本地键盘的步进式）。
+            ICommandModeHint hint = source as ICommandModeHint;
+            if (hint != null) return hint.PreferredCommandMode;
+
             if (source.RequiresHeartbeat) return RemoteCommandMode;       // 远程链路
             return StepModeForLocalInput ? CommandMode.Step : CommandMode.Latch; // 本地键盘
         }
@@ -315,10 +321,6 @@ namespace WheelchairSim
         {
             if (Controller == null) return;
 
-            _telemetryTimer += deltaTime;
-            if (!force && _telemetryTimer < TelemetryInterval) return;
-            _telemetryTimer = 0f;
-
             WheelchairState state;
             state.LinearSpeed = Controller.CurrentLinearSpeed;
             state.AngularSpeed = Controller.CurrentAngularSpeed;
@@ -331,6 +333,20 @@ namespace WheelchairSim
             // 步进忙标志：上位机靠 busy 的 1→0 跳变判断"这一步走完了，可以看下一眼"
             state.Stepping = Steps != null && (Steps.IsExecuting || Steps.IsSettling);
             state.ActiveCommand = Controller.ActiveCommand;
+
+            // 需要"仿真实时状态"的链路（WiFi/UDP 的状态帧带位置，而 WheelchairState 里没有位置）
+            // 每帧喂一次最新快照，由它们自己决定什么时候发出去（任务书是 5 Hz）。
+            for (int i = 0; i < _sources.Count; i++)
+            {
+                ISimStateSink sink = _sources[i] as ISimStateSink;
+                if (sink == null) continue;
+                try { sink.OnSimState(state, Controller.transform.position, Controller.transform.forward); }
+                catch (System.Exception) { }
+            }
+
+            _telemetryTimer += deltaTime;
+            if (!force && _telemetryTimer < TelemetryInterval) return;
+            _telemetryTimer = 0f;
 
             byte[] frame = WheelchairProtocol.EncodeStateFrame(state, _telemetrySeq++);
 

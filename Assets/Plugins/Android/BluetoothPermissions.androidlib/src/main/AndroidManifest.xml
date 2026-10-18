@@ -1,0 +1,52 @@
+<?xml version="1.0" encoding="utf-8"?>
+<!--
+  轮椅仿真 App 的 Android 蓝牙权限声明。
+
+  为什么单独放成 .androidlib 而不是覆盖 Assets/Plugins/Android/AndroidManifest.xml：
+  这份 manifest 会被 Gradle **增量合并**进最终 App 的 manifest，只往里加权限，
+  完全不碰 Unity 自己生成的 Activity / 主题 / 启动入口点。手写整份 manifest 一旦
+  漏掉或写错 Unity 的 Activity 配置，打出来的 APK 会直接黑屏。
+
+  用法：什么都不用做，Unity 构建 Android 时会自动把这个文件夹当成一个 Gradle 模块
+  （build.gradle 由 Unity 自动生成，不需要手写）。
+  验证方法：Build 后在 Gradle 工程里打开 unityLibrary/build/merged_manifests/... 或
+  用 Android Studio 的 APK Analyzer 打开 APK，能看到下面这几条 uses-permission 即成功。
+
+  权限为什么要拆成两套（Android 12 是分水岭）：
+    * API <= 30：经典蓝牙用安装时权限 BLUETOOTH / BLUETOOTH_ADMIN，
+                 用 maxSdkVersion="30" 让它们在 Android 12+ 上不再出现（避免被应用商店挑刺）。
+    * API >= 31：改成运行时权限 BLUETOOTH_CONNECT / BLUETOOTH_SCAN，
+                 必须由 App 在运行时弹框申请（代码在 AndroidSppLink.EnsurePermissions）。
+  所以少了任何一条，在对应系统上都会退化成「连不上或列表为空」。
+-->
+<manifest xmlns:android="http://schemas.android.com/apk/res/android"
+          xmlns:tools="http://schemas.android.com/tools">
+
+    <!-- Android 11 及以下：经典蓝牙（SPP / RFCOMM）的安装时权限 -->
+    <uses-permission android:name="android.permission.BLUETOOTH"
+                     android:maxSdkVersion="30" />
+    <uses-permission android:name="android.permission.BLUETOOTH_ADMIN"
+                     android:maxSdkVersion="30" />
+
+    <!--
+      Android 12 及以上：运行时权限。AndroidSppLink.Connect() 里会主动弹框申请。
+      BLUETOOTH_CONNECT：连接已配对设备、查询已配对列表、开关状态（isEnabled）
+      BLUETOOTH_SCAN   ：蓝牙搜索相关调用（本工程只用到了 cancelDiscovery）
+      neverForLocation ：声明不用蓝牙扫描结果推断地理位置，这样 Android 12+ 上
+                         不必再申请定位权限（ACCESS_FINE_LOCATION）。
+    -->
+    <uses-permission android:name="android.permission.BLUETOOTH_CONNECT" />
+    <uses-permission android:name="android.permission.BLUETOOTH_SCAN"
+                     android:usesPermissionFlags="neverForLocation"
+                     tools:targetApi="s" />
+
+    <!--
+      声明本 App 用到蓝牙硬件，但 required="false"：
+      这样没有蓝牙的设备（比如模拟器）也能装上，方便先跑通键盘/TCP 那条链路；
+      真机上如果没有蓝牙适配器，AndroidSppLink 会提示「本机没有蓝牙适配器」。
+      如果你希望应用商店只让带蓝牙的设备看到这个 App，把 false 改成 true 即可。
+    -->
+    <uses-feature android:name="android.hardware.bluetooth"
+                  android:required="false" />
+
+</manifest>

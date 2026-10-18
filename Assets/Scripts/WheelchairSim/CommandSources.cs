@@ -34,6 +34,28 @@ namespace WheelchairSim
         void SendToHost(byte[] data);
     }
 
+    /// <summary>
+    /// 可选扩展：链路自己对"指令语义"的声明。
+    /// 不实现它的链路（蓝牙/串口/TCP）走 WheelchairHub 的老规则（远程链路看 RemoteCommandMode、
+    /// 本地键盘看 StepModeForLocalInput）；WiFi/UDP 链路实现它，因为任务书里的
+    /// "前进 + 速度 0~100"天生是连续控制（收到前进就一直走，直到收到停止）。
+    /// </summary>
+    public interface ICommandModeHint
+    {
+        CommandMode PreferredCommandMode { get; }
+    }
+
+    /// <summary>
+    /// 可选扩展：需要"仿真实时状态"才能回状态帧的链路。
+    /// WheelchairState 里没有位置，而任务书要求状态帧带位置 (x,z)，
+    /// 所以 WheelchairHub 定时把状态连同位置喂给实现了这个接口的链路。
+    /// </summary>
+    public interface ISimStateSink
+    {
+        /// <summary>由 WheelchairHub 每帧调用，参数是当前状态快照（不要在这里做耗时操作）。</summary>
+        void OnSimState(WheelchairState state, Vector3 position, Vector3 forward);
+    }
+
     public abstract class CommandSourceBase : ICommandSource
     {
         protected readonly CommandStreamDecoder Decoder;

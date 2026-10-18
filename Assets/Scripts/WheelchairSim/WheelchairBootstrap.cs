@@ -57,6 +57,27 @@ namespace WheelchairSim
         public string bluetoothDeviceName = "HC-06";
         public string bluetoothDeviceAddress = "00:11:22:33:44:55";
 
+        [Tooltip("WiFi/UDP 链路（任务书 2.2）：手机开热点、本工程当客户端，收 0x01~0x06 指令帧")]
+        public bool enableWifiUdp = true;
+        [Tooltip("指令监听端口（任务书：9001）")]
+        public int wifiListenPort = 9001;
+        [Tooltip("状态帧回发端口（任务书：9002）。填 0 = 回到手机发指令用的源端口")]
+        public int wifiStatusPort = 9002;
+        [Tooltip("是否回发 0x03 状态帧（任务书要求 5 Hz：速度、位置、运行状态、时间戳）")]
+        public bool wifiSendStatus = true;
+        [Tooltip("WiFi 链路是否需要心跳看门狗。任务书没规定心跳指令，默认关（关了之后靠 3 秒无包判定离线）")]
+        public bool wifiRequiresHeartbeat = false;
+        [Tooltip("WiFi 链路按步进式执行。默认否 = 状态保持式：收到前进就一直走，直到收到停止")]
+        public bool wifiStepMode = false;
+        [Tooltip("左转/右转语义：行进中转向（与键盘 A/D 一致）还是原地旋转")]
+        public WifiTurnMode wifiTurnMode = WifiTurnMode.SteerWhileMoving;
+        [Tooltip("App 下发速度 100% 对应的线速度 m/s（还会被安全限速 speedLimit 二次夹住）")]
+        public float wifiSpeedFullScale = 1.0f;
+        [Tooltip("App 下发转向 100% 对应的角速度 rad/s（还会被安全限角速度二次夹住）")]
+        public float wifiTurnFullScale = 1.5f;
+        [Tooltip("收到停止时是否顺带解除急停锁。默认否：急停是安全动作，必须显式解除（按 Z 或点 HUD 按钮）")]
+        public bool wifiStopReleasesEmergency = false;
+
         [Tooltip("Auto = 自动识别二进制帧或 ASCII 文本行")]
         public ProtocolMode protocolMode = ProtocolMode.Auto;
 
@@ -161,6 +182,20 @@ namespace WheelchairSim
             {
                 AndroidSppLink link = new AndroidSppLink(bluetoothDeviceName, bluetoothDeviceAddress);
                 _hub.AddSource(new BluetoothCommandSource(link, protocolMode, true));
+            }
+
+            if (enableWifiUdp)
+            {
+                UdpCommandSource source = new UdpCommandSource(
+                    wifiListenPort, wifiStatusPort, wifiSpeedFullScale, wifiTurnFullScale);
+                source.SendStatusFrames = wifiSendStatus;
+                source.RequiresHeartbeatFlag = wifiRequiresHeartbeat;
+                source.StopAlsoReleasesEmergency = wifiStopReleasesEmergency;
+                source.TurnMode = wifiTurnMode;
+                // 任务书里 App 是"按住就走"的连续控制，所以默认状态保持式；
+                // 若换成离散的脑电指令链路，把 wifiStepMode 打开即可。
+                source.PreferredCommandMode = wifiStepMode ? CommandMode.Step : CommandMode.Latch;
+                _hub.AddSource(source);
             }
         }
 

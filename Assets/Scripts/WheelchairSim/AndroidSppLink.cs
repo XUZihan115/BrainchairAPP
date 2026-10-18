@@ -14,12 +14,14 @@ namespace WheelchairSim
     ///
     /// 使用前必须准备的材料：
     ///   1) Android 真机 + 已配对的蓝牙模块（先系统里配对，再填 MAC 地址）；
-    ///   2) Player Settings -> Other Settings -> AndroidManifest 需要包含：
-    ///        &lt;uses-permission android:name="android.permission.BLUETOOTH" /&gt;
-    ///        &lt;uses-permission android:name="android.permission.BLUETOOTH_ADMIN" /&gt;
-    ///        &lt;uses-permission android:name="android.permission.BLUETOOTH_CONNECT" /&gt;   (Android 12+)
-    ///        &lt;uses-permission android:name="android.permission.BLUETOOTH_SCAN" /&gt;      (Android 12+)
-    ///   3) 若目标是 BLE（低功耗蓝牙）设备，本类不适用，需要改用 BLE 流程或第三方插件。
+    ///   2) manifest 里必须声明蓝牙权限。本工程已经用"Android Library 插件"的方式准备好了，
+    ///      不需要你去改 Player Settings：
+    ///        Assets/Plugins/Android/BluetoothPermissions.androidlib/src/main/AndroidManifest.xml
+    ///      它声明了 BLUETOOTH / BLUETOOTH_ADMIN（Android 11 及以下，maxSdkVersion 30）
+    ///      和 BLUETOOTH_CONNECT / BLUETOOTH_SCAN（Android 12 及以上，运行时申请）。
+    ///   3) Android 12 及以上，权限必须由用户在系统弹框里点"允许"才行，而弹框是异步的：
+    ///      第一次点「连接」只负责弹框并提示，用户同意后再点一次即可（本类已按这个流程处理）。
+    ///   4) 若目标是 BLE（低功耗蓝牙）设备，本类不适用，需要改用 BLE 流程或第三方插件。
     ///
     /// 注意：这条路必须打包到 Android 真机上才能验证，编辑器里会自动退化成空实现。
     /// 如果只想在 PC 上先跑通"蓝牙"，请直接用 SerialCommandSource + 配对后的虚拟串口。
@@ -28,6 +30,8 @@ namespace WheelchairSim
     {
 #if UNITY_ANDROID && !UNITY_EDITOR
         private const string SppUuid = "00001101-0000-1000-8000-00805F9B34FB";
+        private const string ConnectPermission = "android.permission.BLUETOOTH_CONNECT";
+        private const string ScanPermission = "android.permission.BLUETOOTH_SCAN";
 
         private readonly string _address;
         private readonly ConcurrentQueue<byte> _rx = new ConcurrentQueue<byte>();
@@ -57,6 +61,16 @@ namespace WheelchairSim
         {
             try
             {
+                // Android 12 及以上没有 BLUETOOTH_CONNECT 时，getBondedDevices() 会直接抛异常，
+                // 表现为"列表是空的"却没有任何提示。所以这里先说清楚原因，并顺手把弹框弹出来。
+                if (!HasPermission(ConnectPermission))
+                {
+                    EnsurePermissions();
+                    Debug.LogWarning("[Wheelchair] 还没有蓝牙权限（BLUETOOTH_CONNECT）：已在系统里弹出授权框，" +
+                                     "同意后再点一次「刷新已配对设备」。");
+                    return new string[0];
+                }
+
                 using (AndroidJavaClass adapterClass = new AndroidJavaClass("android.bluetooth.BluetoothAdapter"))
                 {
                     AndroidJavaObject adapter = adapterClass.CallStatic<AndroidJavaObject>("getDefaultAdapter");
@@ -89,7 +103,15 @@ namespace WheelchairSim
 
             try
             {
-                EnsurePermissions();
+                // 权限弹框是异步的：用户点「允许」需要时间，而这里一旦继续往下走就会抛
+                // SecurityException（表现为"连接失败"，但用户其实刚看到弹框，很容易误解）。
+                // 所以没拿到权限时只负责弹框 + 给一句明确提示，用户同意后再点一次连接。
+                if (!HasBluetoothPermissions())
+                {
+                    EnsurePermissions();
+                    _detail = "请在系统弹框里允许“附近的设备”权限，然后再次点「连接」";
+                    return;
+                }
 
                 using (AndroidJavaClass adapterClass = new AndroidJavaClass("android.bluetooth.BluetoothAdapter"))
                 {
@@ -220,8 +242,26 @@ namespace WheelchairSim
 
         private static void EnsurePermissions()
         {
-            RequestPermission("android.permission.BLUETOOTH_CONNECT");
-            RequestPermission("android.permission.BLUETOOTH_SCAN");
+            RequestPermission(ConnectPermission);
+            RequestPermission(ScanPermission);
+        }
+
+        private static bool HasBluetoothPermissions()
+        {
+            return HasPermission(ConnectPermission) && HasPermission(ScanPermission);
+        }
+
+        private static bool HasPermission(string permission)
+        {
+            try
+            {
+                return UnityEngine.Android.Permission.HasUserAuthorizedPermission(permission);
+            }
+            catch (Exception)
+            {
+                // Android 11 及以下没有这套运行时权限，查询会失败：此时按"已授权"处理。
+                return true;
+            }
         }
 
         private static void RequestPermission(string permission)

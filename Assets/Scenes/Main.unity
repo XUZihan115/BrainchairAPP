@@ -183,6 +183,16 @@ MonoBehaviour:
   enableAndroidBluetooth: 0
   bluetoothDeviceName: HC-06
   bluetoothDeviceAddress: '00:11:22:33:44:55'
+  enableWifiUdp: 1
+  wifiListenPort: 9001
+  wifiStatusPort: 9002
+  wifiSendStatus: 1
+  wifiRequiresHeartbeat: 0
+  wifiStepMode: 0
+  wifiTurnMode: 0
+  wifiSpeedFullScale: 1
+  wifiTurnFullScale: 1.5
+  wifiStopReleasesEmergency: 0
   protocolMode: 0
   speedLimit: 1
   heartbeatTimeout: 2

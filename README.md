@@ -85,11 +85,15 @@ Assets/Scripts/WheelchairSim/
 Assets/Editor/                     ← 编辑器专用，打包后不参与编译
 ├─ WheelchairTextureImporter.cs  PBR 贴图导入设置自动化
 ├─ WheelchairMaterialSetup.cs    一键自动挂 PBR 贴图（菜单 Tools > Wheelchair）
-├─ WheelchairSceneBuilder.cs     一键重新生成仿真场景（菜单 Tools > Wheelchair）
+├─ WheelchairSceneBuilder.cs     一键重新生成仿真场景 / 应用天空盒（菜单 Tools > Wheelchair）
 └─ WheelchairFocusMode.cs        专注模式：按 F 收起多余窗口
 
 Assets/Scenes/
 └─ Main.unity                    唯一的场景：一个空物体 + WheelchairBootstrap 组件
+
+Assets/Skybox/                    ← 天空盒（源自 Unity Essentials 素材包）
+├─ SkyBrightCloudy.mat           Skybox/Cubemap 材质，Main.unity 引用的就是它
+└─ Skybox01_openGL_settings.png  立方体贴图源图（8192×6144 十字布局，导入为 Cubemap）
 
 Assets/Models/Wheelchair/
 ├─ Wheelchair_LOW_POLY.fbx   真实轮椅模型（合并网格，轮子不独立）
@@ -248,6 +252,11 @@ python Tools/host_test_client.py --host 127.0.0.1 --port 8888 --demo
 * **找不到步进参数**：都在运行时自动挂上的 `StepCommander` 组件上
   （步长 1.0 m、步转角 30°、步速 0.30 m/s、排队超时 5.0 s、不应期 1.0 s……），
   Play 之后在 Hierarchy 里选中轮椅那个物体即可看到。
+* **天空盒怎么换掉 / 换回来**：场景用的是 `Assets/Skybox/SkyBrightCloudy.mat`
+  （源自 Unity Essentials 素材包）。想换回 Unity 默认，去
+  `Window > Rendering > Lighting > Environment` 把 `Skybox Material` 拖成 `Default-Skybox`；
+  想一键恢复本工程的，点菜单 **Tools > Wheelchair > 应用天空盒（SkyBrightCloudy）**。
+  详见 `docs/unity-wheelchair-sim-guide.md` 第 2.4 节。
 
 ---
 

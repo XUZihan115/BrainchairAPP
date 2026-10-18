@@ -82,6 +82,30 @@
 | 跟随相机、灯光 | 相机自动跟车 |
 | HUD 面板 | 右下角，显示速度、航向、电量、链路状态 |
 | 各路指令来源 | 键盘、模拟蓝牙、（可选）TCP、串口、Android 蓝牙 |
+| 天空盒 | **SkyBrightCloudy**（晴天多云），已写进 `Main.unity`，见 2.4 |
+
+### 2.4 天空盒（SkyBrightCloudy）
+
+场景的天空盒用的是 `Assets/Skybox/SkyBrightCloudy.mat`——从 `_Unity Essentials`
+素材包（Unity 官方 Essentials 教程工程）里搬过来的晴天多云全景，两眼看去才有户外感。
+
+| 文件 | 说明 |
+|---|---|
+| `Assets/Skybox/SkyBrightCloudy.mat` | 材质，shader 是内置的 `Skybox/Cubemap`，`_Exposure = 1`、`_Rotation = 132.3` |
+| `Assets/Skybox/Skybox01_openGL_settings.png` | 立方体贴图源图（8192 × 6144 的 **4×3 十字布局**，导入为 Cubemap，最大 2048） |
+
+搬进来时**原样复制了 `.meta`**，所以 GUID 没变、材质引用还能对上；
+源工程里各场景也是用同一个 guid 挂在 `m_SkyboxMaterial` 上的，做法一致。
+
+- 想换回去（Unity 默认天空盒）：`Window > Rendering > Lighting > Environment`，
+  把 `Skybox Material` 拖回 `Default-Skybox` 即可。
+- 场景被重建过、天空盒丢了：点菜单 **Tools > Wheelchair > 应用天空盒（SkyBrightCloudy）**，
+  当前场景立刻换回来（`重新生成仿真场景` 也会自动带上它）。
+- 想调整观感：选中那个 `.mat`，改 `Exposure`（亮度）或 `Rotation`（太阳方位角，单位度）。
+  它同时决定**环境光**（`Ambient Mode = Skybox`），所以调亮调暗会连带影响整车的光照。
+
+> 这张贴图占 **约 20 MB**（打包进工程后会被压缩到 2048 的立方体贴图，运行时不会这么大）。
+> 介意包体就把它降到 1024，肉眼几乎看不出差别。
 
 ---
 
@@ -782,11 +806,15 @@ Assets/Scripts/WheelchairSim/
 Assets/Editor/                     （都是编辑器专用，打包后不参与编译）
 ├─ WheelchairTextureImporter.cs  PBR 贴图导入设置自动化
 ├─ WheelchairMaterialSetup.cs    一键把 PBR 贴图挂到材质上
-├─ WheelchairSceneBuilder.cs     一键重新生成仿真场景
+├─ WheelchairSceneBuilder.cs     一键重新生成仿真场景 / 应用天空盒
 └─ WheelchairFocusMode.cs        专注模式：按 F 收起多余窗口
 
 Assets/Scenes/
 └─ Main.unity                    唯一的场景：一个空物体 + WheelchairBootstrap 组件
+
+Assets/Skybox/                    （天空盒素材，源自 Unity Essentials）
+├─ SkyBrightCloudy.mat           Skybox/Cubemap 材质，场景引用的是它
+└─ Skybox01_openGL_settings.png  立方体贴图源图（8192×6144 十字布局）
 
 Assets/Models/Wheelchair/
 ├─ Wheelchair_LOW_POLY.fbx     真实轮椅模型（合并网格，轮子不独立）

@@ -23,6 +23,14 @@
 __pycache__/
 *.pyc
 
+# 手工试验遗留的材料：保留在本地继续用，但不属于交付内容（与 Assets/Skybox/ 里的同名材料易混）
+/Assets/Scenes/SkyBrightCloudy.mat
+/Assets/Scenes/SkyBrightCloudy.mat.meta
+/Assets/Scenes/SkySunrise.mat
+/Assets/Scenes/SkySunrise.mat.meta
+/Assets/Scenes/balls' material.mat
+/Assets/Scenes/balls' material.mat.meta
+
 # 系统
 .DS_Store
 Thumbs.db

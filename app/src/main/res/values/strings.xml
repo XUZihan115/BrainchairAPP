@@ -1,0 +1,51 @@
+<resources>
+    <string name="app_name">EEG Sender</string>
+
+    <string name="title">脑电指令发送端</string>
+    <string name="subtitle">点一下方向键 = 输出一个 4 秒的该方向想象脑电试次，发满自动停止（不必一直按着）。试次进行中点到别的方向会立刻打断、重开一个 4 秒试次；点到同一方向视作没按。数据以 1000 Hz 采样率、按真实采集设备的报文格式经 WiFi UDP 推送给接收端。</string>
+
+    <string name="label_target">接收端地址</string>
+    <string name="label_ip">IP</string>
+    <string name="label_port">端口</string>
+    <string name="hint_ip">留空 = 自动发现</string>
+    <string name="hint_port">9000</string>
+    <string name="hint_target_mode">IP 留空时自动在局域网内发现接收端（广播端口 UDP 9001，数据端口以接收端应答为准）；填入 IP 则按该地址定向直发，走下面的端口。</string>
+
+    <string name="cmd_forward">↑ 前进</string>
+    <string name="cmd_backward">↓ 后退</string>
+    <string name="cmd_left">← 左转</string>
+    <string name="cmd_right">→ 右转</string>
+    <string name="cmd_stop">■ 停</string>
+
+    <string name="label_status">状态</string>
+    <string name="status_idle">就绪：等待按键</string>
+    <string name="status_loading">正在载入真实脑电数据…</string>
+    <string name="status_ready">就绪：点一下方向键输出一个试次</string>
+    <string name="status_not_ready">数据集尚未就绪</string>
+    <string name="status_bad_port">端口号无效（应为 1 - 65535）</string>
+    <string name="status_bad_ip">IP 地址格式不对</string>
+    <string name="status_ip_off_lan">IP 与本机不在同一网段</string>
+    <string name="status_streaming">推流中「%1$s」</string>
+    <string name="status_discovering">正在自动发现接收端…</string>
+    <string name="status_discover_failed">未发现接收端：请填写 IP，或确认接收端已启动</string>
+    <string name="status_load_failed">数据集载入失败</string>
+    <string name="status_failed">推流失败：%1$s</string>
+
+    <string name="label_stream">码流</string>
+    <string name="stream_idle">空闲</string>
+    <string name="hint_trial">提示：点一下 = 输出一个 4 秒试次，发满即停。试次中点别的方向会立刻打断、重开一个试次（新一路流的 STREAM_INFO 就是「上一次已结束」的标签）；点同一方向视作没按。结束时不再补发 STREAM_STOP，接收端按「静默超时」判定本次想象结束。</string>
+
+    <string name="label_degrade">人为降质（给接收端标定置信度用）</string>
+    <string name="hint_degrade">100% = 原样发送。往下拖会按「4 秒窗 CCA」实测曲线压低接收端算出的相关值：噪声是整体干扰（验证它会不会乱下指令），陷波只削 SSVEP 谱线（验证它会不会正确判成「无指令」）。报文格式不变，接收端感知不到。</string>
+    <string name="label_noise">信号干扰（噪声）</string>
+    <string name="label_notch">SSVEP 削弱（陷波）</string>
+    <string name="degrade_value_full">100%｜ρ≈0.74</string>
+    <string name="degrade_value">%1$d%%｜ρ≈%2$.2f</string>
+    <string name="degrade_off">未降质：发出的就是原始录制数据</string>
+    <string name="degrade_preparing">正在预处理降质参数（每个方向约 0.5 秒，只算一次）…</string>
+    <string name="degrade_ready">降质中（%1$d/%2$d 个方向已预热）</string>
+    <string name="degrade_failed">降质参数计算失败：%1$s</string>
+
+    <string name="label_log">发送日志</string>
+    <string name="btn_clear_log">清空日志</string>
+</resources>

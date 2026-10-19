@@ -1,0 +1,30 @@
+*.iml
+.gradle
+/local.properties
+/.idea/caches
+/.idea/libraries
+/.idea/modules.xml
+/.idea/workspace.xml
+/.idea/navEditor.xml
+/.idea/assetWizardSettings.xml
+.DS_Store
+/build
+/captures
+.externalNativeBuild
+.cxx
+local.properties
+
+# ---- 本项目追加 ----
+# 各模块构建产物：根级 /build 规则覆盖不到 app/build，必须单独写
+build/
+.kotlin/
+# 本地临时文件与真机实测日志（含内网 IP、抓包记录，不入库）
+.tmp/
+# 打包产物与签名材料
+*.apk
+*.aab
+*.keystore
+*.jks
+# Python 编译缓存
+__pycache__/
+*.pyc

@@ -24,6 +24,8 @@
   与状态保持式（按一下就一直走，键盘按住 `Shift`、HUD「手动控制」按钮、或发 `MODE:LATCH` 触发）
 - 参数：**设定速度、设定限速、设定角速度、设定步长/步转角**
 - 回传：**电量、线速度、角速度、航向、急停/故障标志、步进执行中标志**，定时广播
+- **坡面贴合**：上下坡时车身随坡面倾斜（上坡抬头 / 下坡低头 / 斜着切过坡面会侧倾），前后左右 5 点探地，不会陷进坡里也不会悬在半空
+- **演示友好**：按 `F` 一键隐藏屏幕上所有调试面板（编辑器里顺带收起辅助窗口），再按一次恢复
 
 ---
 
@@ -126,6 +128,7 @@
 | `空格` | 停车 | 停车 |
 | `X` | 急停（锁存） | 急停（锁存） |
 | `Z` | 解除急停 | 解除急停 |
+| `F` | 隐藏屏幕上所有面板（再按恢复） | 同左 |
 
 > 键盘默认是**步进式**：按一下 `W` 只走 1 m 就自动停，按一下 `Q` 只转 30° 就自动停。
 > 这是**故意设计的**——让你在编辑器里就能用键盘直接模拟脑电指令
@@ -173,8 +176,26 @@ Play 之后**车头正前方就是一条坡道**（`Ramp_Up` → `Ramp_Platform`
 | 半宽 | 1.0m（左右各 1m） |
 | 平台高度 | 0.5m |
 
-轮椅会**自动贴着坡面起伏**（`WheelchairController.followGround`，默认开启），
-上下坡时车不会陷进坡里、也不会悬在半空。
+轮椅会**自动贴着坡面走**：车头前、车尾、左右两侧共 5 个点向下探地面，算出脚下的高度和坡面法线
+（`WheelchairController.followGround`，默认开启），所以上下坡时车不会陷进坡里、也不会悬在半空。
+
+**坡面贴合**（`WheelchairController.alignToSlope`，默认开启）会让**车身姿态也跟着坡面倾斜**：
+上坡机头抬起、下坡低头、斜着切过坡面会侧倾。看起来就是真的贴在坡上开，而不是水平地"飘"在坡上方。
+
+倾斜的算法有一个关键点（不这么写，上坡会自己拐弯）：车头方向**不能**直接把航向投影到坡面，
+因为"投影到坡面再放回水平面"会让航向漂移（20° 的坡上斜着走 45° 时能差出 10°）。这里用的是另一条式子：
+
+```
+坡面内车头方向 d = f - up * ((f · n) / n.y)      // f = 航向的水平方向，n = 坡面法线
+```
+
+它的水平投影**严格等于航向**，所以上坡走直线，不会莫名其妙画弧。
+
+另外两个细节：
+
+1. **坡度超过 30° 就只跟高度、不跟倾斜**（`maxSlopeAngle`，故意和 `SafetyGuard.MaxClimbableSlopeAngle` 取同一个值），
+   免得在台阶边缘、墙角被算出来的怪法线把车掀翻。
+2. 姿态变化有角速度上限（`slopeAlignSpeed`，默认 180°/s），是平滑"躺"上去的，不会啪地弹一下。
 
 两个关键设计：
 
@@ -183,19 +204,35 @@ Play 之后**车头正前方就是一条坡道**（`Ramp_Up` → `Ramp_Platform`
 2. **爬不上去的陡面仍然挡停**。如果前面是一堵墙（90°）或超过 30° 的陡坡，
    仍然会被判定为障碍物锁停——这正是安全机制要的效果。
 
-### 3.5 专注模式（一键收起多余窗口）
+### 3.5 专注模式（一键隐藏屏幕上和编辑器里的多余窗口）
 
-演示／录屏的时候，Unity 编辑器里一堆面板很挡视线。按 **`F`** 即可：
+演示／录屏的时候，屏幕上那两个 HUD 面板 + 编辑器里的一堆窗口都很挡视线。按 **`F`** 即可：
 
-- 收起 `Hierarchy`、`Project`、`Inspector`、`Console`、`Profiler`、`Animation` 等面板
-- 只留下 **Scene 和 Game** 两个窗口
-- 再按一次 `F` 恢复原样
+- 隐藏**屏幕上所有 HUD 面板**（左上角状态面板 + 左下角控制台），只留下 3D 场景
+- 编辑器里顺手收起 `Hierarchy`、`Project`、`Inspector`、`Console`、`Profiler`、`Animation`
+- 左上角会留一行很淡的小字「屏幕面板已隐藏 · 按 F 恢复」，再按一次 `F` 全部恢复
 
-`F` 只对**编辑器**生效（打包成 exe / APK 后没有这个功能，也不影响运行）。
-也可以在菜单里点：**Tools > Wheelchair > 专注模式（隐藏多余窗口）**。
+| 场景 | 怎么切 |
+|---|---|
+| **Play 中**（Game 窗口有焦点） | 按 **`F`** |
+| 编辑器里没进 Play | 按 **`Ctrl+Shift+F`**，或点菜单 **Tools > Wheelchair > 专注模式（隐藏多余窗口）** |
+
+两种入口走的是同一套实现（`WheelchairSim.DisplayToggle`）。Play 中按 `F` 会同时处理屏幕面板和编辑器窗口；
+没进 Play 时只处理编辑器窗口（这时屏幕面板本来就不显示）。
+打包成 exe / APK 之后，只剩"隐藏 HUD 面板"这一半功能，编辑器窗口那半会被整体裁掉（不影响运行）。
+
+想改按键、或不想看到那行提示字：Play 之后在 Hierarchy 里选中挂 `DisplayToggle` 的物体（就是 `Bootstrap`），
+调 `toggleKey`（默认 `F`）、`showRestoreHint`（默认开）、`syncEditorPanels`（默认开）。
+
+自己写的 OnGUI 面板想跟着一起隐藏，在 `OnGUI` 开头加一句就行：
+
+```csharp
+if (!DisplayToggle.Visible) return;
+```
 
 > 小细节：如果你正要在 Scene 窗口里按 `F`（Unity 自带「聚焦选中物体」），
 > 界面会自动让路给 Unity 原本的功能；在输入框里打字时按 `F` 也不会被抢走。
+> Play 中按 `F` 时，编辑器侧的全局快捷键会主动让位，不会出现"按一次切两下、等于没切"。
 
 ### 3.6 步进模式：把一条脑电指令变成「走 1 米就停」
 
@@ -364,6 +401,33 @@ HUD 的「脑电步进」栏会显示衔接是否开启、上限、以及当前�
    中间不刹车；HUD 会显示「已无缝并入 1 条」。
    再连发三条 `SF`：只合并成 2 米，第三条要等这一段走完再走（这就是 `MaxChainExtraSteps = 1` 的效果）。
    `Tools/host_test_client.py` 的自动演示（`--demo`）已经把这两段排进时间线了。
+
+### 3.7 物理组件与两种驱动模式
+
+轮椅身上现在装着标准的物理三件套，`WheelchairBootstrap` 在 Play 时自动配好：
+
+| 组件 | 配置 | 为什么这么配 |
+|---|---|---|
+| `Rigidbody` | 质量 60 kg、插值 `Interpolate`、碰撞检测 `ContinuousSpeculative` | 60 kg 是电动轮椅加人的合理量级；插值让运动看起来顺；连续检测防止高速穿模 |
+| `BoxCollider` | 车身没有任何实体碰撞体时，按模型包围盒自动补一个 | 用基本几何体拼的模型自带 Collider；**换成真实 FBX 模型后通常一个碰撞体都没有**，这时会自动补上 |
+| 约束 / 重心 | 放开 X、Z 旋转；物理模式下重心压低到 0.30 m | 车身要能随坡面俯仰/侧倾；物理模式靠低重心保持直立 |
+
+自动补碰撞体只在"身上一个实体碰撞体都没有"时触发（`autoAddCollider`，默认开），不会重复添加；
+补出来的时候 Console 会打印尺寸，方便核对。想确认加了没有，Play 之后在 Inspector 里看轮椅物体上有没有 `BoxCollider`。
+
+驱动方式有两种（`WheelchairController.motionMode`，默认第一种）：
+
+| 模式 | 行为 | 什么时候用 |
+|---|---|---|
+| **`Kinematic`（默认）** | 位置和姿态由脚本直接摆；贴地、坡面贴合都在这里实现，走得精确、可复现 | 仿真演示、脑电链路验收 |
+| `Physics` | 交给刚体积分，撞到障碍物会被真的挡住 | 想演示"撞墙被拦下"的效果 |
+
+两个模式的区别值得记一笔：运动学模式下刚体不会自己动，全靠脚本 `MovePosition` / `MoveRotation`，
+这是"能精确复现"和"物理会自己乱跑"之间的取舍。物理模式下脚本只接管**转向**那一个角速度分量，
+俯仰/侧倾留给物理去算，所以车压到坡面上时也会被"压"成贴合坡面的姿态。
+
+> 想让车身不随坡面倾斜（比如你要自己写姿态逻辑），把 `WheelchairController.alignToSlope` 去勾即可；
+> 贴地探测本身由 `followGround` 控制，两者互不影响。
 
 ---
 
@@ -736,7 +800,12 @@ Unity 会生成 `Assets/Plugins/Android/AndroidManifest.xml`（**这是 Unity �
 | 轮椅上下坡时陷进坡里或浮在半空 | 贴地探测没生效 | `WheelchairController.followGround` 默认开；坡太高超过 `maxStepUp`（0.25m）也会被挡住 |
 | 轮椅看起来像玩具、或原地转圈时绕到车身外面 | 模型自身比例／原点不在车身上 | 已由 `autoFitModel` + `modelTargetHeight` 自动修正，Console 会打印适配日志 |
 | 按 `Q` / `E` 转向和直觉相反 | 历史版本角速度正负号与左右手坐标系不一致 | 已修正（`Q` 逆时针、`E` 顺时针）。若仍相反，先确认没误按 `A` / `D` |
-| 按 `F` 没反应 | `F` 只在**编辑器**里有效 | 打包后没有这个功能；编辑器里也可以走菜单 `Tools > Wheelchair > 专注模式（隐藏多余窗口）` |
+| 按 `F` 没反应 | 键盘焦点不在 Game 窗口里；或按键被改过 | 先点一下 Game 窗口再按；**没进 Play 时 `F` 不生效**，用 `Ctrl+Shift+F` 或菜单。见 3.5 |
+| 按 `F` 面板没了，但屏幕上还有一个面板没消失 | 那个面板不是本工程的，或自己写的 `OnGUI` 没加判断 | 自绘面板在 `OnGUI` 开头加 `if (!DisplayToggle.Visible) return;`。见 3.5 |
+| 按 `F` 后编辑器窗口回不来 | 个别窗口不允许被脚本自动重建 | 再按一次 `F`；仍不行就从 `Window` 菜单手动打开 |
+| 上坡时车身抬着头 / 斜着切坡会侧倾 | 这是**坡面贴合**的正常表现（故意做的） | 不想歪就取消 `WheelchairController.alignToSlope`。见 3.4 |
+| 坡上姿态贴得生硬、一顿一顿 | 姿态角速度上限偏高或偏低 | 调 `WheelchairController.slopeAlignSpeed`（默认 180°/s），填 0 = 瞬间贴合。见 3.4 |
+| 换了真实模型后车浮在地面上 / 陷进坡里 | 模型没有碰撞体，或原点不在底面 | `autoAddCollider` 会自动补一个 `BoxCollider`（Console 有日志）；仍不对就调模型原点或 `modelTargetHeight`。见 3.7 |
 | 发 `F` 只走 1 米就停 | 远程链路**默认就是步进式** | 这是脑电链路的正常行为。想连续走就发 `MODE:LATCH`，或改用 HUD「手动控制」按钮 |
 | 按 `Q` / `E` / `A` / `D` 只转 30° 就停，不是一直转 | **键盘默认也是步进式**（和脑电一致） | **按住 `Shift` 再按**这一下就走状态保持式；或把 `WheelchairHub.StepModeForLocalInput` 去勾 |
 | 按 `W` 只走 1 米 | 同上，一步一停 | 连续前进按住 `Shift` 再按 `W`，或点 HUD「手动控制」里的前进按钮 |
@@ -966,13 +1035,14 @@ Assets/Scripts/WheelchairSim/
 ├─ WheelchairHub.cs            中枢：按链路分流 → 步进/安全校验 → 驱动 → 回传
 ├─ WheelchairModelFactory.cs   用基本几何体拼一辆轮椅
 ├─ HudOverlay.cs               屏幕调试面板（OnGUI，零依赖）
+├─ DisplayToggle.cs            演示开关：按 F 隐藏屏幕面板（编辑器里顺带收起辅助窗口）
 └─ WheelchairBootstrap.cs      一键搭建场景
 
 Assets/Editor/                     （都是编辑器专用，打包后不参与编译）
 ├─ WheelchairTextureImporter.cs  PBR 贴图导入设置自动化
 ├─ WheelchairMaterialSetup.cs    一键把 PBR 贴图挂到材质上
 ├─ WheelchairSceneBuilder.cs     一键重新生成仿真场景 / 应用天空盒
-└─ WheelchairFocusMode.cs        专注模式：按 F 收起多余窗口
+└─ WheelchairFocusMode.cs        专注模式编辑器入口（转发给运行时的 DisplayToggle）
 
 Assets/Scenes/
 └─ Main.unity                    唯一的场景：一个空物体 + WheelchairBootstrap 组件

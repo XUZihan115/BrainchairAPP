@@ -39,11 +39,13 @@ Q / E          原地左转 30° / 右转 30°         一直原地旋转
 | `Q` / `E` | 原地左旋 30° / 右旋 30° | 一直原地左旋 / 右旋 |
 | `空格` | 停车 | 同左 |
 | `X` / `Z` | 急停（锁存）/ 解除急停 | 同左 |
-| `F` | 编辑器专属：收起多余窗口（专注模式） | 同左 |
+| `F` | 隐藏屏幕上所有面板（含 HUD），再按恢复 | 同左 |
 
 按一下 `W` 车往前走 1 米就自动停（**步进式**，和脑电指令一致）。
 想要连续驾驶就**按住 `Shift` 再按 `W`**，松开 `Shift` 又回到一步一停。
 正前方就是一条约 9.5° 的坡道，`Shift` + `W` 直行即可测试爬坡。
+走上去会看到**车身跟着坡面倾斜**（上坡抬头、下坡低头，`WheelchairController.alignToSlope`），
+轮椅身上也带着 `Rigidbody` + `BoxCollider`（换成没有碰撞体的真实模型时会自动补一个）。
 
 > 键盘默认一步一停，是为了让你在编辑器里就能直接用键盘模拟脑电指令
 > （脑电用户一次只能给一条离散指令）。这个默认值在 `WheelchairHub` 的
@@ -69,24 +71,27 @@ Q / E          原地左转 30° / 右转 30°         一直原地旋转
 Assets/Scripts/WheelchairSim/
 ├─ WheelchairCommand.cs      指令枚举 + 指令/状态数据结构
 ├─ WheelchairProtocol.cs     通信协议：二进制帧 + ASCII 文本行 + CRC8 + 流解析
+├─ WifiUdpProtocol.cs        任务书 2.2 的 WiFi/UDP 帧 + 校验自动识别 + 状态帧编解码
 ├─ CommandSources.cs         指令源接口 + 本地键盘/按钮源
 ├─ TcpCommandSource.cs       TCP 指令源（内置服务器，默认 8888）
 ├─ SerialCommandSource.cs    串口指令源（PC 上配对蓝牙后的虚拟 COM 口）
 ├─ BluetoothCommandSource.cs 蓝牙源抽象 + 模拟蓝牙链路
 ├─ AndroidSppLink.cs         Android 经典蓝牙 SPP 实现（真机）
-├─ WheelchairController.cs   差速运动模型
+├─ UdpCommandSource.cs       UDP 指令源（监听 9001，可选回发 9002）
+├─ WheelchairController.cs   差速运动模型（差速 + 贴地 + 坡面贴合 + 物理组件配置）
 ├─ StepCommander.cs          步进执行器（脑电链路：一条指令 = 一段有界动作）
 ├─ SafetyGuard.cs            心跳看门狗 / 障碍急停 / 急停锁存
 ├─ WheelchairHub.cs          中枢：按链路分流 → 步进/安全校验 → 驱动 → 回传状态
 ├─ WheelchairModelFactory.cs 用基本几何体拼一辆轮椅
 ├─ HudOverlay.cs             屏幕调试面板（OnGUI，零依赖）
+├─ DisplayToggle.cs          演示开关：按 F 隐藏屏幕面板（编辑器里顺带收起辅助窗口）
 └─ WheelchairBootstrap.cs    一键搭建场景
 
 Assets/Editor/                     ← 编辑器专用，打包后不参与编译
 ├─ WheelchairTextureImporter.cs  PBR 贴图导入设置自动化
 ├─ WheelchairMaterialSetup.cs    一键自动挂 PBR 贴图（菜单 Tools > Wheelchair）
 ├─ WheelchairSceneBuilder.cs     一键重新生成仿真场景 / 应用天空盒（菜单 Tools > Wheelchair）
-└─ WheelchairFocusMode.cs        专注模式：按 F 收起多余窗口
+└─ WheelchairFocusMode.cs        专注模式编辑器入口（转发给运行时的 DisplayToggle）
 
 Assets/Scenes/
 └─ Main.unity                    唯一的场景：一个空物体 + WheelchairBootstrap 组件
@@ -100,7 +105,8 @@ Assets/Models/Wheelchair/
 └─ Textures/                  5 张 PBR 贴图（BaseColor/Normal/Metallic/Roughness/AO）
 
 Tools/
-└─ host_test_client.py       PC 端测试客户端（发指令 + 收状态）
+├─ host_test_client.py       PC 端测试客户端（发指令 + 收状态）
+└─ wifi_udp_client.py        WiFi/UDP 测试客户端（本机自测 / 当手机端替身）
 ```
 
 ---
@@ -257,7 +263,14 @@ python Tools/host_test_client.py --host 127.0.0.1 --port 8888 --demo
   第一条已经停下才到达 → 只能当新的一步走。HUD「无缝衔接」那行会显示已并入几条。
 * **连发三条只合并成 2 米**：`MaxChainExtraSteps = 1` 是防误判叠加的安全阀（按条数封顶）。
   要连更远就调大它，同时接受"一次误判多走的距离也按同样倍数变大"。
-* **按 `F` 没反应**：`F` 只在编辑器里有效，打包后没有该功能。
+* **按 `F` 没反应**：先点一下 Game 窗口让它拿到键盘焦点。**没进 Play 时 `F` 不生效**，
+  那时用 `Ctrl+Shift+F` 或菜单 Tools > Wheelchair > 专注模式。
+* **按 `F` 面板没了，屏幕角落还留着一个小面板**：那个面板不是本工程的，或者自己写的 `OnGUI`
+  没加判断。自绘面板在 `OnGUI` 开头加 `if (!DisplayToggle.Visible) return;`。
+* **上坡时车头抬着 / 斜着切坡会侧倾**：这是**坡面贴合**的正常表现（故意的）。
+  不喜欢就把 `WheelchairController.alignToSlope` 去勾。
+* **换了真实模型后车浮在地面上**：模型多半没有碰撞体，`autoAddCollider` 会自动补一个
+  `BoxCollider`（Console 有日志）。
 * **发 `F` 只走 1 米就停 / 连发两条只动一下**：这是脑电链路的**步进式**默认语义
   （外加 1.0 s 不应期会丢掉重复指令）。想连续控制先发 `MODE:LATCH`。
 * **步进按了完全不动**：多半是前方障碍物余量不足，HUD 的「脑电步进」区会显示

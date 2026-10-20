@@ -297,6 +297,12 @@ namespace WheelchairSim
 
             Transform body = Controller.transform;
             Vector3 direction = Controller.CurrentLinearSpeed < -0.01f ? -body.forward : body.forward;
+            // 只看水平方向：车身贴着坡面上坡时车头是抬头朝天的，
+            // 用倾斜后的 forward 去探障碍会一路扫向天空、把矮墙漏掉。
+            direction.y = 0f;
+            if (direction.sqrMagnitude < 0.0001f) direction = body.forward;
+            direction.Normalize();
+
             Vector3 origin = body.position + Vector3.up * 0.45f;
 
             int count = Physics.RaycastNonAlloc(

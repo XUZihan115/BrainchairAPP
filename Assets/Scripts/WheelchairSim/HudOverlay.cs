@@ -41,6 +41,9 @@ namespace WheelchairSim
 
         private void OnGUI()
         {
+            // 演示开关（按 F）把屏幕面板整体隐藏，只留 3D 场景
+            if (!DisplayToggle.Visible) return;
+
             if (Hub == null || Hub.Controller == null) return;
             EnsureStyles();
 
@@ -114,6 +117,7 @@ namespace WheelchairSim
 
             GUILayout.Space(6f);
             GUILayout.Label("键盘：W/S 走一步 1 m · Q/E/A/D 转一步 30° · 按住 Shift 再按 = 连续 · 空格 停止 · X 急停 · Z 解除", _labelStyle);
+            GUILayout.Label("演示：按 F 隐藏 / 显示屏幕上所有面板（再按一次恢复）", _labelStyle);
 
             GUILayout.EndArea();
         }

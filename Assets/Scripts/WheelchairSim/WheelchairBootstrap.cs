@@ -109,13 +109,9 @@ namespace WheelchairSim
             _controller.rightDriveWheel = rightWheel;
             _controller.wheelRadius = wheelRadius;
 
-            Rigidbody body = wheelchair.GetComponent<Rigidbody>();
-            if (body == null) body = wheelchair.AddComponent<Rigidbody>();
-            body.mass = 60f;
-            body.interpolation = RigidbodyInterpolation.Interpolate;
-            body.constraints = RigidbodyConstraints.FreezeRotationX | RigidbodyConstraints.FreezeRotationZ;
-            body.isKinematic = _controller.motionMode == MotionMode.Kinematic;
-            body.useGravity = _controller.motionMode == MotionMode.Physics;
+            // 刚体的质量 / 约束 / 是否运动学，以及"没有碰撞体时自动补一个"，
+            // 统一交给控制器配置，免得场景装配和组件默认值两处写法不一致。
+            _controller.ApplyMotionMode();
 
             _hub = gameObject.GetComponent<WheelchairHub>();
             if (_hub == null) _hub = gameObject.AddComponent<WheelchairHub>();
@@ -135,6 +131,9 @@ namespace WheelchairSim
             HudOverlay hud = gameObject.GetComponent<HudOverlay>();
             if (hud == null) hud = gameObject.AddComponent<HudOverlay>();
             hud.Hub = _hub;
+
+            // 演示开关：按 F 隐藏 / 显示屏幕上所有面板（编辑器里顺带收起辅助窗口）
+            if (gameObject.GetComponent<DisplayToggle>() == null) gameObject.AddComponent<DisplayToggle>();
 
             SetupSources(hud);
 

@@ -100,6 +100,18 @@ namespace WheelchairSim
                 GUILayout.Label(string.Format("前方障碍：{0} m（{1:F2} m 内停车）", distance, safety.ObstacleStopDistance), _labelStyle);
             }
 
+            if (Hub.CommandLeaseSeconds > 0f)
+            {
+                GUILayout.Label(Hub.LeaseArmed
+                    ? string.Format("指令租期：剩余 {0,4:F1} s / {1:F1} s（到期自动平稳停车，不进急停）",
+                        Hub.LeaseRemaining, Hub.CommandLeaseSeconds)
+                    : string.Format("指令租期：待命（运动指令 {0:F1} s 不来就自动停车）", Hub.CommandLeaseSeconds), _labelStyle);
+            }
+            else
+            {
+                GUILayout.Label("指令租期：已关闭（停发后只能靠上位机补发停止）", _labelStyle);
+            }
+
             GUILayout.Space(6f);
             GUILayout.Label("—— 指令来源 ——", _labelStyle);
 
@@ -148,8 +160,8 @@ namespace WheelchairSim
             GUILayout.Label(string.Format("预输入队列：{0} / {1} 条    排队超时 {2:F1} s",
                 steps.QueuedCount, steps.QueueDepth, steps.CommandTtl), _labelStyle);
             GUILayout.Label(steps.InRefractory
-                ? string.Format("不应期：剩余 {0:F1} s（这期间的重复指令一律丢弃）", steps.RefractoryRemaining)
-                : string.Format("不应期：空闲（两条指令最小间隔 {0:F1} s）", steps.RefractoryPeriod), _labelStyle);
+                ? string.Format("不应期：剩余 {0:F1} s（只挡同向重复；异向指令可立即抢占）", steps.RefractoryRemaining)
+                : string.Format("不应期：空闲（同向两条指令最小间隔 {0:F1} s，异向不受限）", steps.RefractoryPeriod), _labelStyle);
             GUILayout.Label(string.Format("累计：完成 {0} 步 / 丢弃 {1} 条", steps.CompletedSteps, steps.RejectedSteps), _labelStyle);
 
             if (!string.IsNullOrEmpty(steps.LastRejectReason))

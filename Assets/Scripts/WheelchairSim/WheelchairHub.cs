@@ -43,6 +43,15 @@ namespace WheelchairSim
                  "想连续走就按住 Shift 再按键，按住期间那一下按状态保持式执行；本开关在运行时改也立刻生效")]
         public bool StepModeForLocalInput = true;
 
+        [Header("指令租期（按住式上位机的安全阀）")]
+        [Tooltip("声明了 ICommandLeaseHint 的链路（WiFi/UDP），收到状态保持式的运动指令后开始计时；" +
+                 "租期内没有再收到运动指令就自动平滑停车——不进急停锁存，可以直接再发下一条指令。" +
+                 "填 0 = 关闭。这是为\"上位机每 0.2 s 重发一次、最多 4 s\"这种按住式发送兜底的：\n" +
+                 "上位机停发的那一刻接收端并不知道，没有租期的话状态保持式会一直开下去")]
+        public float CommandLeaseSeconds = 4.0f;
+        [Tooltip("租期是否也管本地键盘 / HUD 按钮。默认否：本机前面坐着人，按空格就能停，不需要自动兜底")]
+        public bool LeaseAppliesToLocalInput = false;
+
         private readonly List<ICommandSource> _sources = new List<ICommandSource>();
         private readonly Queue<CommandMessage> _inbox = new Queue<CommandMessage>();
         private readonly Queue<CommandMessage> _sourceInbox = new Queue<CommandMessage>();
@@ -56,9 +65,22 @@ namespace WheelchairSim
         private byte  _telemetrySeq;
         private string _lastCommandText = "-";
 
+        // 指令租期：只在"声明了 ICommandLeaseHint 的链路 + 状态保持式 + 运动指令"时武装
+        private bool  _leaseArmed;
+        private float _leaseTimer;
+        private string _leaseSourceName = "-";
+
         public IReadOnlyList<ICommandSource> Sources { get { return _sources; } }
         public string LastCommandText { get { return _lastCommandText; } }
         public bool AnyRemoteConnected { get; private set; }
+
+        /// <summary>租期是否正在计时（HUD 显示用）。</summary>
+        public bool LeaseArmed { get { return _leaseArmed; } }
+        /// <summary>租期剩余秒数（HUD 显示用）。</summary>
+        public float LeaseRemaining
+        {
+            get { return _leaseArmed ? Mathf.Max(0f, CommandLeaseSeconds - _leaseTimer) : 0f; }
+        }
 
         /// <summary>查询某条链路当前的指令语义（HUD 显示用）。</summary>
         public CommandMode GetSourceMode(ICommandSource source)
@@ -192,6 +214,8 @@ namespace WheelchairSim
 
                 if (Steps != null) Steps.Tick(deltaTime);
 
+                TickCommandLease(deltaTime);
+
                 Controller.Tick(deltaTime);
             }
 
@@ -218,6 +242,7 @@ namespace WheelchairSim
                     if (Steps != null) Steps.AbortStep(true);
                     Safety.Latch("收到上位机急停指令");
                     Controller.EmergencyStop();
+                    _leaseArmed = false;
                     return;
 
                 case WheelchairCommand.ReleaseEmergency:
@@ -236,11 +261,13 @@ namespace WheelchairSim
                     Safety.NotifyHeartbeat();
                     if (Steps != null) Steps.AbortStep(true);
                     Controller.ApplyCommand(WheelchairCommand.Stop);
+                    _leaseArmed = false;      // 已经明确停车，不需要租期再兜一次
                     return;
 
                 case WheelchairCommand.SetCommandMode:
                     // 只影响发这条指令的那条链路：上位机连上来自报家门，
                     // 脑电上位机发 MODE:STEP，电脑调试工具发 MODE:LATCH。
+                    _leaseArmed = false;      // 语义要变了，旧的租期计时不再适用
                     if (source != null)
                     {
                         _modeOverrides[source] = message.Arg >= 0.5f ? CommandMode.Step : CommandMode.Latch;
@@ -281,10 +308,87 @@ namespace WheelchairSim
             CommandMode mode = GetSourceMode(source, message.ModeOverride);
             if (Steps != null && Steps.TryHandle(new CommandMessage(message.Command, arg, message.Seq), mode))
             {
+                _leaseArmed = false;      // 步进式自带"到量即停"，不需要租期兜底
                 return;
             }
 
             Controller.ApplyCommand(message.Command, arg);
+
+            // 状态保持式的运动指令 → 给租期续命。按住式上位机（每 0.2 s 重发一次、最多 4 s）
+            // 就是靠这个：它中途只要还在发，租期就一直被刷新；一旦停发，租期到点自动停车。
+            // 参数类指令（调速度 / 限速 / 请求状态）不动租期。
+            if (mode == CommandMode.Latch && IsMotionCommand(message.Command)) ArmLease(source);
+        }
+
+        // ------------------------------------------------------------ 指令租期
+
+        /// <summary>这条指令是不是"让轮椅动起来"的指令（只有它们才给租期续命）。</summary>
+        private static bool IsMotionCommand(WheelchairCommand command)
+        {
+            switch (command)
+            {
+                case WheelchairCommand.Forward:
+                case WheelchairCommand.Backward:
+                case WheelchairCommand.SteerLeft:
+                case WheelchairCommand.SteerRight:
+                case WheelchairCommand.RotateLeft:
+                case WheelchairCommand.RotateRight:
+                    return true;
+                default:
+                    return false;
+            }
+        }
+
+        /// <summary>收到一条状态保持式的运动指令：开始 / 刷新租期计时。</summary>
+        private void ArmLease(ICommandSource source)
+        {
+            if (CommandLeaseSeconds <= 0f) return;
+
+            ICommandLeaseHint hint = source as ICommandLeaseHint;
+            if (hint != null)
+            {
+                if (!hint.WantsCommandLease) return;
+            }
+            else if (source != null || !LeaseAppliesToLocalInput)
+            {
+                return;      // 没声明租期的链路（蓝牙 / 串口 / 本地键盘）保持旧行为
+            }
+
+            _leaseTimer = 0f;
+            _leaseSourceName = source != null ? source.DisplayName : "本地输入";
+
+            if (!_leaseArmed)
+            {
+                _leaseArmed = true;
+                Debug.Log(string.Format(
+                    "[Hub] {0} 进入指令租期：{1:F1} s 内没有新的运动指令就自动平稳停车（不进急停锁存）",
+                    _leaseSourceName, CommandLeaseSeconds));
+            }
+        }
+
+        /// <summary>
+        /// 每帧检查租期。到期后走的是"平稳停车"：与收到 Stop 指令同一条路径（减速斜坡），
+        /// 既不进急停锁存（不需要发 ReleaseEmergency 才能恢复），也不喂心跳看门狗。
+        /// </summary>
+        private void TickCommandLease(float deltaTime)
+        {
+            if (!_leaseArmed) return;
+
+            if (CommandLeaseSeconds <= 0f) { _leaseArmed = false; return; }
+
+            _leaseTimer += deltaTime;
+            if (_leaseTimer < CommandLeaseSeconds) return;
+
+            _leaseArmed = false;
+            _leaseTimer = 0f;
+
+            if (Steps != null) Steps.AbortStep(true);
+            Controller.ApplyCommand(WheelchairCommand.Stop);
+            _lastCommandText = "租期到期自动停车";
+
+            Debug.Log(string.Format(
+                "[Hub] {0} 的指令租期到期（{1:F1} s 内没有新的运动指令），已平稳停车；未锁存，可以直接再发指令",
+                _leaseSourceName, CommandLeaseSeconds));
         }
 
         private void UpdateObstacleSensor()

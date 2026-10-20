@@ -20,8 +20,8 @@
 
 常用示例：
 
-    # 让轮椅前进 2 秒（每 0.1 秒发一次，最后补一个停止）
-    python wifi_udp_client.py --host 192.168.43.1 --cmd forward --speed 60 --repeat 20 --interval 0.1 --then-stop
+    # 让轮椅前进 4 秒（每 0.2 秒重发一次，最后补一个停止）——就是上位机"按住前进"的策略
+    python wifi_udp_client.py --host 192.168.43.1 --cmd forward --speed 60 --repeat 20 --interval 0.2 --then-stop
 
     # 原地左转
     python wifi_udp_client.py --host 192.168.43.1 --cmd left --speed 50 --repeat 15 --interval 0.1
@@ -31,6 +31,11 @@
 
     # 交互模式：w/s 前进后退、a/d 左右转、空格停车、x 急停、+/- 调速、q 退出
     python wifi_udp_client.py --host 192.168.43.1 --interactive
+
+    # 按住式交互（推荐，和 App 手感一致）：按下运动键后每 0.2 秒重发一次、最多 4 秒；
+    # 窗口内重复按同键被忽略，按其他键立即抢占；到期补发停止。
+    # Unity 端还有一层"指令租期"兜底：万一脚本崩了/网断了，4 秒没新指令也会自动平稳停车。
+    python wifi_udp_client.py --host 192.168.43.1 --interactive --hold
 
     # 只想看组出来的字节流（不联网），用来和 App 抓包比对
     python wifi_udp_client.py --cmd forward --speed 60 --print-only
@@ -375,6 +380,7 @@ def send(sock, target, frame, quiet):
 
 
 def run_interactive(sock, target, args):
+    """旧版交互：按一下就发 1 秒（阻塞式，期间按键会排队）。保留是为了不破坏既有用法。"""
     import msvcrt   # Windows
 
     speed = args.speed
@@ -424,6 +430,103 @@ def run_interactive(sock, target, args):
     print("退出交互模式")
 
 
+def run_interactive_hold(sock, target, args):
+    """按住式发送（--hold）：把"按住不放"翻译成一串周期重发，并带 4 秒上界。
+
+    规则（对应上位机 App 的按键策略）：
+
+        按下前进   -> 每 hold_interval 秒重发一次前进，最多持续 hold_seconds 秒
+        再按前进   -> 窗口内**忽略**（同一段动作，不去打断它）
+        按其他键   -> 立即结束当前窗口，改发新指令（后退 / 左转 / 右转 / 停止 / 急停）
+        窗口到期   -> 补发一条停止（发送端自觉收尾）
+
+    接收端（Unity）还有一层"指令租期"兜底：即使本脚本崩了、网断了、忘记补停止，
+    WheelchairHub 也会在租期内没收到新运动指令时平稳停车。
+    """
+    import msvcrt   # Windows
+
+    keys = {"w": "forward", "s": "backward", "a": "left", "d": "right",
+            " ": "stop", "x": "estop"}
+
+    speed = args.speed
+    active = None              # 当前按住窗口里的指令名
+    deadline = 0.0             # 窗口到期时刻
+    next_send = 0.0            # 下一帧的发送时刻
+
+    print("按住式交互（--hold）：w 前进 / s 后退 / a 左转 / d 右转 / 空格 停止 / x 急停 / +/- 调速 / q 退出")
+    print("按键后每 %.2f s 重发一次，最多 %.1f s；窗口内重复按同键被忽略，按其他键立即切换"
+          % (args.hold_interval, args.hold_seconds))
+    print("当前速度百分比：%d%%" % speed)
+
+    while True:
+        now = time.time()
+
+        # 1) 窗口内到点就重发一帧（这就是"按住"）
+        if active is not None and now >= next_send:
+            code = COMMANDS[active][0]
+            send(sock, target, build_command_frame(code, speed, args.checksum, args.length_mode), args.quiet)
+            next_send = now + args.hold_interval
+
+        # 2) 窗口到期：补发停止，发送端自觉收尾
+        if active is not None and now >= deadline:
+            print("[窗口] %s 已满 %.1f s，补发停止" % (COMMANDS[active][1], args.hold_seconds))
+            send(sock, target,
+                 build_command_frame(COMMANDS["stop"][0], None, args.checksum, args.length_mode), args.quiet)
+            active = None
+            next_send = 0.0
+
+        # 3) 非阻塞读键：窗口进行中也能立刻响应其他按键（这才是"抢占"）
+        if not msvcrt.kbhit():
+            time.sleep(0.02)
+            continue
+
+        key = msvcrt.getch()
+        try:
+            char = key.decode("ascii").lower()
+        except UnicodeDecodeError:
+            continue
+
+        if char == "q":
+            break
+        if char in ("+", "="):
+            speed = min(100, speed + 10)
+            print("速度百分比 -> %d%%" % speed)
+            continue
+        if char in ("-", "_"):
+            speed = max(10, speed - 10)
+            print("速度百分比 -> %d%%" % speed)
+            continue
+
+        name = keys.get(char)
+        if name is None:
+            continue
+
+        if name in ("stop", "estop"):
+            code = COMMANDS[name][0]
+            send(sock, target, build_command_frame(code, None, args.checksum, args.length_mode), args.quiet)
+            print("%s（%s）" % (COMMANDS[name][1], "结束当前窗口" if active else "空闲中"))
+            active = None
+            next_send = 0.0
+            continue
+
+        if active == name:
+            print("[忽略] 已在%s窗口内（剩余 %.1f s），重复按同键不打断" % (COMMANDS[name][1], deadline - now))
+            continue
+
+        if active is not None:
+            print("[抢占] 结束%s窗口，切换为%s" % (COMMANDS[active][1], COMMANDS[name][1]))
+        active = name
+        deadline = now + args.hold_seconds
+        next_send = 0.0        # 立刻发第一帧
+
+    if active is not None:
+        send(sock, target,
+             build_command_frame(COMMANDS["stop"][0], None, args.checksum, args.length_mode), args.quiet)
+        print("退出前补发停止")
+
+    print("退出交互模式")
+
+
 def main():
     parser = argparse.ArgumentParser(
         description="脑控轮椅 WiFi(UDP) 链路测试客户端（对应 Unity 端 enableWifiUdp）",
@@ -448,6 +551,13 @@ def main():
     parser.add_argument("--listen-only", action="store_true", help="只收状态帧，不发指令")
     parser.add_argument("--seconds", type=float, default=0.0, help="--listen-only 的持续秒数（0 = 一直收到 Ctrl+C）")
     parser.add_argument("--interactive", action="store_true", help="键盘交互模式")
+    parser.add_argument("--hold", action="store_true",
+                        help="按住式交互：按键后每 --hold-interval 重发，最多 --hold-seconds，"
+                             "同键重复被忽略、其他键立即抢占、到期补发停止（配合 Unity 端指令租期）")
+    parser.add_argument("--hold-seconds", type=float, default=4.0,
+                        help="按住窗口上限秒（默认 4.0，与 Unity 端 wifiCommandLeaseSeconds 对应）")
+    parser.add_argument("--hold-interval", type=float, default=0.2,
+                        help="按住窗口内的重发间隔秒（默认 0.2）")
     parser.add_argument("--print-only", action="store_true", help="只打印组好的字节流，不联网")
     parser.add_argument("--quiet", action="store_true", help="不打印每个发送的帧")
 
@@ -486,7 +596,10 @@ def main():
             return 0
 
         if args.interactive:
-            run_interactive(send_sock, target, args)
+            if args.hold:
+                run_interactive_hold(send_sock, target, args)
+            else:
+                run_interactive(send_sock, target, args)
             return 0
 
         if not args.cmd:

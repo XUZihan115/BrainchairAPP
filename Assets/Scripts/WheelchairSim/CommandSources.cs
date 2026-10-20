@@ -46,6 +46,22 @@ namespace WheelchairSim
     }
 
     /// <summary>
+    /// 可选扩展：链路是否参与"指令租期"（WheelchairHub.CommandLeaseSeconds）。
+    ///
+    /// 为什么需要：上位机把"按住"实现成"每 0.2 s 重发一次、最多 4 s"这种周期发送时，
+    /// 它停发的那一刻接收端是不知道的——状态保持式下轮椅会一直开下去。
+    /// 实现本接口的链路（WiFi/UDP）收到运动指令就开始计时，租期内没有新指令就自动
+    /// **平稳停车**（走减速斜坡，不进急停锁存，可以直接再发下一条指令）。
+    ///
+    /// 不实现它的链路走旧行为：脑电蓝牙是步进式，每条指令本来就"到量即停"，不需要租期。
+    /// </summary>
+    public interface ICommandLeaseHint
+    {
+        /// <summary>true = 该链路的运动指令参与租期计时。</summary>
+        bool WantsCommandLease { get; }
+    }
+
+    /// <summary>
     /// 可选扩展：需要"仿真实时状态"才能回状态帧的链路。
     /// WheelchairState 里没有位置，而任务书要求状态帧带位置 (x,z)，
     /// 所以 WheelchairHub 定时把状态连同位置喂给实现了这个接口的链路。

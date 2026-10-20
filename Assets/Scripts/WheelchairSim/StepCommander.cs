@@ -90,6 +90,14 @@ namespace WheelchairSim
         [Tooltip("两条步进指令之间的最小间隔 s：间隔内重复来的指令一律丢弃，" +
                  "防止一次注视被判成两条（SSVEP 误报的主要形态）")]
         public float RefractoryPeriod = 1.0f;
+        [Tooltip("不应期只挡\"同向重复\"：后退 / 左右转属于\"改主意了\"，是新的意图，" +
+                 "不会被上一条前进的不应期吃掉，而是立刻抢占当前动作。" +
+                 "关掉 = 退回旧的全局不应期（1 s 内任何指令都被丢弃）")]
+        public bool RefractoryOnlySameIntent = true;
+        [Tooltip("异向指令到达时，直接中止还没走完的这一步、立刻执行新指令（预输入队列一并清空）。" +
+                 "关掉 = 排到队尾，等这一步走完再执行。" +
+                 "注意：关掉它更保守，但上位机\"按住前进途中按左转\"就得等上一步走完才响应")]
+        public bool PreemptOnDifferentIntent = true;
         [Tooltip("一步结束、队列也空了之后，再过这么久仍无指令就补发一次停车 s")]
         public float IdleStopTimeout = 1.5f;
 
@@ -115,11 +123,25 @@ namespace WheelchairSim
             public float EnqueuedAt;    // 进入队列的时刻（用于 TTL）
         }
 
+        /// <summary>
+        /// 一条指令的"意图"：用来区分"同向重复"（一次注视被判成两条）和"改主意了"（新意图）。
+        /// 平移与旋转分开，前进与后退分开——只有完全同向才算重复。
+        /// </summary>
+        private enum StepIntent { None, Forward, Backward, Left, Right }
+
+        private static StepIntent IntentOf(StepRequest request)
+        {
+            if (Mathf.Abs(request.Distance) >= 0.001f)
+                return request.Distance > 0f ? StepIntent.Forward : StepIntent.Backward;
+            return request.Angle > 0f ? StepIntent.Left : StepIntent.Right;
+        }
+
         private readonly List<StepRequest> _queue = new List<StepRequest>(8);
         private readonly RaycastHit[] _probeHits = new RaycastHit[16];
 
         private float _clock;
         private float _lastAcceptTime = float.NegativeInfinity;   // 不应期计时
+        private StepIntent _lastIntent = StepIntent.None;         // 上一条被接受的指令的意图
         private float _lastStepEndTime = float.NegativeInfinity;  // 空闲补停车计时
 
         private bool _executing;
@@ -378,18 +400,37 @@ namespace WheelchairSim
             // 不应期：一次注视只允许对应一条指令。这里是唯一能挡住
             // "同一次判定被判成两条"的地方——如果只在开始执行时挡，
             // 第二条会被当成预输入排队，最后照样走出来。
-            if (_clock - _lastAcceptTime < RefractoryPeriod)
+            //
+            // 默认只挡"同向重复"：后退 / 左转 / 右转是"改主意了"，属于新意图，
+            // 不能被上一条前进的不应期一起吃掉——否则"收到其他指令就结束前进"
+            // 在步进模式下会失效（这也是上位机按住前进时的真实期望）。
+            StepIntent intent = IntentOf(request);
+            bool sameIntent = intent == _lastIntent;
+
+            if (_clock - _lastAcceptTime < RefractoryPeriod
+                && (!RefractoryOnlySameIntent || sameIntent))
             {
-                Reject(string.Format("不应期内（距上一条指令 {0:F1} s < {1:F1} s），重复指令已丢弃",
-                    _clock - _lastAcceptTime, RefractoryPeriod));
+                Reject(string.Format("不应期内（距上一条{0}指令 {1:F1} s < {2:F1} s），重复指令已丢弃",
+                    RefractoryOnlySameIntent ? "同向" : "", _clock - _lastAcceptTime, RefractoryPeriod));
                 return;
             }
 
             _lastAcceptTime = _clock;
+            _lastIntent = intent;
             request.EnqueuedAt = _clock;
 
             if (_executing || _settling)
             {
+                if (PreemptOnDifferentIntent && !sameIntent)
+                {
+                    // 改主意了：不等这一步走完，直接中止它、立刻执行新指令
+                    Debug.Log(string.Format("[Step] 异向指令 {0} 到达，立即抢占（中止 {1}）",
+                        Describe(request), _executing ? Describe(_active) : "停车等待"));
+                    AbortStep(true);
+                    StartStep(request);
+                    return;
+                }
+
                 Enqueue(request);
                 return;
             }

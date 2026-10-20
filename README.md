@@ -207,11 +207,16 @@ python Tools/host_test_client.py --host 127.0.0.1 --port 8888 --demo
 
 * **先放行 Windows 防火墙的入站 UDP 9001**（管理员 PowerShell）：
   `New-NetFirewallRule -DisplayName "Wheelchair UDP 9001" -Direction Inbound -Protocol UDP -LocalPort 9001 -Action Allow`
-* 本机自测：`python Tools/wifi_udp_client.py --host 127.0.0.1 --interactive`
+* 本机自测（**按住式，推荐**）：`python Tools/wifi_udp_client.py --host 127.0.0.1 --interactive --hold`
+  —— 按下运动键后每 0.2 s 重发一次、最多 4 s，同键重复被忽略、按其他键立即抢占、到期补发停止。
+* 旧版一键一发 1 秒：`python Tools/wifi_udp_client.py --host 127.0.0.1 --interactive`
 * 帧格式 `AA 55 | 类型 | 长度 | 数据 | 校验 | 0D 0A`，指令码 `01` 前进 / `02` 后退 / `03` 左转 / `04` 右转 / `05` 停止 / `06` 急停。
 * 校验算法（累加和 / 异或 / CRC8 × 两种覆盖范围）与长度字段语义（三种）**全部自动识别**，HUD 上会显示结果。
 * 勾 `wifiSendStatus` 会以 5 Hz 回发状态帧（字段布局为本地自定，接真 App 前需与对方对齐）。
-* 完整说明见 `docs/unity-wheelchair-sim-guide.md` 第 4.4 节。
+* **按住式发送有接收端兜底**：`wifiCommandLeaseSeconds`（默认 4.0 s）——收到状态保持式的运动指令后开始计时，
+  超时没新指令就**平稳停车**（不进急停锁存、不用发 `REL`，可以直接再按）。填 0 = 关闭。
+  这就是 App「按住前进 = 每 0.2 s 重发一次、最多 4 s」的对应实现：发送端停发（松手 / 断网 / 崩了）之后车一定停。
+* 完整说明见 `docs/unity-wheelchair-sim-guide.md` 第 4.4 / 4.5 节。
 
 ---
 
@@ -223,8 +228,12 @@ python Tools/host_test_client.py --host 127.0.0.1 --port 8888 --demo
 * **急停锁存**：一旦锁死，必须显式发 `REL`（解除急停）才能恢复，
   避免指令抖动导致"停了又自己跑"。
 * **限速**：`SetSpeedLimit` 可在运行时下调；速度 / 角速度都有硬上限与加速度平滑。
+* **指令租期**（`CommandLeaseSeconds`，默认 4.0 s）：按住式上位机（App 每 0.2 s 重发、最多 4 s）
+  停止发送之后，参与租期的链路（WiFi/UDP，实现 `ICommandLeaseHint`）超时自动**平稳停车**——
+  比心跳看门狗温和：**不进急停锁存**，松手后再按前进立刻就走。见指南 4.5。
 * **步进模式的三道护栏**（脑电链路）：
   * **不应期 1.0 s**：同一次注视被判成两条指令时，第二条在入口就被丢弃（防 SSVEP 误报）。
+    只挡**同向重复**；前进途中按后退 / 左转 / 右转属于新意图，会立即抢占（`RefractoryOnlySameIntent` / `PreemptOnDifferentIntent`）。
   * **障碍物联动**：本步方向上余量不足就缩短步长；缩短后不足 0.1 m 就整步拒绝。
   * **单步超时**：预计耗时 × 2 + 1.5 s，被卡住会自己放弃并停车。
 * **无缝衔接**（`ChainSameDirection`，默认开）：预输入的**同向**指令不再"停一下再走" ——
@@ -256,8 +265,14 @@ python Tools/host_test_client.py --host 127.0.0.1 --port 8888 --demo
   和脑电指令一致——一条指令只转一步。想一直转就**按住 `Shift` 再按**，
   或者点左下角「手动控制」里的运动按钮（那几个按钮始终是状态保持式）。
 * **按 `W` 只走 1 米**：同上，一步一停。连续前进请按住 `Shift` 再按 `W`。
-* **连按两下只有一下生效**：不应期 1.0 s 会丢掉这期间的重复指令（防 SSVEP 误报），
+* **连按两下只有一下生效**：不应期 1.0 s 会丢掉这期间的**同向**重复指令（防 SSVEP 误报），
   这是设计如此。想连续用 `Shift`。
+* **按住前进 4 秒后车自己停了**：指令租期到点（默认 4.0 s）。HUD「最近指令」会显示
+  「租期到期自动停车」。想更长就调 `--hold-seconds`，想关掉租期把 `wifiCommandLeaseSeconds` 填 0。
+* **松手之后车还往前走了一段**：状态保持式的固有延迟（最坏 = 租期长度，默认 4.0 s）。
+  想更快就把发送端窗口和 `wifiCommandLeaseSeconds` 一起调小。
+* **前进途中按左转，车直接拐了**：异向指令立即抢占（`PreemptOnDifferentIntent`），这是按住式想要的行为。
+* **租期到点后按前进没反应**：不该出现。真锁存的多半是心跳看门狗或障碍物急停，发 `REL`（或按 `Z`）解除。
 * **排队两条「前进」，一会儿连成 2 米不停、一会儿又在 1 米处停一下**：
   看第二条到达的**时机**——第一条还在走时到达 → 无缝并进去（一口气 2 m）；
   第一条已经停下才到达 → 只能当新的一步走。HUD「无缝衔接」那行会显示已并入几条。
@@ -272,7 +287,7 @@ python Tools/host_test_client.py --host 127.0.0.1 --port 8888 --demo
 * **换了真实模型后车浮在地面上**：模型多半没有碰撞体，`autoAddCollider` 会自动补一个
   `BoxCollider`（Console 有日志）。
 * **发 `F` 只走 1 米就停 / 连发两条只动一下**：这是脑电链路的**步进式**默认语义
-  （外加 1.0 s 不应期会丢掉重复指令）。想连续控制先发 `MODE:LATCH`。
+  （外加 1.0 s 不应期会丢掉**同向**重复指令）。想连续控制先发 `MODE:LATCH`。
 * **步进按了完全不动**：多半是前方障碍物余量不足，HUD 的「脑电步进」区会显示
   「整步拒绝」及原因；也可以直接看那一栏的队列 / 不应期 / 丢弃计数。
 * **找不到步进参数**：都在运行时自动挂上的 `StepCommander` 组件上

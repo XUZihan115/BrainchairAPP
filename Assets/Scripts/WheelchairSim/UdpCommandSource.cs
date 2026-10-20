@@ -26,7 +26,7 @@ namespace WheelchairSim
     /// 网络读写全在后台线程，收到的整包丢进队列，主线程 Tick 里解析成指令；
     /// 状态帧由后台线程按 5 Hz 节奏自己发，不受渲染帧率影响。
     /// </summary>
-    public sealed class UdpCommandSource : CommandSourceBase, ICommandModeHint, ISimStateSink
+    public sealed class UdpCommandSource : CommandSourceBase, ICommandModeHint, ICommandLeaseHint, ISimStateSink
     {
         public const int DefaultListenPort = 9001;
         public const int DefaultStatusPort = 9002;
@@ -71,6 +71,13 @@ namespace WheelchairSim
         /// <summary>收到"停止"时是否顺带解除急停锁（默认不解除：急停必须显式解除）。</summary>
         public bool StopAlsoReleasesEmergency;
 
+        /// <summary>
+        /// 是否参与"指令租期"：App 按住前进时每 0.2 s 重发一次、最多 4 s，
+        /// 停发之后接收端得自己停下，否则状态保持式会一直开下去。
+        /// 默认开；在 WheelchairBootstrap 里用 wifiCommandLease 控制。
+        /// </summary>
+        public bool WantsCommandLease { get; set; }
+
         /// <summary>App 主界面按键是"按住就走、松开才停"的连续控制，所以默认状态保持式。</summary>
         public CommandMode PreferredCommandMode { get; set; }
 
@@ -113,6 +120,7 @@ namespace WheelchairSim
             MaxLinearSpeed = maxLinearSpeed;
             MaxAngularSpeed = maxAngularSpeed;
             PreferredCommandMode = CommandMode.Latch;
+            WantsCommandLease = true;
             IsConnected = false;
             StatusDetail = "未启动";
         }

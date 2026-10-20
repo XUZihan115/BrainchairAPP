@@ -69,6 +69,10 @@ namespace WheelchairSim
         public bool wifiRequiresHeartbeat = false;
         [Tooltip("WiFi 链路按步进式执行。默认否 = 状态保持式：收到前进就一直走，直到收到停止")]
         public bool wifiStepMode = false;
+        [Tooltip("WiFi 链路的指令租期 s：App 按住前进时每 0.2 s 重发一次、最多 4 s，" +
+                 "停发之后接收端必须自己停下来（否则状态保持式会一直开下去）。" +
+                 "填 0 = 关闭（退回旧行为：只能靠上位机补发停止或心跳看门狗）")]
+        public float wifiCommandLeaseSeconds = 4.0f;
         [Tooltip("左转/右转语义：行进中转向（与键盘 A/D 一致）还是原地旋转")]
         public WifiTurnMode wifiTurnMode = WifiTurnMode.SteerWhileMoving;
         [Tooltip("App 下发速度 100% 对应的线速度 m/s（还会被安全限速 speedLimit 二次夹住）")]
@@ -191,9 +195,12 @@ namespace WheelchairSim
                 source.RequiresHeartbeatFlag = wifiRequiresHeartbeat;
                 source.StopAlsoReleasesEmergency = wifiStopReleasesEmergency;
                 source.TurnMode = wifiTurnMode;
+                // 按住式上位机的安全阀：收到运动指令开始计时，超时没新指令就平稳停车
+                source.WantsCommandLease = wifiCommandLeaseSeconds > 0f;
                 // 任务书里 App 是"按住就走"的连续控制，所以默认状态保持式；
                 // 若换成离散的脑电指令链路，把 wifiStepMode 打开即可。
                 source.PreferredCommandMode = wifiStepMode ? CommandMode.Step : CommandMode.Latch;
+                _hub.CommandLeaseSeconds = wifiCommandLeaseSeconds;
                 _hub.AddSource(source);
             }
         }

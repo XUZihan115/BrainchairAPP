@@ -22,7 +22,9 @@ namespace WheelchairSim.EditorTools
         [MenuItem("Tools/Wheelchair/专注模式（隐藏多余窗口） %#f")]
         public static void Toggle()
         {
-            DisplayToggle.ToggleEditorPanels();
+            // Play 中要连屏幕上的 HUD 面板一起切，否则菜单和 F 键的效果不一致。
+            if (EditorApplication.isPlaying) DisplayToggle.ToggleVisible();
+            else DisplayToggle.ToggleEditorPanels();
         }
 
         // 全局快捷键 F。没有 context 参数 = 在任何编辑器窗口里都生效。

@@ -1,0 +1,89 @@
+single 0 not ready	true
+single-0 STREAM_STOP	true
+single 1 not ready	true
+single-1 STREAM_STOP	true
+single 2 not ready	true
+single-2 STREAM_STOP	true
+single 3 not ready	true
+single-3 STREAM_STOP	true
+single 4 not ready	true
+single-4 STREAM_STOP	true
+single 5 not ready	true
+single-5 STREAM_STOP	true
+single 6 not ready	true
+single-6 STREAM_STOP	true
+single 7 not ready	true
+single-7 STREAM_STOP	true
+single 8 not ready	true
+single-8 STREAM_STOP	true
+single 9 not ready	true
+single-9 STREAM_STOP	true
+single 10 not ready	true
+single-10 STREAM_STOP	true
+single 11 not ready	true
+single-11 STREAM_STOP	true
+single 12 not ready	true
+single-12 STREAM_STOP	true
+single 13 not ready	true
+single-13 STREAM_STOP	true
+single 14 not ready	true
+single-14 STREAM_STOP	true
+single 15 not ready	true
+single-15 STREAM_STOP	true
+single 16 not ready	true
+single-16 STREAM_STOP	true
+single 17 not ready	true
+single-17 STREAM_STOP	true
+cal-default-forward STREAM_STOP	true
+cal-default-left STREAM_STOP	true
+cal-default-right STREAM_STOP	true
+cal-default-backward STREAM_STOP	true
+cal-default-stop STREAM_STOP	true
+eval-default-forward STREAM_STOP	true
+eval-default-left STREAM_STOP	true
+eval-default-right STREAM_STOP	true
+eval-default-backward STREAM_STOP	true
+eval-default-stop STREAM_STOP	true
+cal-selected-forward STREAM_STOP	true
+cal-selected-left STREAM_STOP	true
+cal-selected-right STREAM_STOP	true
+cal-selected-backward STREAM_STOP	true
+cal-selected-stop STREAM_STOP	true
+eval-selected-forward STREAM_STOP	true
+eval-selected-left STREAM_STOP	true
+eval-selected-right STREAM_STOP	true
+eval-selected-backward STREAM_STOP	true
+eval-selected-stop STREAM_STOP	true
+eval-reference-forward STREAM_STOP	true
+eval-reference-left STREAM_STOP	true
+eval-reference-right STREAM_STOP	true
+eval-reference-backward STREAM_STOP	true
+eval-reference-stop STREAM_STOP	true
+a-wrap-forward STREAM_STOP	true
+a-wrap-default-forward STREAM_STOP	true
+a-wrap-left STREAM_STOP	true
+a-wrap-default-left STREAM_STOP	true
+a-wrap-right STREAM_STOP	true
+a-wrap-default-right STREAM_STOP	true
+a-wrap-backward STREAM_STOP	true
+a-wrap-default-backward STREAM_STOP	true
+a-wrap-stop STREAM_STOP	true
+a-wrap-default-stop STREAM_STOP	true
+continuous-switch STREAM_STOP	true
+continuous-switch-default STREAM_STOP	true
+released-switch-forward STREAM_STOP	true
+released-switch-left STREAM_STOP	true
+released-switch-right STREAM_STOP	true
+released-switch-backward STREAM_STOP	true
+released-switch-stop STREAM_STOP	true
+noise-10.0 STREAM_STOP	true
+noise-50.0 STREAM_STOP	true
+noise-100.0 STREAM_STOP	true
+degraded-noise STREAM_STOP	true
+flat stops	true
+flat-signal STREAM_STOP	true
+gap invalidates	true
+timeout clears	true
+gap-timeout-restart restart clears	true
+restart computes new windows	true
+gap-timeout-restart STREAM_STOP	true

@@ -1,0 +1,72 @@
+[
+  {
+    "name": "com.yourteam.brainchair.receiver.ReceiverTest",
+    "tests": "11",
+    "skipped": "0",
+    "failures": "0",
+    "errors": "0",
+    "timestamp": "2026-10-19T08:27:38",
+    "hostname": "DESKTOP-B4DMF6G",
+    "time": "30.214"
+  },
+  {
+    "name": "com.yourteam.brainchair.SafetyTest",
+    "tests": "7",
+    "skipped": "0",
+    "failures": "0",
+    "errors": "0",
+    "timestamp": "2026-10-19T08:27:38",
+    "hostname": "DESKTOP-B4DMF6G",
+    "time": "0.02"
+  },
+  {
+    "name": "com.yourteam.brainchair.signal.RecognitionControlTest",
+    "tests": "2",
+    "skipped": "0",
+    "failures": "0",
+    "errors": "0",
+    "timestamp": "2026-10-19T08:28:08",
+    "hostname": "DESKTOP-B4DMF6G",
+    "time": "0.003"
+  },
+  {
+    "name": "com.yourteam.brainchair.signal.ReplayValidationTest",
+    "tests": "1",
+    "skipped": "0",
+    "failures": "0",
+    "errors": "0",
+    "timestamp": "2026-10-19T08:28:08",
+    "hostname": "DESKTOP-B4DMF6G",
+    "time": "10.993"
+  },
+  {
+    "name": "com.yourteam.brainchair.signal.SafetyRegressionProbeTest",
+    "tests": "1",
+    "skipped": "0",
+    "failures": "0",
+    "errors": "0",
+    "timestamp": "2026-10-19T08:28:19",
+    "hostname": "DESKTOP-B4DMF6G",
+    "time": "0.06"
+  },
+  {
+    "name": "com.yourteam.brainchair.signal.SignalTest",
+    "tests": "8",
+    "skipped": "0",
+    "failures": "0",
+    "errors": "0",
+    "timestamp": "2026-10-19T08:28:20",
+    "hostname": "DESKTOP-B4DMF6G",
+    "time": "8.342"
+  },
+  {
+    "name": "com.yourteam.brainchair.signal.TrialSafetyReplayTest",
+    "tests": "1",
+    "skipped": "0",
+    "failures": "0",
+    "errors": "0",
+    "timestamp": "2026-10-19T08:28:28",
+    "hostname": "DESKTOP-B4DMF6G",
+    "time": "6.632"
+  }
+]

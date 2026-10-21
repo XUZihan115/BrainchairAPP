@@ -1,0 +1,12 @@
+<?xml version="1.0" encoding="UTF-8"?>
+<testsuite name="com.yourteam.brainchair.control.Stage27ControlTest" tests="6" skipped="0" failures="0" errors="0" timestamp="2026-10-20T02:57:36" hostname="DESKTOP-B4DMF6G" time="0.036">
+  <properties/>
+  <testcase name="sixCommandsMapToLatestDraftWithoutLegacyEstopCollision" classname="com.yourteam.brainchair.control.Stage27ControlTest" time="0.026"/>
+  <testcase name="simulatedReceiverWatchdogAndLatchedRestartRemainDistinctFromActualUnity" classname="com.yourteam.brainchair.control.Stage27ControlTest" time="0.001"/>
+  <testcase name="ordinaryStopAndExpiryRequireFreshMotionAndEmergencyRequiresExplicitLiveUnlock" classname="com.yourteam.brainchair.control.Stage27ControlTest" time="0.002"/>
+  <testcase name="queuedWakeupsReadCurrentStateAndCannotOverwriteStop" classname="com.yourteam.brainchair.control.Stage27ControlTest" time="0.0"/>
+  <testcase name="emergencyReleasePreservesHalfSecondFreshLinkRequirement" classname="com.yourteam.brainchair.control.Stage27ControlTest" time="0.001"/>
+  <testcase name="unconfirmedCodecRefusesAnyUdpAndNeverFallsBackToPrototypeFrame" classname="com.yourteam.brainchair.control.Stage27ControlTest" time="0.006"/>
+  <system-out><![CDATA[]]></system-out>
+  <system-err><![CDATA[]]></system-err>
+</testsuite>

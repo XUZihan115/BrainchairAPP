@@ -1,0 +1,1485 @@
+{
+  "sourceCommit": "6064d5fbf818c948ae2f7926095fba77275b9a9a",
+  "teamBaseCommit": "70f7fc2479255970dfb52e40fec9ef0767b06e23",
+  "originalGitHistoryImported": false,
+  "originalLocalGitPreserved": true,
+  "sourceFileCount": 162,
+  "protectedSourceAndBuildFiles": 51,
+  "changedFiles": [
+    ".gitattributes",
+    ".gitignore",
+    "README.md",
+    "docs/ab-integration/README.md",
+    "docs/stage25/README.md",
+    "docs/stage25/data-inspection.json",
+    "docs/stage27/evidence.json",
+    "scripts/stage27_sender.py",
+    "scripts/validate-stage25.ps1",
+    "scripts/validate-stage26.ps1"
+  ],
+  "policy": "Only source snapshot, reports and portable delivery setup. No .git, raw EEG, APK, cache, keys or machine configuration.",
+  "files": [
+    {
+      "path": ".gitattributes",
+      "sourceSha256": "1eec95cb30727cc0bce4309418563382cf9a35a433e60a63c847eb685c1c4e06",
+      "identical": false,
+      "teamWorktreeSha256": "95616f03ba93fdedf96df0ee82d390ec40f702eb1522df5d0accf9841788c790",
+      "teamBlobSha256": "2da20e51cbbd58535f4b38eb16b13edc8cd45d0bf53de0b5214e7dcdf0ab045e",
+      "identicalAfterLineEndingNormalization": false,
+      "teamMode": "100644"
+    },
+    {
+      "path": ".gitignore",
+      "sourceSha256": "0ad2b297935d1e0971ea6c09240649df31367265ab92d86343960e9fb3c974d3",
+      "identical": false,
+      "teamWorktreeSha256": "082f507d67673052b001a5fbaa3aa00f8e37480d25cf317be7204040863e5b98",
+      "teamBlobSha256": "857d7ec12136bcf327f216eb485eca5bfbb35f1d4cfbd7c9ab3f785ae0d0c9e1",
+      "identicalAfterLineEndingNormalization": false,
+      "teamMode": "100644"
+    },
+    {
+      "path": "Build-App.cmd",
+      "sourceSha256": "afcacba69bb6b50426f604a7c28b15a88656037abf52b48af503a6cab82c5354",
+      "identical": false,
+      "teamWorktreeSha256": "afcacba69bb6b50426f604a7c28b15a88656037abf52b48af503a6cab82c5354",
+      "teamBlobSha256": "9e25a7daf10ed5b07fe0b97709efc7d7ccb132f9c8b4973029e413ce462e215a",
+      "identicalAfterLineEndingNormalization": true,
+      "teamMode": "100644"
+    },
+    {
+      "path": "Open-Studio.cmd",
+      "sourceSha256": "e472c57353b5aa8bae40e88461775359aff2a1b42d14ec2744a0d713ca86b2a5",
+      "identical": false,
+      "teamWorktreeSha256": "e472c57353b5aa8bae40e88461775359aff2a1b42d14ec2744a0d713ca86b2a5",
+      "teamBlobSha256": "17e85a406e2af6817ee90d9373eee09c03f4218a624f1e49a1027e3c59beb251",
+      "identicalAfterLineEndingNormalization": true,
+      "teamMode": "100644"
+    },
+    {
+      "path": "README.md",
+      "sourceSha256": "1f1cd57c48510bc1775849dde762294fb7252dc9d7d6f0fec58205f463eee353",
+      "identical": false,
+      "teamWorktreeSha256": "6026aa729d897d8910aa31fdc689f3ec6687a38b061373623157a250f3a2ed02",
+      "teamBlobSha256": "1fd7ec2a8c53b68c279e859f98247e8931804ee75534efbd43c791870222b692",
+      "identicalAfterLineEndingNormalization": false,
+      "teamMode": "100644"
+    },
+    {
+      "path": "Start-Demo.cmd",
+      "sourceSha256": "907a3f8cc6f8a6f34849d7788849e92bf531b22c2994194fb5dc2f14948c1a21",
+      "identical": false,
+      "teamWorktreeSha256": "907a3f8cc6f8a6f34849d7788849e92bf531b22c2994194fb5dc2f14948c1a21",
+      "teamBlobSha256": "3bfdd81ff5139990273935f16902fd23c523609e27477d1f477b0a11f3e5f2d9",
+      "identicalAfterLineEndingNormalization": true,
+      "teamMode": "100644"
+    },
+    {
+      "path": "app/build.gradle.kts",
+      "sourceSha256": "ad976b5c14a45635799a32cfda88343f7761bb7c3f2e8368554b08986a8d5ca7",
+      "identical": false,
+      "teamWorktreeSha256": "ad976b5c14a45635799a32cfda88343f7761bb7c3f2e8368554b08986a8d5ca7",
+      "teamBlobSha256": "d768f60dad1160318fdcf15622c50c285295442b4b8dd5de2ed6254af87ed7ec",
+      "identicalAfterLineEndingNormalization": true,
+      "teamMode": "100644"
+    },
+    {
+      "path": "app/src/main/AndroidManifest.xml",
+      "sourceSha256": "a95fbdfaff0745a7c928e1c6c5e355658140a01933839749a328ce474aaeba69",
+      "identical": false,
+      "teamWorktreeSha256": "a95fbdfaff0745a7c928e1c6c5e355658140a01933839749a328ce474aaeba69",
+      "teamBlobSha256": "2797db261254eb72e3c1286a74bb15f533972c63593e090964aa6ac704e692cb",
+      "identicalAfterLineEndingNormalization": true,
+      "teamMode": "100644"
+    },
+    {
+      "path": "app/src/main/java/com/yourteam/brainchair/MainActivity.kt",
+      "sourceSha256": "b4afdc64940ce7f5072016d1141eed27f7c81fc9a62010b882539e252d0da428",
+      "identical": false,
+      "teamWorktreeSha256": "b4afdc64940ce7f5072016d1141eed27f7c81fc9a62010b882539e252d0da428",
+      "teamBlobSha256": "83b69c84cc192b934b3a7dad7363c0939031527c29676e665fe09ef9808278e9",
+      "identicalAfterLineEndingNormalization": true,
+      "teamMode": "100644"
+    },
+    {
+      "path": "app/src/main/java/com/yourteam/brainchair/comm/CommManager.kt",
+      "sourceSha256": "ad326adb4b361e19d42adb53750a28306926ff37a2d43a2009807b5ee9ef1ed3",
+      "identical": false,
+      "teamWorktreeSha256": "ad326adb4b361e19d42adb53750a28306926ff37a2d43a2009807b5ee9ef1ed3",
+      "teamBlobSha256": "4820f15be78d8043eae0dde305bb6290295bc1d7a282ac3ec927397f66c74cf2",
+      "identicalAfterLineEndingNormalization": true,
+      "teamMode": "100644"
+    },
+    {
+      "path": "app/src/main/java/com/yourteam/brainchair/comm/Protocol.kt",
+      "sourceSha256": "e034bda00dfb4d2fc6aae14b201b75729febe5c6e7672c2dc5542b6ffb457f9f",
+      "identical": false,
+      "teamWorktreeSha256": "e034bda00dfb4d2fc6aae14b201b75729febe5c6e7672c2dc5542b6ffb457f9f",
+      "teamBlobSha256": "39a7de6d44cc361e12dafdac665d027051335c68cc10491340c07c864dd310f5",
+      "identicalAfterLineEndingNormalization": true,
+      "teamMode": "100644"
+    },
+    {
+      "path": "app/src/main/java/com/yourteam/brainchair/control/ControlAuthority.kt",
+      "sourceSha256": "021b71a7af979e31bab2d0e5aa95b3d10b4e02601c51e2c06be182342b25c4b9",
+      "identical": false,
+      "teamWorktreeSha256": "021b71a7af979e31bab2d0e5aa95b3d10b4e02601c51e2c06be182342b25c4b9",
+      "teamBlobSha256": "37fa470023552b7b71ac73401dd76faceda59d6955fe958ee01828d14f94f80e",
+      "identicalAfterLineEndingNormalization": true,
+      "teamMode": "100644"
+    },
+    {
+      "path": "app/src/main/java/com/yourteam/brainchair/control/ControlRuntime.kt",
+      "sourceSha256": "6e04907a181624ad1b0e79d740ad1b3573897b7cff5bed194fc4b31c4c258866",
+      "identical": false,
+      "teamWorktreeSha256": "6e04907a181624ad1b0e79d740ad1b3573897b7cff5bed194fc4b31c4c258866",
+      "teamBlobSha256": "4703d6d86b6bc5da2c238f579605cf47cb51dc8f39edb6f7cad8e928c743fe63",
+      "identicalAfterLineEndingNormalization": true,
+      "teamMode": "100644"
+    },
+    {
+      "path": "app/src/main/java/com/yourteam/brainchair/control/UnityProtocol.kt",
+      "sourceSha256": "ecc47792695d3b83dacf1bb79ba745dc13c73f5d9b44c3058845a4d9ccccd691",
+      "identical": false,
+      "teamWorktreeSha256": "ecc47792695d3b83dacf1bb79ba745dc13c73f5d9b44c3058845a4d9ccccd691",
+      "teamBlobSha256": "f0df56656f851a75bd3ed3feb7902e1e674ab3601e9c65035cae258e4d8287c0",
+      "identicalAfterLineEndingNormalization": true,
+      "teamMode": "100644"
+    },
+    {
+      "path": "app/src/main/java/com/yourteam/brainchair/control/UnityTransport.kt",
+      "sourceSha256": "0650b95300e4cdb6da00b5dc63dc60be186c293222384f2c71051c964b5c1f72",
+      "identical": false,
+      "teamWorktreeSha256": "0650b95300e4cdb6da00b5dc63dc60be186c293222384f2c71051c964b5c1f72",
+      "teamBlobSha256": "4ed148551c7dd80aef48750892ef958590bd98f57b7366765fdddbd85c330fa0",
+      "identicalAfterLineEndingNormalization": true,
+      "teamMode": "100644"
+    },
+    {
+      "path": "app/src/main/java/com/yourteam/brainchair/control/UnityUdpLink.kt",
+      "sourceSha256": "5146b8d6ef95cf45a05ddca7eb339974e3c43f77067274628e204696fde08fe3",
+      "identical": false,
+      "teamWorktreeSha256": "5146b8d6ef95cf45a05ddca7eb339974e3c43f77067274628e204696fde08fe3",
+      "teamBlobSha256": "b218b1558524c1d7ab93de524268961f6f3c41ef0d0eb5b7f46c08cd7582eaa1",
+      "identicalAfterLineEndingNormalization": true,
+      "teamMode": "100644"
+    },
+    {
+      "path": "app/src/main/java/com/yourteam/brainchair/model/ChairEngine.kt",
+      "sourceSha256": "94cdfa6b4f3bd05e9ac8f0a96f852933d016db84d40dcdeb449eaf056d621cbc",
+      "identical": false,
+      "teamWorktreeSha256": "94cdfa6b4f3bd05e9ac8f0a96f852933d016db84d40dcdeb449eaf056d621cbc",
+      "teamBlobSha256": "1d503d826967e671c7d6b7b449559b88fb36e11d1c4f6364fd27b88edb7854c3",
+      "identicalAfterLineEndingNormalization": true,
+      "teamMode": "100644"
+    },
+    {
+      "path": "app/src/main/java/com/yourteam/brainchair/model/IntentGate.kt",
+      "sourceSha256": "c0da198a0d1b03f260fddea290a6e125e91e7f1e696227abd4d5423c811942e9",
+      "identical": false,
+      "teamWorktreeSha256": "c0da198a0d1b03f260fddea290a6e125e91e7f1e696227abd4d5423c811942e9",
+      "teamBlobSha256": "e7b333261e9596de32f00d796f4d38951560b505c40ced32bbb3844da153e2d4",
+      "identicalAfterLineEndingNormalization": true,
+      "teamMode": "100644"
+    },
+    {
+      "path": "app/src/main/java/com/yourteam/brainchair/receiver/EegProtocol.kt",
+      "sourceSha256": "2aaf541c58657518391f7dc9e54031d30393a754ba716467853241ae07187eb6",
+      "identical": false,
+      "teamWorktreeSha256": "2aaf541c58657518391f7dc9e54031d30393a754ba716467853241ae07187eb6",
+      "teamBlobSha256": "6533b8213e2b35a6d056dd1298b65a0747bb5e8252e37921d554de5740aec0e5",
+      "identicalAfterLineEndingNormalization": true,
+      "teamMode": "100644"
+    },
+    {
+      "path": "app/src/main/java/com/yourteam/brainchair/receiver/ReceiverActivity.kt",
+      "sourceSha256": "d3ccf6217a33866c8b12217e771f495da6f16d274ffde3cf69a5442fe70a1d73",
+      "identical": false,
+      "teamWorktreeSha256": "d3ccf6217a33866c8b12217e771f495da6f16d274ffde3cf69a5442fe70a1d73",
+      "teamBlobSha256": "a3e64b050aab94a0654b3474ab309b731e0ce97d585df987fbaeda532963e110",
+      "identicalAfterLineEndingNormalization": true,
+      "teamMode": "100644"
+    },
+    {
+      "path": "app/src/main/java/com/yourteam/brainchair/receiver/ReceiverService.kt",
+      "sourceSha256": "3c5b1edc4a98e78d89a8757a750e061963a1867c903c49fdd4e042b8d537df4a",
+      "identical": false,
+      "teamWorktreeSha256": "3c5b1edc4a98e78d89a8757a750e061963a1867c903c49fdd4e042b8d537df4a",
+      "teamBlobSha256": "ea6cc1aabde8088e33bfb4986bce9ede39908d9a798c2838208bd62f37cd4e7c",
+      "identicalAfterLineEndingNormalization": true,
+      "teamMode": "100644"
+    },
+    {
+      "path": "app/src/main/java/com/yourteam/brainchair/receiver/StreamSession.kt",
+      "sourceSha256": "a9a1cdcc5748841b0ac509f34aa1faa89b25cb3ca6a5c44b2e68311e48e367fd",
+      "identical": false,
+      "teamWorktreeSha256": "a9a1cdcc5748841b0ac509f34aa1faa89b25cb3ca6a5c44b2e68311e48e367fd",
+      "teamBlobSha256": "956b56e67519d747791c76ce507de051c99e606fa205f918fcc2d352ae27019c",
+      "identicalAfterLineEndingNormalization": true,
+      "teamMode": "100644"
+    },
+    {
+      "path": "app/src/main/java/com/yourteam/brainchair/receiver/UdpReceiver.kt",
+      "sourceSha256": "3c92f150bf73a201842be554b12d210b57fd61c5025ce656d57b783e2c6e1d68",
+      "identical": false,
+      "teamWorktreeSha256": "3c92f150bf73a201842be554b12d210b57fd61c5025ce656d57b783e2c6e1d68",
+      "teamBlobSha256": "6749e4d288ffe2128ea03431bc42014b344cd37d9c1554b05957014baf7dbacd",
+      "identicalAfterLineEndingNormalization": true,
+      "teamMode": "100644"
+    },
+    {
+      "path": "app/src/main/java/com/yourteam/brainchair/signal/Bandpass.kt",
+      "sourceSha256": "d84042001e042aa4b4e44e83a457cd60fe22dd291ed410ffe3ccbc5b54a1e1fa",
+      "identical": false,
+      "teamWorktreeSha256": "d84042001e042aa4b4e44e83a457cd60fe22dd291ed410ffe3ccbc5b54a1e1fa",
+      "teamBlobSha256": "5024eed831ccdae2dfcdeb8f6e76388bf4578e7711a214239b655c36683dea5f",
+      "identicalAfterLineEndingNormalization": true,
+      "teamMode": "100644"
+    },
+    {
+      "path": "app/src/main/java/com/yourteam/brainchair/signal/Cca.kt",
+      "sourceSha256": "4ddc23d9274e2c53b60b1ed82cd835a870d89fca83786225ee90e9ae5ffc85b7",
+      "identical": false,
+      "teamWorktreeSha256": "4ddc23d9274e2c53b60b1ed82cd835a870d89fca83786225ee90e9ae5ffc85b7",
+      "teamBlobSha256": "fad7e1a781f186833ed172e9ea72d54b043599c23fd1321903cb4785c417468d",
+      "identicalAfterLineEndingNormalization": true,
+      "teamMode": "100644"
+    },
+    {
+      "path": "app/src/main/java/com/yourteam/brainchair/signal/ControlOutputSource.kt",
+      "sourceSha256": "64b311c2e7994d3f5ca1a0f524c9ee9979783f3c1a49db58064cfa3f4b95d143",
+      "identical": false,
+      "teamWorktreeSha256": "64b311c2e7994d3f5ca1a0f524c9ee9979783f3c1a49db58064cfa3f4b95d143",
+      "teamBlobSha256": "2cc32e22caa5af6c84a68e0274e00ea54735559951182c75cc422a51e2177009",
+      "identicalAfterLineEndingNormalization": true,
+      "teamMode": "100644"
+    },
+    {
+      "path": "app/src/main/java/com/yourteam/brainchair/signal/DecisionGate.kt",
+      "sourceSha256": "1f977468ff4932b9cd0eb9fd2832c7fbf2c3c9473e75de168d7c2b4c9e43005e",
+      "identical": false,
+      "teamWorktreeSha256": "1f977468ff4932b9cd0eb9fd2832c7fbf2c3c9473e75de168d7c2b4c9e43005e",
+      "teamBlobSha256": "172e6375620993500df53154a35714f90633a624027affa406f3e2a6e7d3c0b5",
+      "identicalAfterLineEndingNormalization": true,
+      "teamMode": "100644"
+    },
+    {
+      "path": "app/src/main/java/com/yourteam/brainchair/signal/RecognitionControl.kt",
+      "sourceSha256": "1aa2a32241c4ec733c5e5e1fb4996437dc1c12f1ad77f0a312cae8450cff3608",
+      "identical": false,
+      "teamWorktreeSha256": "1aa2a32241c4ec733c5e5e1fb4996437dc1c12f1ad77f0a312cae8450cff3608",
+      "teamBlobSha256": "97a8f8f66ce8832fa5eef3dd817d6512c97fd7ff4d220c82ab5e959ec0f9d1fb",
+      "identicalAfterLineEndingNormalization": true,
+      "teamMode": "100644"
+    },
+    {
+      "path": "app/src/main/java/com/yourteam/brainchair/signal/RecognitionTrace.kt",
+      "sourceSha256": "7e34341a3aaada27e166c30e99d193217ac47568ab5b497dcdb61ff6e965be10",
+      "identical": false,
+      "teamWorktreeSha256": "7e34341a3aaada27e166c30e99d193217ac47568ab5b497dcdb61ff6e965be10",
+      "teamBlobSha256": "b5d8575c77b8cce429e6b85c6c7177c04d3fb089b88ba2c4ba122a42ab5d372b",
+      "identicalAfterLineEndingNormalization": true,
+      "teamMode": "100644"
+    },
+    {
+      "path": "app/src/main/java/com/yourteam/brainchair/signal/SignalEngine.kt",
+      "sourceSha256": "75caa7f9a922a4b4844aee7d6532e91cea3fdb8a205e7147f481b7d31f613b1d",
+      "identical": false,
+      "teamWorktreeSha256": "75caa7f9a922a4b4844aee7d6532e91cea3fdb8a205e7147f481b7d31f613b1d",
+      "teamBlobSha256": "203611b1ed510131102b47a0f700b9bcd60d439b12c3bd489e4dcbcdfc82c14f",
+      "identicalAfterLineEndingNormalization": true,
+      "teamMode": "100644"
+    },
+    {
+      "path": "app/src/main/java/com/yourteam/brainchair/signal/SignalTiming.kt",
+      "sourceSha256": "9b18d4b8b2985655d2acf0d483898bd8818337f7acbe3ef63fedd044d67c733b",
+      "identical": false,
+      "teamWorktreeSha256": "9b18d4b8b2985655d2acf0d483898bd8818337f7acbe3ef63fedd044d67c733b",
+      "teamBlobSha256": "edc135a28b9b5f761e09c26b4cb399404b02cc30220e2a97fd0168d2dab7f2e0",
+      "identicalAfterLineEndingNormalization": true,
+      "teamMode": "100644"
+    },
+    {
+      "path": "app/src/main/res/drawable/ic_chair.xml",
+      "sourceSha256": "194076c7fa5166267620914334f1508aed58848673d6c4d0b34d1cbf377296e3",
+      "identical": false,
+      "teamWorktreeSha256": "194076c7fa5166267620914334f1508aed58848673d6c4d0b34d1cbf377296e3",
+      "teamBlobSha256": "c1d17e5a79f9447c6d7044945aefe2c4f235b8c74bf8946115824a79e7af0d0d",
+      "identicalAfterLineEndingNormalization": true,
+      "teamMode": "100644"
+    },
+    {
+      "path": "app/src/main/res/layout/activity_main.xml",
+      "sourceSha256": "bfec6efeb805e0e17c799194e02d6f495163b2102fd3faad827d84ed7c920ea3",
+      "identical": false,
+      "teamWorktreeSha256": "bfec6efeb805e0e17c799194e02d6f495163b2102fd3faad827d84ed7c920ea3",
+      "teamBlobSha256": "fea69e6a2d344377c6ddefe785bd95386dc06bed67a5b9d91c7f54a3720373b4",
+      "identicalAfterLineEndingNormalization": true,
+      "teamMode": "100644"
+    },
+    {
+      "path": "app/src/main/res/values/strings.xml",
+      "sourceSha256": "5f2964c1de3b7bf2487537e6d634b7ef5c7a5a8e5021223d0e6a137c9eb03dec",
+      "identical": false,
+      "teamWorktreeSha256": "5f2964c1de3b7bf2487537e6d634b7ef5c7a5a8e5021223d0e6a137c9eb03dec",
+      "teamBlobSha256": "c41a654b96d09f1841a90eb3bf7139d614250bd889664065ace3b65f6507cdb3",
+      "identicalAfterLineEndingNormalization": true,
+      "teamMode": "100644"
+    },
+    {
+      "path": "app/src/main/res/values/styles.xml",
+      "sourceSha256": "eb295d39d5a69d31ed6e4d5caf166d3f60807f54c5f1d70aa04f314dcfc2b5da",
+      "identical": false,
+      "teamWorktreeSha256": "eb295d39d5a69d31ed6e4d5caf166d3f60807f54c5f1d70aa04f314dcfc2b5da",
+      "teamBlobSha256": "a8a7bd1d45459d778f2353c6908216ef48d85f7404dd792771ba8b78485f6a83",
+      "identicalAfterLineEndingNormalization": true,
+      "teamMode": "100644"
+    },
+    {
+      "path": "app/src/test/java/com/yourteam/brainchair/SafetyTest.kt",
+      "sourceSha256": "87365ae149af8a829997108efd12abc805fc741d4c9b53320600332f5bf8f67c",
+      "identical": false,
+      "teamWorktreeSha256": "87365ae149af8a829997108efd12abc805fc741d4c9b53320600332f5bf8f67c",
+      "teamBlobSha256": "013eefb59776b8d0decaa7f1e248609da02c5b203fa2e1ff3b9838f3c73f37e1",
+      "identicalAfterLineEndingNormalization": true,
+      "teamMode": "100644"
+    },
+    {
+      "path": "app/src/test/java/com/yourteam/brainchair/control/Stage27ControlTest.kt",
+      "sourceSha256": "cac862aadd0bd7f0eb5d3c7a873f4fc293a5cf32f3a6f1e24e9c9d5aea33fef6",
+      "identical": false,
+      "teamWorktreeSha256": "cac862aadd0bd7f0eb5d3c7a873f4fc293a5cf32f3a6f1e24e9c9d5aea33fef6",
+      "teamBlobSha256": "0d3a390abe0672d1f5fcaa05c97ceb935184ef4512a1f8b0fc0a30c8b4bd4a02",
+      "identicalAfterLineEndingNormalization": true,
+      "teamMode": "100644"
+    },
+    {
+      "path": "app/src/test/java/com/yourteam/brainchair/control/Stage27IntegrationTest.kt",
+      "sourceSha256": "f44718efa0c78ad5b5883aeffb63f96c49de3d359faacf6695245806d695a447",
+      "identical": false,
+      "teamWorktreeSha256": "f44718efa0c78ad5b5883aeffb63f96c49de3d359faacf6695245806d695a447",
+      "teamBlobSha256": "d0311b4f3f5be7fd1364e94985cc3b2046a74eaa4da2f9e780efb436f9dbed83",
+      "identicalAfterLineEndingNormalization": true,
+      "teamMode": "100644"
+    },
+    {
+      "path": "app/src/test/java/com/yourteam/brainchair/control/Stage3ControlTest.kt",
+      "sourceSha256": "d298effda720265a3df0aef8ac926bc38f8f7cc537e71c09cc42b47f02b5ba8f",
+      "identical": false,
+      "teamWorktreeSha256": "d298effda720265a3df0aef8ac926bc38f8f7cc537e71c09cc42b47f02b5ba8f",
+      "teamBlobSha256": "fe4dbc2ae4c936b46ea3c3dca3ed34045adfffa97fc41baa004e504f4be96a34",
+      "identicalAfterLineEndingNormalization": true,
+      "teamMode": "100644"
+    },
+    {
+      "path": "app/src/test/java/com/yourteam/brainchair/control/Stage3IntegrationTest.kt",
+      "sourceSha256": "ab55aef98dafb6fd31fea8798418352a86e9a73b96b3e949031de2bd42a723cc",
+      "identical": false,
+      "teamWorktreeSha256": "ab55aef98dafb6fd31fea8798418352a86e9a73b96b3e949031de2bd42a723cc",
+      "teamBlobSha256": "923aa61605187c6acbc016eece2979609a5380206381939d40564dbe1b947465",
+      "identicalAfterLineEndingNormalization": true,
+      "teamMode": "100644"
+    },
+    {
+      "path": "app/src/test/java/com/yourteam/brainchair/control/Stage3ProtocolTest.kt",
+      "sourceSha256": "897ce57397909c88259b2acbdaf410e677377a97b3bc54ced216e1659b22335c",
+      "identical": false,
+      "teamWorktreeSha256": "897ce57397909c88259b2acbdaf410e677377a97b3bc54ced216e1659b22335c",
+      "teamBlobSha256": "378bea3756bfceb67697d01927ec4868e9f460418892c2566aa91361a0a0e6f4",
+      "identicalAfterLineEndingNormalization": true,
+      "teamMode": "100644"
+    },
+    {
+      "path": "app/src/test/java/com/yourteam/brainchair/control/Stage3ReplayTest.kt",
+      "sourceSha256": "48200d78530447bdbe0d950330f57977438679468fb0ff065df47635e7faa255",
+      "identical": false,
+      "teamWorktreeSha256": "48200d78530447bdbe0d950330f57977438679468fb0ff065df47635e7faa255",
+      "teamBlobSha256": "26c192848e6703639e98ca82c304ffef8e7715c3c6cef8eead22c288c28450d7",
+      "identicalAfterLineEndingNormalization": true,
+      "teamMode": "100644"
+    },
+    {
+      "path": "app/src/test/java/com/yourteam/brainchair/control/Stage3TestSupport.kt",
+      "sourceSha256": "78c3ce74d60029d40e7c3bfffda3da69b6216dad31ac01f46dec2d552ac3dbcd",
+      "identical": false,
+      "teamWorktreeSha256": "78c3ce74d60029d40e7c3bfffda3da69b6216dad31ac01f46dec2d552ac3dbcd",
+      "teamBlobSha256": "c4e43e121a472b47175d7ff61f615318afce035057c50d1d8e2864822caf3c0f",
+      "identicalAfterLineEndingNormalization": true,
+      "teamMode": "100644"
+    },
+    {
+      "path": "app/src/test/java/com/yourteam/brainchair/receiver/ReceiverTest.kt",
+      "sourceSha256": "36abfd9fd53bda36b543cf2a2e26b4f5bbea9361306d9e492bad4d073312b958",
+      "identical": false,
+      "teamWorktreeSha256": "36abfd9fd53bda36b543cf2a2e26b4f5bbea9361306d9e492bad4d073312b958",
+      "teamBlobSha256": "f373333452026867c5dde9c1602b1c23404a164819eae715e7f0bc8c6b3012b8",
+      "identicalAfterLineEndingNormalization": true,
+      "teamMode": "100644"
+    },
+    {
+      "path": "app/src/test/java/com/yourteam/brainchair/signal/AbIntegrationTest.kt",
+      "sourceSha256": "568f3bd5af019e06e7b11d6209a23d6fc1b485fa4e2ea2571c3dc751d21919ba",
+      "identical": false,
+      "teamWorktreeSha256": "568f3bd5af019e06e7b11d6209a23d6fc1b485fa4e2ea2571c3dc751d21919ba",
+      "teamBlobSha256": "e87107ea6e9bc7f7893d84a15aa84e10da29e8f94f0204b13b1e4a19ee62bea1",
+      "identicalAfterLineEndingNormalization": true,
+      "teamMode": "100644"
+    },
+    {
+      "path": "app/src/test/java/com/yourteam/brainchair/signal/RecognitionControlTest.kt",
+      "sourceSha256": "941169ff15250164c76ee1f3905ba867f1f92bc024b5aea96b43bc889a84ae1a",
+      "identical": false,
+      "teamWorktreeSha256": "941169ff15250164c76ee1f3905ba867f1f92bc024b5aea96b43bc889a84ae1a",
+      "teamBlobSha256": "610294a6abbcb5f5cc02042f377a31aa23a46d0de97dfe882325e2d5ee3e4942",
+      "identicalAfterLineEndingNormalization": true,
+      "teamMode": "100644"
+    },
+    {
+      "path": "app/src/test/java/com/yourteam/brainchair/signal/ReplayValidationTest.kt",
+      "sourceSha256": "53016920b2fd340fe796881997999c0d1337440ce45ea7fbf859aaf4e51fec47",
+      "identical": false,
+      "teamWorktreeSha256": "53016920b2fd340fe796881997999c0d1337440ce45ea7fbf859aaf4e51fec47",
+      "teamBlobSha256": "55fc11da59f88d74016c29c992922eb871f56e383714862075a8128866552c49",
+      "identicalAfterLineEndingNormalization": true,
+      "teamMode": "100644"
+    },
+    {
+      "path": "app/src/test/java/com/yourteam/brainchair/signal/SafetyRegressionProbeTest.kt",
+      "sourceSha256": "9d49a078020ace561604c02876583c43feb2ac108b649eefb16cbce4a348f40e",
+      "identical": false,
+      "teamWorktreeSha256": "9d49a078020ace561604c02876583c43feb2ac108b649eefb16cbce4a348f40e",
+      "teamBlobSha256": "b47d5d1693d23fb0e28e52f208361fd68d6f5cea92cad48bfd1f70e8a33b0411",
+      "identicalAfterLineEndingNormalization": true,
+      "teamMode": "100644"
+    },
+    {
+      "path": "app/src/test/java/com/yourteam/brainchair/signal/SignalTest.kt",
+      "sourceSha256": "df498d9e3e818f332c385abf8d229e7e600c083a1cc1e9b70effd0d0e24d07d8",
+      "identical": false,
+      "teamWorktreeSha256": "df498d9e3e818f332c385abf8d229e7e600c083a1cc1e9b70effd0d0e24d07d8",
+      "teamBlobSha256": "0e3cd9d9cde91be7ff3b50127d0ec66de4a1e15368bcf0c94cc3428e7c857e19",
+      "identicalAfterLineEndingNormalization": true,
+      "teamMode": "100644"
+    },
+    {
+      "path": "app/src/test/java/com/yourteam/brainchair/signal/TrialSafetyReplayTest.kt",
+      "sourceSha256": "4cf9a518f25fbdc660aa5f7a9d95be1c5625ab597098aa63246e6cd0f045dd6c",
+      "identical": false,
+      "teamWorktreeSha256": "4cf9a518f25fbdc660aa5f7a9d95be1c5625ab597098aa63246e6cd0f045dd6c",
+      "teamBlobSha256": "fa1fcab9a31a043e88f8c8325b0d17c7a03f912baff473e104357a5af3c2dc58",
+      "identicalAfterLineEndingNormalization": true,
+      "teamMode": "100644"
+    },
+    {
+      "path": "build.gradle.kts",
+      "sourceSha256": "1975118f3510bd4c8ab38391245466fd09b39301597ed8789a3caaf0690deb28",
+      "identical": false,
+      "teamWorktreeSha256": "1975118f3510bd4c8ab38391245466fd09b39301597ed8789a3caaf0690deb28",
+      "teamBlobSha256": "329036499b58c82966a8dabcbc172c4e2804bbb96b775fb656770e6555da3084",
+      "identicalAfterLineEndingNormalization": true,
+      "teamMode": "100644"
+    },
+    {
+      "path": "docs/EEG接口说明.md",
+      "sourceSha256": "2c985399f36c7086e764fc3adc1d88d38d3cf5aa95d68e69bc815ed4c64dafc6",
+      "identical": false,
+      "teamWorktreeSha256": "2c985399f36c7086e764fc3adc1d88d38d3cf5aa95d68e69bc815ed4c64dafc6",
+      "teamBlobSha256": "ddea6406eec1cd64f95ef82a3734d76900041cb11fb67792be5173de03b24d72",
+      "identicalAfterLineEndingNormalization": true,
+      "teamMode": "100644"
+    },
+    {
+      "path": "docs/ab-integration/PHONE-TEST-GUIDE.md",
+      "sourceSha256": "9a7f9705d4e63e0eba1f0233bb3381a02ea51a84c9dbe243ce0b5b5bcd9d561e",
+      "identical": false,
+      "teamWorktreeSha256": "9a7f9705d4e63e0eba1f0233bb3381a02ea51a84c9dbe243ce0b5b5bcd9d561e",
+      "teamBlobSha256": "4363d8765c991260bb091841d3184dbb807091d1ea4923062b85bb4cac710dde",
+      "identicalAfterLineEndingNormalization": true,
+      "teamMode": "100644"
+    },
+    {
+      "path": "docs/ab-integration/PHONE-TEST-RECORD.md",
+      "sourceSha256": "7600d42e44a71b9bd47e481b110a9f44640275744e5c2a24a9bfdf5a0f7b02ee",
+      "identical": false,
+      "teamWorktreeSha256": "7600d42e44a71b9bd47e481b110a9f44640275744e5c2a24a9bfdf5a0f7b02ee",
+      "teamBlobSha256": "dd465c40408ec8eae4669a6efda239805e00a167218ff7190e29be269367bc31",
+      "identicalAfterLineEndingNormalization": true,
+      "teamMode": "100644"
+    },
+    {
+      "path": "docs/ab-integration/README.md",
+      "sourceSha256": "e0d65d5ba2a629275fe4cc94f9f59282f21ee2bc35ef8a1f7c3617399fcca619",
+      "identical": false,
+      "teamWorktreeSha256": "8150256ac2f6cea321ba6b661d3604ee4acedd20e846cb89f6941bdf72edafba",
+      "teamBlobSha256": "b463c1ee180a5f49f8ae9d301c826ad2db18dd5296234ad5db179c05a34af2a8",
+      "identicalAfterLineEndingNormalization": false,
+      "teamMode": "100644"
+    },
+    {
+      "path": "docs/ab-integration/RESULTS.md",
+      "sourceSha256": "821fc3d0e415acf9a1591af7440e12f2a3b14a25bbaa076d9a24741304df4b6e",
+      "identical": false,
+      "teamWorktreeSha256": "821fc3d0e415acf9a1591af7440e12f2a3b14a25bbaa076d9a24741304df4b6e",
+      "teamBlobSha256": "533a3103dbf56eecefc0a4da96b7e5078dd018b9886fa9c7732a482baba86034",
+      "identicalAfterLineEndingNormalization": true,
+      "teamMode": "100644"
+    },
+    {
+      "path": "docs/ab-integration/UNITY-PROTOCOL-CHECKLIST.md",
+      "sourceSha256": "f5b4558502552d20205c3f73e1861a6ac31bfd00ecede43b33d5c6d3ee8b0a66",
+      "identical": false,
+      "teamWorktreeSha256": "f5b4558502552d20205c3f73e1861a6ac31bfd00ecede43b33d5c6d3ee8b0a66",
+      "teamBlobSha256": "44077e479fddd8dd189d7cdaaccf8c4668ea7e8dc37eb709fc589143e673b024",
+      "identicalAfterLineEndingNormalization": true,
+      "teamMode": "100644"
+    },
+    {
+      "path": "docs/ab-integration/evidence.json",
+      "sourceSha256": "e7a847fe6766c43c84c1833dc0e7daee571d178cd1a599f2d1abe865911bafc4",
+      "identical": false,
+      "teamWorktreeSha256": "e7a847fe6766c43c84c1833dc0e7daee571d178cd1a599f2d1abe865911bafc4",
+      "teamBlobSha256": "c8ecc48b32ba9f17127df64f64b85cb82b9124e7a742061166f53c79c769e350",
+      "identicalAfterLineEndingNormalization": true,
+      "teamMode": "100644"
+    },
+    {
+      "path": "docs/cca-window-comparison-confusion.csv",
+      "sourceSha256": "d711ad53ceb27158085a3caaf6df5ee1c18ce13156b660b56e73c6bf639a8cda",
+      "identical": false,
+      "teamWorktreeSha256": "d711ad53ceb27158085a3caaf6df5ee1c18ce13156b660b56e73c6bf639a8cda",
+      "teamBlobSha256": "ebfdc17d858d7436f0ff851dbd06908d584767c8782681b61ee86c7f9cfe9ae6",
+      "identicalAfterLineEndingNormalization": true,
+      "teamMode": "100644"
+    },
+    {
+      "path": "docs/cca-window-comparison-errors.csv",
+      "sourceSha256": "ae902a78a6ee90c740594b0c3a478c6d54fda7f016ef99c1e9d28ae145824461",
+      "identical": false,
+      "teamWorktreeSha256": "ae902a78a6ee90c740594b0c3a478c6d54fda7f016ef99c1e9d28ae145824461",
+      "teamBlobSha256": "3aef2a1ef17a8d1603df68cd82994a28cffeffed524c52769195b1e39345cab7",
+      "identicalAfterLineEndingNormalization": true,
+      "teamMode": "100644"
+    },
+    {
+      "path": "docs/cca-window-comparison-evidence.json",
+      "sourceSha256": "226fed0f383dfd1933c01a9128cf6e2681c8c114df988dc6dbbc1e36126610b0",
+      "identical": false,
+      "teamWorktreeSha256": "226fed0f383dfd1933c01a9128cf6e2681c8c114df988dc6dbbc1e36126610b0",
+      "teamBlobSha256": "b9d52ebfcc3dddf5d67b336f761f7eca041ae7b91ca92410d66ab20da8e19fa3",
+      "identicalAfterLineEndingNormalization": true,
+      "teamMode": "100644"
+    },
+    {
+      "path": "docs/cca-window-comparison-summary.csv",
+      "sourceSha256": "52a419f963c1207aee4d7c6f8449df50249a66e9878dee2e14f730b7f2433266",
+      "identical": false,
+      "teamWorktreeSha256": "52a419f963c1207aee4d7c6f8449df50249a66e9878dee2e14f730b7f2433266",
+      "teamBlobSha256": "95755820a650df1828766cef709c8c0cdb9749cdd9674b998fa12ffd3625299f",
+      "identicalAfterLineEndingNormalization": true,
+      "teamMode": "100644"
+    },
+    {
+      "path": "docs/cca-window-comparison-trials.csv",
+      "sourceSha256": "8e34a9ec2089383cb3e5fa417e8a92b9c736b8bf08ed092bc8d3634beb138477",
+      "identical": false,
+      "teamWorktreeSha256": "8e34a9ec2089383cb3e5fa417e8a92b9c736b8bf08ed092bc8d3634beb138477",
+      "teamBlobSha256": "d196b858f3d7058c37c40537a0bbfecf358a09c1cfe8a88aeca177fd461bcaf2",
+      "identicalAfterLineEndingNormalization": true,
+      "teamMode": "100644"
+    },
+    {
+      "path": "docs/cca-window-comparison-windows.csv",
+      "sourceSha256": "b7269b200f9ee668b94257dfbca2e117950257a25db56c29c81d4a07c77213ba",
+      "identical": false,
+      "teamWorktreeSha256": "b7269b200f9ee668b94257dfbca2e117950257a25db56c29c81d4a07c77213ba",
+      "teamBlobSha256": "8cfe7365980477b8ef0c9a08ea86031dfe9089b9a6423b79243a0665f9bbfd9e",
+      "identicalAfterLineEndingNormalization": true,
+      "teamMode": "100644"
+    },
+    {
+      "path": "docs/cca-window-comparison.md",
+      "sourceSha256": "aef99655659f2cae6ac793858bf752cac8e2756649429a9a3dc05e57f486b857",
+      "identical": false,
+      "teamWorktreeSha256": "aef99655659f2cae6ac793858bf752cac8e2756649429a9a3dc05e57f486b857",
+      "teamBlobSha256": "05b4779c33560b58c24a2a473c84b08d8e9e2aabacacfc7c5001e604bb20f8db",
+      "identicalAfterLineEndingNormalization": true,
+      "teamMode": "100644"
+    },
+    {
+      "path": "docs/download-checksums.json",
+      "sourceSha256": "ef7f596de654c2e984e91e725fd0c6789267ab226ce9a96d4c52602dcb6dd02f",
+      "identical": false,
+      "teamWorktreeSha256": "ef7f596de654c2e984e91e725fd0c6789267ab226ce9a96d4c52602dcb6dd02f",
+      "teamBlobSha256": "8ddbad087b44280db4f496748859239c24005d07400c3c9515ffe5a8e38d5f76",
+      "identicalAfterLineEndingNormalization": true,
+      "teamMode": "100644"
+    },
+    {
+      "path": "docs/stage1/CONFLICTS.md",
+      "sourceSha256": "d553162368a95088902018687d7b3bbd1e7bd0c804441309953340057130b2c2",
+      "identical": false,
+      "teamWorktreeSha256": "d553162368a95088902018687d7b3bbd1e7bd0c804441309953340057130b2c2",
+      "teamBlobSha256": "efa50ce51f0e181efecb21ddde092a1f06acf70c9d8d0da041200ab15f219e5f",
+      "identicalAfterLineEndingNormalization": true,
+      "teamMode": "100644"
+    },
+    {
+      "path": "docs/stage1/README.md",
+      "sourceSha256": "889ad711684e237f5e163fb9dd1308f0aef0519f5667209f14021c593f623a51",
+      "identical": false,
+      "teamWorktreeSha256": "889ad711684e237f5e163fb9dd1308f0aef0519f5667209f14021c593f623a51",
+      "teamBlobSha256": "75f2a0010bf2d17aa6900381b6902551c5b1685723e01727bcd1f0cb1ec943da",
+      "identicalAfterLineEndingNormalization": true,
+      "teamMode": "100644"
+    },
+    {
+      "path": "docs/stage1/TEST-REPORT.md",
+      "sourceSha256": "7b738bad66cedbc66b2ed08a1b511d810bf889fe58aea95b442021087bfe3baf",
+      "identical": false,
+      "teamWorktreeSha256": "7b738bad66cedbc66b2ed08a1b511d810bf889fe58aea95b442021087bfe3baf",
+      "teamBlobSha256": "9be5203e24f9c26938f4b076f4cf29fd0f2effb67e40131b269789d19abcebe0",
+      "identicalAfterLineEndingNormalization": true,
+      "teamMode": "100644"
+    },
+    {
+      "path": "docs/stage1/source-hashes.json",
+      "sourceSha256": "ef88f6168a63e3aafed3dce007cdae65ae93c4d034c68ce7ce8813b2af743dab",
+      "identical": false,
+      "teamWorktreeSha256": "ef88f6168a63e3aafed3dce007cdae65ae93c4d034c68ce7ce8813b2af743dab",
+      "teamBlobSha256": "f9552a47a9d555202b5827838c13b7b3924f90782de0a619bdbe61d85233916e",
+      "identicalAfterLineEndingNormalization": true,
+      "teamMode": "100644"
+    },
+    {
+      "path": "docs/stage1/sources/PRD-BrainchairAPP-MVP(1).md",
+      "sourceSha256": "105cae634c9bd03d299144738884a068e83253cc7faa4f5dfbf2ff83ae8472e0",
+      "identical": true,
+      "teamWorktreeSha256": "105cae634c9bd03d299144738884a068e83253cc7faa4f5dfbf2ff83ae8472e0",
+      "teamBlobSha256": "105cae634c9bd03d299144738884a068e83253cc7faa4f5dfbf2ff83ae8472e0",
+      "identicalAfterLineEndingNormalization": true,
+      "teamMode": "100644"
+    },
+    {
+      "path": "docs/stage1/sources/Proposal-BrainchairAPP(1).md",
+      "sourceSha256": "72cb913a307f55ebb74a570971a8361319fb4698a68f0161141cc99b373a372f",
+      "identical": true,
+      "teamWorktreeSha256": "72cb913a307f55ebb74a570971a8361319fb4698a68f0161141cc99b373a372f",
+      "teamBlobSha256": "72cb913a307f55ebb74a570971a8361319fb4698a68f0161141cc99b373a372f",
+      "identicalAfterLineEndingNormalization": true,
+      "teamMode": "100644"
+    },
+    {
+      "path": "docs/stage1/sources/acceptance_probe.py",
+      "sourceSha256": "a0686390d7cfaa49a83cf98d3b37a6e07378369c03ae2df60555e7b0f8933b34",
+      "identical": true,
+      "teamWorktreeSha256": "a0686390d7cfaa49a83cf98d3b37a6e07378369c03ae2df60555e7b0f8933b34",
+      "teamBlobSha256": "a0686390d7cfaa49a83cf98d3b37a6e07378369c03ae2df60555e7b0f8933b34",
+      "identicalAfterLineEndingNormalization": true,
+      "teamMode": "100644"
+    },
+    {
+      "path": "docs/stage1/sources/handover-to-team-b.md",
+      "sourceSha256": "f448ff047fa87db53e8a271f48a3e66237cafd11bbc3b153e365d0ab5826594b",
+      "identical": true,
+      "teamWorktreeSha256": "f448ff047fa87db53e8a271f48a3e66237cafd11bbc3b153e365d0ab5826594b",
+      "teamBlobSha256": "f448ff047fa87db53e8a271f48a3e66237cafd11bbc3b153e365d0ab5826594b",
+      "identicalAfterLineEndingNormalization": true,
+      "teamMode": "100644"
+    },
+    {
+      "path": "docs/stage1/sources/receiver-handbook.md",
+      "sourceSha256": "8c23ce6f7bc88f7f0594a3ce63bee5598b36685718ca23a7b93768a79f52984b",
+      "identical": true,
+      "teamWorktreeSha256": "8c23ce6f7bc88f7f0594a3ce63bee5598b36685718ca23a7b93768a79f52984b",
+      "teamBlobSha256": "8c23ce6f7bc88f7f0594a3ce63bee5598b36685718ca23a7b93768a79f52984b",
+      "identicalAfterLineEndingNormalization": true,
+      "teamMode": "100644"
+    },
+    {
+      "path": "docs/stage1/sources/system-architecture.md",
+      "sourceSha256": "2e2858c9f240b6f1b188bb956a42ea569ef9a0e36db39e67160dd7c7d94463e6",
+      "identical": true,
+      "teamWorktreeSha256": "2e2858c9f240b6f1b188bb956a42ea569ef9a0e36db39e67160dd7c7d94463e6",
+      "teamBlobSha256": "2e2858c9f240b6f1b188bb956a42ea569ef9a0e36db39e67160dd7c7d94463e6",
+      "identicalAfterLineEndingNormalization": true,
+      "teamMode": "100644"
+    },
+    {
+      "path": "docs/stage1/sources/udp-protocol.md",
+      "sourceSha256": "5aa3405f4a4d85e39cfe91f00f27f4936de4805fc7d2021a47ed2ab48c8a8a9d",
+      "identical": true,
+      "teamWorktreeSha256": "5aa3405f4a4d85e39cfe91f00f27f4936de4805fc7d2021a47ed2ab48c8a8a9d",
+      "teamBlobSha256": "5aa3405f4a4d85e39cfe91f00f27f4936de4805fc7d2021a47ed2ab48c8a8a9d",
+      "identicalAfterLineEndingNormalization": true,
+      "teamMode": "100644"
+    },
+    {
+      "path": "docs/stage2/README.md",
+      "sourceSha256": "d96a2cd21eac79f4e0ae41bc80b5936e05499d46aaa6afd46baae9544b65c6ff",
+      "identical": false,
+      "teamWorktreeSha256": "d96a2cd21eac79f4e0ae41bc80b5936e05499d46aaa6afd46baae9544b65c6ff",
+      "teamBlobSha256": "070bffe49f75f77cfc8b080dae8e9fb1aa4820e0505ebcd811c74dca2020df7f",
+      "identicalAfterLineEndingNormalization": true,
+      "teamMode": "100644"
+    },
+    {
+      "path": "docs/stage2/TEST-REPORT.md",
+      "sourceSha256": "77c8e2c74e9dab18d1c97706aeba3d6eebf64722b904eee2757bf7e82d31f706",
+      "identical": false,
+      "teamWorktreeSha256": "77c8e2c74e9dab18d1c97706aeba3d6eebf64722b904eee2757bf7e82d31f706",
+      "teamBlobSha256": "3a5a4451e315d58ad8fde9f3b82453ebacd0a9d96fd9719c69554e585c46a639",
+      "identicalAfterLineEndingNormalization": true,
+      "teamMode": "100644"
+    },
+    {
+      "path": "docs/stage25/ANDROID.md",
+      "sourceSha256": "2308355eef8d0fe10adf7dee1919c798ebb72027c1d4a10821c83c73e2750149",
+      "identical": false,
+      "teamWorktreeSha256": "2308355eef8d0fe10adf7dee1919c798ebb72027c1d4a10821c83c73e2750149",
+      "teamBlobSha256": "536515d31be6cda0e67430bc3bd2a15ad214fe38108dd8cb6036b037e0bb0575",
+      "identicalAfterLineEndingNormalization": true,
+      "teamMode": "100644"
+    },
+    {
+      "path": "docs/stage25/README.md",
+      "sourceSha256": "424b89fc22034b5ba62e76974e8cbf93fe137b49234295f74ed8a267dff15c83",
+      "identical": false,
+      "teamWorktreeSha256": "54d12ad531c04efa43ca91ea95b8610d9f8855ee79547df4723a248d17f383e0",
+      "teamBlobSha256": "12578bb76ac2a18f481f232b8aaeb01ed6b04033581d5629e122aa1be0222e94",
+      "identicalAfterLineEndingNormalization": false,
+      "teamMode": "100644"
+    },
+    {
+      "path": "docs/stage25/RESULTS.md",
+      "sourceSha256": "83308b4afd14bda7f670f365258a0156f495b7751d0adc0c3a6294a553282334",
+      "identical": false,
+      "teamWorktreeSha256": "83308b4afd14bda7f670f365258a0156f495b7751d0adc0c3a6294a553282334",
+      "teamBlobSha256": "720497b9b0909002f538558b32f40d7e7423b8d18c41ae3aa82c0f71f0b15db6",
+      "identicalAfterLineEndingNormalization": true,
+      "teamMode": "100644"
+    },
+    {
+      "path": "docs/stage25/android-evidence/evaluation-checks.json",
+      "sourceSha256": "9e42c91e52f70fea30a5e0db9a155d8792a2230f2a0437681dbc0a654c1a952f",
+      "identical": false,
+      "teamWorktreeSha256": "9e42c91e52f70fea30a5e0db9a155d8792a2230f2a0437681dbc0a654c1a952f",
+      "teamBlobSha256": "1d909ce18aefbf3ddd24e756527e1bf951cbafc06f43563e24b288a0a2f17fd4",
+      "identicalAfterLineEndingNormalization": true,
+      "teamMode": "100644"
+    },
+    {
+      "path": "docs/stage25/android-evidence/evaluation-performance.json",
+      "sourceSha256": "d9e9b94603e1fa64490452724705578930cdc9477d943892ca1fab4eb04deed4",
+      "identical": false,
+      "teamWorktreeSha256": "d9e9b94603e1fa64490452724705578930cdc9477d943892ca1fab4eb04deed4",
+      "teamBlobSha256": "e24b38423153c0c5ba4e56b377058d57230929a410635403728058df884f9307",
+      "identicalAfterLineEndingNormalization": true,
+      "teamMode": "100644"
+    },
+    {
+      "path": "docs/stage25/android-evidence/mixed-checks.json",
+      "sourceSha256": "e6e8cafbd850dc85da9b4f053ee0fc92925c9db0dbee4f454e165ef8e5dee6a7",
+      "identical": false,
+      "teamWorktreeSha256": "e6e8cafbd850dc85da9b4f053ee0fc92925c9db0dbee4f454e165ef8e5dee6a7",
+      "teamBlobSha256": "f030b14f80a3b39da376d08a96a9f9b4303c9d8daadffc503764cb05a48011bf",
+      "identicalAfterLineEndingNormalization": true,
+      "teamMode": "100644"
+    },
+    {
+      "path": "docs/stage25/android-evidence/mixed-performance.json",
+      "sourceSha256": "8e93c8631c271eab58c86368c04367ecec5c3dccc33d0439d4d717b50ca9ea5a",
+      "identical": false,
+      "teamWorktreeSha256": "8e93c8631c271eab58c86368c04367ecec5c3dccc33d0439d4d717b50ca9ea5a",
+      "teamBlobSha256": "90de11ecad371e811693e3c0ad416617b8386f3bda565f98b857a40f58c91b86",
+      "identicalAfterLineEndingNormalization": true,
+      "teamMode": "100644"
+    },
+    {
+      "path": "docs/stage25/calibration-grid.csv",
+      "sourceSha256": "4573a2f092ca83d8d3c378e46442c459d199324d15efb9feb49b455269ac9beb",
+      "identical": false,
+      "teamWorktreeSha256": "4573a2f092ca83d8d3c378e46442c459d199324d15efb9feb49b455269ac9beb",
+      "teamBlobSha256": "fb6405620c52d9f4b311b4e4580c8ae816dc63d7f42dcfa6d39bcb459b213547",
+      "identicalAfterLineEndingNormalization": true,
+      "teamMode": "100644"
+    },
+    {
+      "path": "docs/stage25/checks.tsv",
+      "sourceSha256": "b60592e30f4f4c4c5905a7c0b442095693cfe6144b01bd7f0aa5d0b5d71e3f83",
+      "identical": false,
+      "teamWorktreeSha256": "b60592e30f4f4c4c5905a7c0b442095693cfe6144b01bd7f0aa5d0b5d71e3f83",
+      "teamBlobSha256": "394f259d95d63e76036d7713963dd8755b56c052c3b8065c6941ab7f96a83a4c",
+      "identicalAfterLineEndingNormalization": true,
+      "teamMode": "100644"
+    },
+    {
+      "path": "docs/stage25/data-inspection.json",
+      "sourceSha256": "d68050d3684286273b1c58340c6e82dfaf02267c9e2b6760e22407bd5c0cfc0b",
+      "identical": false,
+      "teamWorktreeSha256": "56df6eda331263900b81aa5290b833572a77f972d55492d15642c81e14aead2a",
+      "teamBlobSha256": "4f6790b130ecf025e0dfb38ec565c90937bab7b6cb37b70fa6f00b0dbcad1b33",
+      "identicalAfterLineEndingNormalization": false,
+      "teamMode": "100644"
+    },
+    {
+      "path": "docs/stage25/errors.csv",
+      "sourceSha256": "1997c44330dd7a19de58a5dd5a835b1a813eaa3e395a673e5ff2ce8d072f6b21",
+      "identical": false,
+      "teamWorktreeSha256": "1997c44330dd7a19de58a5dd5a835b1a813eaa3e395a673e5ff2ce8d072f6b21",
+      "teamBlobSha256": "04bf0e7957b35233f39694c08ffee5ea8e56c965ce4edd4cd13dc9be1bfcb42b",
+      "identicalAfterLineEndingNormalization": true,
+      "teamMode": "100644"
+    },
+    {
+      "path": "docs/stage25/segments.csv",
+      "sourceSha256": "9724522b79d72498b572c8de3dd0ef782e2f368f6d098538092a7644a0ce8a0c",
+      "identical": false,
+      "teamWorktreeSha256": "9724522b79d72498b572c8de3dd0ef782e2f368f6d098538092a7644a0ce8a0c",
+      "teamBlobSha256": "c76a1a76e12029bac3fe8ad87f07ce6130025d2d7491bb99f2f66fffd71a8452",
+      "identicalAfterLineEndingNormalization": true,
+      "teamMode": "100644"
+    },
+    {
+      "path": "docs/stage25/summary.json",
+      "sourceSha256": "1abf8e2a5313487452a49f208dfb27e8d32d38c7ede079765124f4ad1a9f817f",
+      "identical": false,
+      "teamWorktreeSha256": "1abf8e2a5313487452a49f208dfb27e8d32d38c7ede079765124f4ad1a9f817f",
+      "teamBlobSha256": "d6e0b167f2cedc58d44a2c12334e14844a8b7aa3c50ea593753ba302a79e04f6",
+      "identicalAfterLineEndingNormalization": true,
+      "teamMode": "100644"
+    },
+    {
+      "path": "docs/stage26/ANDROID.md",
+      "sourceSha256": "1d3ee9f4fe4101bc66ea61cc1696d15a159df57bb6b3653dc19dfae2af9c1e78",
+      "identical": false,
+      "teamWorktreeSha256": "1d3ee9f4fe4101bc66ea61cc1696d15a159df57bb6b3653dc19dfae2af9c1e78",
+      "teamBlobSha256": "9637f5aaad574a7eb312860f27969704dbc41e2a13425591a3bf69da06722745",
+      "identicalAfterLineEndingNormalization": true,
+      "teamMode": "100644"
+    },
+    {
+      "path": "docs/stage26/README.md",
+      "sourceSha256": "5da6eeea0bf96ea9026d64c9423ea5c2d9dd2c1b0f78c1191f7e038db187cd1d",
+      "identical": false,
+      "teamWorktreeSha256": "5da6eeea0bf96ea9026d64c9423ea5c2d9dd2c1b0f78c1191f7e038db187cd1d",
+      "teamBlobSha256": "ecee96ae7fe9ea30b07f1ef288f666fba22db05b16102031135c2e175bfd7b8e",
+      "identicalAfterLineEndingNormalization": true,
+      "teamMode": "100644"
+    },
+    {
+      "path": "docs/stage26/RESULTS.md",
+      "sourceSha256": "940cfd78f5af5ff9b7264538c43088f5cf60733e0794d0066e0e7404fd95dcad",
+      "identical": false,
+      "teamWorktreeSha256": "940cfd78f5af5ff9b7264538c43088f5cf60733e0794d0066e0e7404fd95dcad",
+      "teamBlobSha256": "8f98c74978b24c7ecc503a75083e63a8f0414284312bc4439403dd677b20f60e",
+      "identicalAfterLineEndingNormalization": true,
+      "teamMode": "100644"
+    },
+    {
+      "path": "docs/stage26/android-evidence/checks.json",
+      "sourceSha256": "d8324a39bf3faedd27b6dff4a5c932f2aecdf5a65aa693a24e58093de22b2982",
+      "identical": false,
+      "teamWorktreeSha256": "d8324a39bf3faedd27b6dff4a5c932f2aecdf5a65aa693a24e58093de22b2982",
+      "teamBlobSha256": "17ef76b8d772f56a9bfc4baa0ee4cf78cb9499eae78253fefe1ea903e25e3cb1",
+      "identicalAfterLineEndingNormalization": true,
+      "teamMode": "100644"
+    },
+    {
+      "path": "docs/stage26/android-evidence/performance.json",
+      "sourceSha256": "cf52c7270787125a773384edf9f2f9dec467ca8342ea6548b1e5163ed25900eb",
+      "identical": false,
+      "teamWorktreeSha256": "cf52c7270787125a773384edf9f2f9dec467ca8342ea6548b1e5163ed25900eb",
+      "teamBlobSha256": "6fecb4ddadedb2c0eef999f0dfabb9e6523d27978c9e674eb1afde0d67040cbb",
+      "identicalAfterLineEndingNormalization": true,
+      "teamMode": "100644"
+    },
+    {
+      "path": "docs/stage26/errors.csv",
+      "sourceSha256": "a97ceb0c61027d86872b9d127f7b88cdbfa83f079ba06dcdec9c116be9d91f5d",
+      "identical": false,
+      "teamWorktreeSha256": "a97ceb0c61027d86872b9d127f7b88cdbfa83f079ba06dcdec9c116be9d91f5d",
+      "teamBlobSha256": "2e130427de7bc6d8384eedb2b9da3ffd56f84c7568f8cc180b992b38840cef77",
+      "identicalAfterLineEndingNormalization": true,
+      "teamMode": "100644"
+    },
+    {
+      "path": "docs/stage26/junit-summary.json",
+      "sourceSha256": "e82bb2f25faff7c216791a2a8c20f01d0470061c41281ecf21665b03b55ede27",
+      "identical": false,
+      "teamWorktreeSha256": "e82bb2f25faff7c216791a2a8c20f01d0470061c41281ecf21665b03b55ede27",
+      "teamBlobSha256": "c01a0c4aa9a1417b39e099eba9ca435b2977395bff3f0ff82a841705f4135371",
+      "identicalAfterLineEndingNormalization": true,
+      "teamMode": "100644"
+    },
+    {
+      "path": "docs/stage26/layer-matrices.json",
+      "sourceSha256": "b788055cdbe6641240d73e62c49d3059d2176b943082b4fea75e39cf2d046271",
+      "identical": false,
+      "teamWorktreeSha256": "b788055cdbe6641240d73e62c49d3059d2176b943082b4fea75e39cf2d046271",
+      "teamBlobSha256": "d9dcaf21148caf1b1c5f06f6119f7bebd405a5ea829741b62c2c08048b23623e",
+      "identicalAfterLineEndingNormalization": true,
+      "teamMode": "100644"
+    },
+    {
+      "path": "docs/stage26/safety-probes.csv",
+      "sourceSha256": "e04fc2b9c619fbf8ef2e8b13591756c908c564be75e399e5edd3ac258623218f",
+      "identical": false,
+      "teamWorktreeSha256": "e04fc2b9c619fbf8ef2e8b13591756c908c564be75e399e5edd3ac258623218f",
+      "teamBlobSha256": "2ff53d0aa20ce58a0318aa19bd6f3d9b40237be3f93c6bff2eb5a1386e82dc1d",
+      "identicalAfterLineEndingNormalization": true,
+      "teamMode": "100644"
+    },
+    {
+      "path": "docs/stage26/summary.json",
+      "sourceSha256": "252946067152cbad09d0a98c001bcb4aa048b8b9394677e5f8961e3c1303bc27",
+      "identical": false,
+      "teamWorktreeSha256": "252946067152cbad09d0a98c001bcb4aa048b8b9394677e5f8961e3c1303bc27",
+      "teamBlobSha256": "df9f464398efe42c5adf9bed66ca57b1539baba37f0fd1a401d192b47d115d99",
+      "identicalAfterLineEndingNormalization": true,
+      "teamMode": "100644"
+    },
+    {
+      "path": "docs/stage26/transitions.csv",
+      "sourceSha256": "c999d786d340e6e1187837f12f3e6275fbd5934336054f6a83f5be40fc9d79e2",
+      "identical": false,
+      "teamWorktreeSha256": "c999d786d340e6e1187837f12f3e6275fbd5934336054f6a83f5be40fc9d79e2",
+      "teamBlobSha256": "86b54d007b34a84f75efe98c0eee02e9cb2278cce9e3d87f6f53bc52ec24f7e7",
+      "identicalAfterLineEndingNormalization": true,
+      "teamMode": "100644"
+    },
+    {
+      "path": "docs/stage26/trials.csv",
+      "sourceSha256": "f676ab0bb7ef6e451144967f752bd0c456dc3a1ca5aaa5318eedc67b9daa4539",
+      "identical": false,
+      "teamWorktreeSha256": "f676ab0bb7ef6e451144967f752bd0c456dc3a1ca5aaa5318eedc67b9daa4539",
+      "teamBlobSha256": "9307967fb192b599af1600e7e0555b455e3b4e160be0c59f7b823983d3fa97c1",
+      "identicalAfterLineEndingNormalization": true,
+      "teamMode": "100644"
+    },
+    {
+      "path": "docs/stage27/README.md",
+      "sourceSha256": "97daeb0b177a2c8552bb94317a74d7f9bc0cbbfcda2544c4be5dceb3c106a208",
+      "identical": false,
+      "teamWorktreeSha256": "97daeb0b177a2c8552bb94317a74d7f9bc0cbbfcda2544c4be5dceb3c106a208",
+      "teamBlobSha256": "109045b53a68635cb0039a1ae3a374857feaf829bdbe34293b7e152f67c8f755",
+      "identicalAfterLineEndingNormalization": true,
+      "teamMode": "100644"
+    },
+    {
+      "path": "docs/stage27/RESULTS.md",
+      "sourceSha256": "370213ea5e36c5a25a717afd90cc99067d5fba27c8e3cdbf478b5fc3ebe1e75d",
+      "identical": false,
+      "teamWorktreeSha256": "370213ea5e36c5a25a717afd90cc99067d5fba27c8e3cdbf478b5fc3ebe1e75d",
+      "teamBlobSha256": "8e51e35ac5dc214326e8a80f8d0fa6e69c6a113efa1141e10c512dbad0093300",
+      "identicalAfterLineEndingNormalization": true,
+      "teamMode": "100644"
+    },
+    {
+      "path": "docs/stage27/TEST-com.yourteam.brainchair.control.Stage27ControlTest.xml",
+      "sourceSha256": "7baddcd0bee89b8ce2d961e3175bdaf171c7791aa1adb8fb509b371730ad6fda",
+      "identical": false,
+      "teamWorktreeSha256": "7baddcd0bee89b8ce2d961e3175bdaf171c7791aa1adb8fb509b371730ad6fda",
+      "teamBlobSha256": "cc3c20f6e587f34bc2ab747d5074da02ee0e6db34fdecf5b28fdc402335808f0",
+      "identicalAfterLineEndingNormalization": true,
+      "teamMode": "100644"
+    },
+    {
+      "path": "docs/stage27/TEST-com.yourteam.brainchair.control.Stage27IntegrationTest.xml",
+      "sourceSha256": "f64c59e3a4ced8ee3767dced8d5e074a276537d2d606f3bf5846a02b2dc7a8dd",
+      "identical": false,
+      "teamWorktreeSha256": "f64c59e3a4ced8ee3767dced8d5e074a276537d2d606f3bf5846a02b2dc7a8dd",
+      "teamBlobSha256": "1dddf1794ee0ad81d45370d9fa512824cd62840348a0ed0a73516fc5ab9de3c8",
+      "identicalAfterLineEndingNormalization": true,
+      "teamMode": "100644"
+    },
+    {
+      "path": "docs/stage27/android-diagnostic-timing.json",
+      "sourceSha256": "70c759803280318b55596324931e00460779717b8feb35993d5a3b1057b205e2",
+      "identical": false,
+      "teamWorktreeSha256": "70c759803280318b55596324931e00460779717b8feb35993d5a3b1057b205e2",
+      "teamBlobSha256": "42edd289de72caf0d659062e5e55ec77e65f5544de56a96d15c162d72b3f4c4c",
+      "identicalAfterLineEndingNormalization": true,
+      "teamMode": "100644"
+    },
+    {
+      "path": "docs/stage27/evidence.json",
+      "sourceSha256": "7be0f6f1435ddf76c1a7c47e254959c212481bdb506525c1f37588f2eace4feb",
+      "identical": false,
+      "teamWorktreeSha256": "a7176965d8daa1892afc0ee67b0555ead204dc9372c1e232e553f164316fc94a",
+      "teamBlobSha256": "a990d7330da3a3f200030d7ffb8d69dfa37f570a55ffc221f6a12748ca1c454e",
+      "identicalAfterLineEndingNormalization": false,
+      "teamMode": "100644"
+    },
+    {
+      "path": "docs/stage27/udp-timeline.csv",
+      "sourceSha256": "3df55106580a29b58cfb401a130fb6c7681df9ca771ad6b6b1101979405b5cd3",
+      "identical": false,
+      "teamWorktreeSha256": "3df55106580a29b58cfb401a130fb6c7681df9ca771ad6b6b1101979405b5cd3",
+      "teamBlobSha256": "983e535630a5085d1715e206a188e1f08e9b034863879198a874e967c19b6a0a",
+      "identicalAfterLineEndingNormalization": true,
+      "teamMode": "100644"
+    },
+    {
+      "path": "docs/stage3/README.md",
+      "sourceSha256": "4c9d60a710989f7795cb2bcda1717952da98527e185f57e5c9988c5393b457a3",
+      "identical": false,
+      "teamWorktreeSha256": "4c9d60a710989f7795cb2bcda1717952da98527e185f57e5c9988c5393b457a3",
+      "teamBlobSha256": "b9466563d5dceb11ada30d943c82676105092af113ea4833c2426a9fe3912bc3",
+      "identicalAfterLineEndingNormalization": true,
+      "teamMode": "100644"
+    },
+    {
+      "path": "docs/stage3/integration-notes.md",
+      "sourceSha256": "2ff6262d3b1a5c2caf1009e42d04bf4ed431e66a23cad3356076e457e88c8f12",
+      "identical": false,
+      "teamWorktreeSha256": "2ff6262d3b1a5c2caf1009e42d04bf4ed431e66a23cad3356076e457e88c8f12",
+      "teamBlobSha256": "83fc368683e7417c60f68e90a69b15f7c4f228cfa76e51058be8f39f807a5a81",
+      "identicalAfterLineEndingNormalization": true,
+      "teamMode": "100644"
+    },
+    {
+      "path": "docs/stage3/paced-udp-timeline.csv",
+      "sourceSha256": "3479f848b9bb8b59694c661536b8e126bffc44835b47581b8e43e8547df0e79d",
+      "identical": false,
+      "teamWorktreeSha256": "3479f848b9bb8b59694c661536b8e126bffc44835b47581b8e43e8547df0e79d",
+      "teamBlobSha256": "1e23320ccc8ec84e1554d48ec6d34a773a540de33896ecae8df052ffe9f94cb2",
+      "identicalAfterLineEndingNormalization": true,
+      "teamMode": "100644"
+    },
+    {
+      "path": "docs/stage3/real-2p5-regression.csv",
+      "sourceSha256": "06ad12e6992c130ec41c4caf640376f9b7c501dd1b51cd903b590f89c7db06aa",
+      "identical": false,
+      "teamWorktreeSha256": "06ad12e6992c130ec41c4caf640376f9b7c501dd1b51cd903b590f89c7db06aa",
+      "teamBlobSha256": "bfc8e8d8513d43ee8d599171a55c94e74b2316a17eb808e21d21fa8f00043cb3",
+      "identicalAfterLineEndingNormalization": true,
+      "teamMode": "100644"
+    },
+    {
+      "path": "docs/stage3/test-results.json",
+      "sourceSha256": "bffa05a8d0b84a9b733c8b6f1fc5a2b3317ffa4094e0a2923f7f7c049de1005f",
+      "identical": false,
+      "teamWorktreeSha256": "bffa05a8d0b84a9b733c8b6f1fc5a2b3317ffa4094e0a2923f7f7c049de1005f",
+      "teamBlobSha256": "b0fa87874a3fe3930727e688727a73bf414549dbe8791f86d8776c34e5726fcd",
+      "identicalAfterLineEndingNormalization": true,
+      "teamMode": "100644"
+    },
+    {
+      "path": "docs/stage3/udp-9001-interface-source.md",
+      "sourceSha256": "9d4c9dd2c3420757d296c3fce20820d4bd78fc79b9a07b68ed28c1bb78902cb7",
+      "identical": false,
+      "teamWorktreeSha256": "9d4c9dd2c3420757d296c3fce20820d4bd78fc79b9a07b68ed28c1bb78902cb7",
+      "teamBlobSha256": "c632789f13a5e4bd63e7f12ea75abf3461e103f4304d413c45f285d70092d717",
+      "identicalAfterLineEndingNormalization": true,
+      "teamMode": "100644"
+    },
+    {
+      "path": "docs/团队计划.md",
+      "sourceSha256": "05726ed529a69db8231c97190e01fb1d941965b4cbe5ed563f3c1f646add7738",
+      "identical": false,
+      "teamWorktreeSha256": "05726ed529a69db8231c97190e01fb1d941965b4cbe5ed563f3c1f646add7738",
+      "teamBlobSha256": "b443d9633e348c1eb4b41ada4fc026fb99d6dddc85f0d4168da973fc7c159b89",
+      "identicalAfterLineEndingNormalization": true,
+      "teamMode": "100644"
+    },
+    {
+      "path": "docs/测试与安全记录.md",
+      "sourceSha256": "2ad47590ccb9060c6e7677bb0859be045d9c25759c59a949a5594f24f4b11f42",
+      "identical": false,
+      "teamWorktreeSha256": "2ad47590ccb9060c6e7677bb0859be045d9c25759c59a949a5594f24f4b11f42",
+      "teamBlobSha256": "2b78ac2b89d8d979df51e042ebce6c375d086a9acd6922f0cf13f93e751e5781",
+      "identicalAfterLineEndingNormalization": true,
+      "teamMode": "100644"
+    },
+    {
+      "path": "docs/演示与答辩.md",
+      "sourceSha256": "e840591dc5995156b511cfded430eee2e2a87bf2497bee49453db38717820999",
+      "identical": false,
+      "teamWorktreeSha256": "e840591dc5995156b511cfded430eee2e2a87bf2497bee49453db38717820999",
+      "teamBlobSha256": "c786af74ca6c254e93550e8c47a3848fedd2170fc5d621ac1932bbb4964bb7df",
+      "identicalAfterLineEndingNormalization": true,
+      "teamMode": "100644"
+    },
+    {
+      "path": "docs/环境与下载清单.md",
+      "sourceSha256": "a2229fe74dccdbe216ef735f75fa8a80f7bfc3fc2c82e6f0148be354b2eeea35",
+      "identical": false,
+      "teamWorktreeSha256": "a2229fe74dccdbe216ef735f75fa8a80f7bfc3fc2c82e6f0148be354b2eeea35",
+      "teamBlobSha256": "04b8992a63b9968d75c46746a086475c8593ea37de50496c6afeda23b36635c5",
+      "identicalAfterLineEndingNormalization": true,
+      "teamMode": "100644"
+    },
+    {
+      "path": "docs/通信协议说明书-v1.0.md",
+      "sourceSha256": "2ba4085755516f2251acb9bb12639fd956378ce5b5a52f71abd10d340ac189fa",
+      "identical": false,
+      "teamWorktreeSha256": "2ba4085755516f2251acb9bb12639fd956378ce5b5a52f71abd10d340ac189fa",
+      "teamBlobSha256": "faccb568d5fc9a2eeb64f4882cf58c1d7355f50d21edac72cee5b2cd7d43a991",
+      "identicalAfterLineEndingNormalization": true,
+      "teamMode": "100644"
+    },
+    {
+      "path": "gradle.properties",
+      "sourceSha256": "4f8a836dfb16a1a70863f64e425223a8eee2d80ea79302d7cf47e6d46eb96691",
+      "identical": false,
+      "teamWorktreeSha256": "4f8a836dfb16a1a70863f64e425223a8eee2d80ea79302d7cf47e6d46eb96691",
+      "teamBlobSha256": "df3e33587cd4c2ad500b4acfba7ffd8f3b2e13b314aff3f3e69d7b16de25aab7",
+      "identicalAfterLineEndingNormalization": true,
+      "teamMode": "100644"
+    },
+    {
+      "path": "gradle/wrapper/gradle-wrapper.jar",
+      "sourceSha256": "2db75c40782f5e8ba1fc278a5574bab070adccb2d21ca5a6e5ed840888448046",
+      "identical": true,
+      "teamWorktreeSha256": "2db75c40782f5e8ba1fc278a5574bab070adccb2d21ca5a6e5ed840888448046",
+      "teamBlobSha256": "2db75c40782f5e8ba1fc278a5574bab070adccb2d21ca5a6e5ed840888448046",
+      "identicalAfterLineEndingNormalization": true,
+      "teamMode": "100644"
+    },
+    {
+      "path": "gradle/wrapper/gradle-wrapper.properties",
+      "sourceSha256": "1d53a5c24b38c7f74e0deda725c42123b1b76c05af11a26c68db31915b2703d3",
+      "identical": false,
+      "teamWorktreeSha256": "1d53a5c24b38c7f74e0deda725c42123b1b76c05af11a26c68db31915b2703d3",
+      "teamBlobSha256": "7a9f5881dfabcb59158fa0f25f840bc0b6e48620b598d1c098c51116ce1a80fb",
+      "identicalAfterLineEndingNormalization": true,
+      "teamMode": "100644"
+    },
+    {
+      "path": "gradlew",
+      "sourceSha256": "1ce03a421a975125820e1e4b7230f6a151617255b39cf84758505c7e67b316fa",
+      "identical": false,
+      "teamWorktreeSha256": "1ce03a421a975125820e1e4b7230f6a151617255b39cf84758505c7e67b316fa",
+      "teamBlobSha256": "a3648413b47ef77af21d5ebc36c687c7d103aaef3e17f33de7d4f080a6f300a3",
+      "identicalAfterLineEndingNormalization": true,
+      "teamMode": "100755"
+    },
+    {
+      "path": "gradlew.bat",
+      "sourceSha256": "57931b17dd228e5c24dac90e815d0bf82477e831a4618dfab4136f5446b42a9f",
+      "identical": false,
+      "teamWorktreeSha256": "57931b17dd228e5c24dac90e815d0bf82477e831a4618dfab4136f5446b42a9f",
+      "teamBlobSha256": "2209f919a22528af59a2af2ad97e8d056cca18e39f7d87aa3fd549a73b180150",
+      "identicalAfterLineEndingNormalization": true,
+      "teamMode": "100644"
+    },
+    {
+      "path": "scripts/CcaWindowComparison.kt",
+      "sourceSha256": "7897f7127c1eddeb1b9f7ceffb9ce8d74f70d84e0648769f0bc00080d5c9f18b",
+      "identical": false,
+      "teamWorktreeSha256": "7897f7127c1eddeb1b9f7ceffb9ce8d74f70d84e0648769f0bc00080d5c9f18b",
+      "teamBlobSha256": "7ce282a182ec17a51fe13e827172436a37b7b3564ed63027a55d69e369e603d0",
+      "identicalAfterLineEndingNormalization": true,
+      "teamMode": "100644"
+    },
+    {
+      "path": "scripts/CcaWindowParity.kt",
+      "sourceSha256": "5d9544fb2c78ecfee2923d428487735dd80f8c7eff653119405f14a6bbb3808f",
+      "identical": false,
+      "teamWorktreeSha256": "5d9544fb2c78ecfee2923d428487735dd80f8c7eff653119405f14a6bbb3808f",
+      "teamBlobSha256": "5e045a6f40cafac7ca4b8b4033fa92d6bf38c4f490a594bff52877e2a4f20dcc",
+      "identicalAfterLineEndingNormalization": true,
+      "teamMode": "100644"
+    },
+    {
+      "path": "scripts/build-ab-integration.ps1",
+      "sourceSha256": "9ebf6396fde4f3fbcf47d10e2b45c9963a0a980c216d07468c082f6282aacc01",
+      "identical": false,
+      "teamWorktreeSha256": "9ebf6396fde4f3fbcf47d10e2b45c9963a0a980c216d07468c082f6282aacc01",
+      "teamBlobSha256": "42eba47e46309e2e3615ea9fdfb3c912040d2553e58a4d60c0c60065626d1279",
+      "identicalAfterLineEndingNormalization": true,
+      "teamMode": "100644"
+    },
+    {
+      "path": "scripts/build-stage1.ps1",
+      "sourceSha256": "3d604a2b42979a3e445abaf18e1b7232483a6748189da8a112e5b466f5a8c83a",
+      "identical": false,
+      "teamWorktreeSha256": "3d604a2b42979a3e445abaf18e1b7232483a6748189da8a112e5b466f5a8c83a",
+      "teamBlobSha256": "7d4f24a5e313ccd1a6faddac53a042026ca9c0635852a5b26bf141c7279c8b23",
+      "identicalAfterLineEndingNormalization": true,
+      "teamMode": "100644"
+    },
+    {
+      "path": "scripts/build-stage2.ps1",
+      "sourceSha256": "98a873d229b7a7c3340b48deffd86223e4279fdce622829b0797ec1b33527055",
+      "identical": false,
+      "teamWorktreeSha256": "98a873d229b7a7c3340b48deffd86223e4279fdce622829b0797ec1b33527055",
+      "teamBlobSha256": "b6a5ae2e68d5a546b95d3bd131202645a7bcc2e5cc3b995b277e5439aacec56e",
+      "identicalAfterLineEndingNormalization": true,
+      "teamMode": "100644"
+    },
+    {
+      "path": "scripts/build-stage27.ps1",
+      "sourceSha256": "bfdd41645944012315655ad0290d015c8fef04bb9cbaed49601dfec8745aae5d",
+      "identical": false,
+      "teamWorktreeSha256": "bfdd41645944012315655ad0290d015c8fef04bb9cbaed49601dfec8745aae5d",
+      "teamBlobSha256": "3a1714f58119635237bab9f9cb1c60d7f60d5224ef5e8135da04701d9e9fd63e",
+      "identicalAfterLineEndingNormalization": true,
+      "teamMode": "100644"
+    },
+    {
+      "path": "scripts/build-stage3.ps1",
+      "sourceSha256": "34c10ff4abb6dfd83a4096172adbee4bc3164ae8ea43ef06d7500c3f6336ead6",
+      "identical": false,
+      "teamWorktreeSha256": "34c10ff4abb6dfd83a4096172adbee4bc3164ae8ea43ef06d7500c3f6336ead6",
+      "teamBlobSha256": "fabbd07977ffdb54e7c6225b0ada1972401288ea1f7d316cb39205d08d811ed3",
+      "identicalAfterLineEndingNormalization": true,
+      "teamMode": "100644"
+    },
+    {
+      "path": "scripts/build.ps1",
+      "sourceSha256": "43df0a114f3b77662d165e9602c053e0ea0ca6943f3d6b9f76020ceaa39c6f1c",
+      "identical": false,
+      "teamWorktreeSha256": "43df0a114f3b77662d165e9602c053e0ea0ca6943f3d6b9f76020ceaa39c6f1c",
+      "teamBlobSha256": "7c1a8a7046af822f4ecceac75aa76d5ec88e41c32db68c897ac4d9264d6a1115",
+      "identicalAfterLineEndingNormalization": true,
+      "teamMode": "100644"
+    },
+    {
+      "path": "scripts/cca_window_comparison.py",
+      "sourceSha256": "526193a68875c3d062693097a4ab4f5b0afd17321759bf58aa5fd05f058fb213",
+      "identical": false,
+      "teamWorktreeSha256": "526193a68875c3d062693097a4ab4f5b0afd17321759bf58aa5fd05f058fb213",
+      "teamBlobSha256": "33c907ba2914f4e20b353b489073132cb9a0baf52cad2ee44410c26e2f17194c",
+      "identicalAfterLineEndingNormalization": true,
+      "teamMode": "100644"
+    },
+    {
+      "path": "scripts/collect_ab_logs.py",
+      "sourceSha256": "d220cce5b1a7a5dce7f57dc65f9497d90bbdad19a3b7dd818e96954d03522ff2",
+      "identical": false,
+      "teamWorktreeSha256": "d220cce5b1a7a5dce7f57dc65f9497d90bbdad19a3b7dd818e96954d03522ff2",
+      "teamBlobSha256": "9e7ea6fe163c5e5ed81faa234984aec615bd1c09d04ab5159f050beb29097df6",
+      "identicalAfterLineEndingNormalization": true,
+      "teamMode": "100644"
+    },
+    {
+      "path": "scripts/create_deck.mjs",
+      "sourceSha256": "fccfc27f80d693474825717cde593e3b4af3468accf901940b7cde2ef7afb52c",
+      "identical": false,
+      "teamWorktreeSha256": "fccfc27f80d693474825717cde593e3b4af3468accf901940b7cde2ef7afb52c",
+      "teamBlobSha256": "316f38d602ce655ce2a60932c960c9f2a8296098a4faadbc1ae59ae895c6b292",
+      "identicalAfterLineEndingNormalization": true,
+      "teamMode": "100644"
+    },
+    {
+      "path": "scripts/open-studio.ps1",
+      "sourceSha256": "2cc2ead31d0bf07da8d71c66357c5aa14afa66f2173b13fed063abf702fc7edd",
+      "identical": false,
+      "teamWorktreeSha256": "2cc2ead31d0bf07da8d71c66357c5aa14afa66f2173b13fed063abf702fc7edd",
+      "teamBlobSha256": "30766662bbc66dcae5c8311f6ccd044a5646be4f10a59abbd12ed253c895bae5",
+      "identicalAfterLineEndingNormalization": true,
+      "teamMode": "100644"
+    },
+    {
+      "path": "scripts/probe_actual_a_apk.py",
+      "sourceSha256": "bd1f33c84e281b3415151df5542a1cad262e5cb28b873e067b9349cd1ce72ed3",
+      "identical": false,
+      "teamWorktreeSha256": "bd1f33c84e281b3415151df5542a1cad262e5cb28b873e067b9349cd1ce72ed3",
+      "teamBlobSha256": "b2acb965c437f697e49dbe5b18624dcb1f40767721b1dbb81f5883fc991951c0",
+      "identicalAfterLineEndingNormalization": true,
+      "teamMode": "100644"
+    },
+    {
+      "path": "scripts/report_ab_integration.py",
+      "sourceSha256": "9d8b675c8f3ef46b76f6d97fb8b2909184f985747795e91884a1ec8e1e5a9f66",
+      "identical": false,
+      "teamWorktreeSha256": "9d8b675c8f3ef46b76f6d97fb8b2909184f985747795e91884a1ec8e1e5a9f66",
+      "teamBlobSha256": "a9aa953bb82d7bd95588dc191b278fed781c50296cd356c8fa40760552e3132b",
+      "identicalAfterLineEndingNormalization": true,
+      "teamMode": "100644"
+    },
+    {
+      "path": "scripts/stage1_packets.py",
+      "sourceSha256": "33eb1cfe82df12b6ac059dc48bf4cf6748ccc1097458ff0581da1261e8b3857f",
+      "identical": false,
+      "teamWorktreeSha256": "33eb1cfe82df12b6ac059dc48bf4cf6748ccc1097458ff0581da1261e8b3857f",
+      "teamBlobSha256": "25ffc3c047f9c831f99fa67870f1ee4fed3dcb5641a190f5f693f92a01556eb5",
+      "identicalAfterLineEndingNormalization": true,
+      "teamMode": "100644"
+    },
+    {
+      "path": "scripts/stage25_extract.py",
+      "sourceSha256": "749b0b7b9cbc6f70122272ab9a7cab65caae56cb1ec56d79a9a68c973cf2ce99",
+      "identical": false,
+      "teamWorktreeSha256": "749b0b7b9cbc6f70122272ab9a7cab65caae56cb1ec56d79a9a68c973cf2ce99",
+      "teamBlobSha256": "2612bc182a411a54e1b8ede29e5855a9ac111fdb73e99a32a1f0d101cfac8dc3",
+      "identicalAfterLineEndingNormalization": true,
+      "teamMode": "100644"
+    },
+    {
+      "path": "scripts/stage25_report.py",
+      "sourceSha256": "f7eea976fb4d9e50dce5d8c676f4d388425a1d403fd7ab920da3d31d00d1fa9a",
+      "identical": false,
+      "teamWorktreeSha256": "f7eea976fb4d9e50dce5d8c676f4d388425a1d403fd7ab920da3d31d00d1fa9a",
+      "teamBlobSha256": "98312255d4ff1f2da903ac9c989fff87a95c469621a20af1a557417a8ec47942",
+      "identicalAfterLineEndingNormalization": true,
+      "teamMode": "100644"
+    },
+    {
+      "path": "scripts/stage26_report.py",
+      "sourceSha256": "0bf85dfbb728ad748f9e2be55eb02fff44a5fbd8e5768f4effd0030cc3d2afca",
+      "identical": false,
+      "teamWorktreeSha256": "0bf85dfbb728ad748f9e2be55eb02fff44a5fbd8e5768f4effd0030cc3d2afca",
+      "teamBlobSha256": "2de99aa243e18e446e74b6bc5c4a057ed441066e3a402dec2b0ce5a79e9186fe",
+      "identicalAfterLineEndingNormalization": true,
+      "teamMode": "100644"
+    },
+    {
+      "path": "scripts/stage27_sender.py",
+      "sourceSha256": "f8173bb0890494675cdb1bfd6fce974eaaf37dc6ce42a31548df566657eba1eb",
+      "identical": false,
+      "teamWorktreeSha256": "8fb295574eb0a6cfc6c98ceaf69a05062c020e88fb6cc1023cfe4d8fa672aeee",
+      "teamBlobSha256": "a22c57d198018621401cac6ffc031dad00b7775ceb5e2282310b188d66e91862",
+      "identicalAfterLineEndingNormalization": false,
+      "teamMode": "100644"
+    },
+    {
+      "path": "scripts/stage2_oracle.py",
+      "sourceSha256": "4afcc3f8f7abca194a0b6a6a7c6d46f0b390ed58b34020dca50efb135f46583b",
+      "identical": false,
+      "teamWorktreeSha256": "4afcc3f8f7abca194a0b6a6a7c6d46f0b390ed58b34020dca50efb135f46583b",
+      "teamBlobSha256": "163ec5752fc53594d47febb5f0e80c8d7f3bb176f819d09a522854775289ce34",
+      "identicalAfterLineEndingNormalization": true,
+      "teamMode": "100644"
+    },
+    {
+      "path": "scripts/stage3_emulator_test.py",
+      "sourceSha256": "0cbe8b9cf79238aa97e418a3903d4033c46f62f46a241eca0c151d66434d866f",
+      "identical": false,
+      "teamWorktreeSha256": "0cbe8b9cf79238aa97e418a3903d4033c46f62f46a241eca0c151d66434d866f",
+      "teamBlobSha256": "a8d83d49486bbdb980ef6f02135b00c436faead28d17a28085692848f2dad2f2",
+      "identicalAfterLineEndingNormalization": true,
+      "teamMode": "100644"
+    },
+    {
+      "path": "scripts/stage3_results.py",
+      "sourceSha256": "fdfe41a8bcf37f610deaf3f6c76858f8b535ce42f509cbf66b3e50ee72557a3d",
+      "identical": false,
+      "teamWorktreeSha256": "fdfe41a8bcf37f610deaf3f6c76858f8b535ce42f509cbf66b3e50ee72557a3d",
+      "teamBlobSha256": "676d12081812ae4b2fc615db2c9c849247e19fd829fd9da044c2098fe4a328ff",
+      "identicalAfterLineEndingNormalization": true,
+      "teamMode": "100644"
+    },
+    {
+      "path": "scripts/stage3_udp_peer.py",
+      "sourceSha256": "3ac41b380a65f2d35ddc02f2eb4dcbd72c6f90de424a382db98fe3a38aebdc80",
+      "identical": false,
+      "teamWorktreeSha256": "3ac41b380a65f2d35ddc02f2eb4dcbd72c6f90de424a382db98fe3a38aebdc80",
+      "teamBlobSha256": "81d72615729c3c1327baef38835f554620fd272e04239e30f0435c2f8458f1f2",
+      "identicalAfterLineEndingNormalization": true,
+      "teamMode": "100644"
+    },
+    {
+      "path": "scripts/start-demo.ps1",
+      "sourceSha256": "ef4c4c53bb8407c91b21643e2bf6414c4b4461a5d13a81b3dde63f7e586e98a2",
+      "identical": false,
+      "teamWorktreeSha256": "ef4c4c53bb8407c91b21643e2bf6414c4b4461a5d13a81b3dde63f7e586e98a2",
+      "teamBlobSha256": "aa5f519c69b9c40116fbf495c6750c114395fada709aa841f7952178f99bea8d",
+      "identicalAfterLineEndingNormalization": true,
+      "teamMode": "100644"
+    },
+    {
+      "path": "scripts/validate-stage25.ps1",
+      "sourceSha256": "a971bc4f27f5a07d969d338b32da4670bd1101a5c2bdd6b9a125e71312d5fc03",
+      "identical": false,
+      "teamWorktreeSha256": "e8052bfe36d7bcd41f787d59be766c731fa6e2efb2575110136ce40eb56cc270",
+      "teamBlobSha256": "7752c8f717e85c35769523f6ec4d3cdab215cd459fb74a23b2f76a17c4fbd712",
+      "identicalAfterLineEndingNormalization": false,
+      "teamMode": "100644"
+    },
+    {
+      "path": "scripts/validate-stage26.ps1",
+      "sourceSha256": "3630ef42c42aa5288f56cb9da2278a4106bd5518714d12ad6bcdd26db9ba7289",
+      "identical": false,
+      "teamWorktreeSha256": "1e1daa02f64401d7ebb7c5cbd1718748bebce45eecc2beb0d2c0fbd71fa4d833",
+      "teamBlobSha256": "0d584f37858b65d297fab4ca540459147ce57e669365afbcb4f96c0416c0ba3f",
+      "identicalAfterLineEndingNormalization": false,
+      "teamMode": "100644"
+    },
+    {
+      "path": "scripts/verify_emulator.py",
+      "sourceSha256": "2545beee6caf3fb7843487a236c2c9728c93f8103e0f29def109c03bf11807e0",
+      "identical": false,
+      "teamWorktreeSha256": "2545beee6caf3fb7843487a236c2c9728c93f8103e0f29def109c03bf11807e0",
+      "teamBlobSha256": "6a2852bebda147fd6a4665b20ecc0ced54173dd2ace73f6c8cfcc019586e455a",
+      "identicalAfterLineEndingNormalization": true,
+      "teamMode": "100644"
+    },
+    {
+      "path": "scripts/verify_frozen_ab_path.py",
+      "sourceSha256": "4917120df6abc265325aa42b3274abfa7bf3f2801e9c9230a970a9d0c7cf41e6",
+      "identical": false,
+      "teamWorktreeSha256": "4917120df6abc265325aa42b3274abfa7bf3f2801e9c9230a970a9d0c7cf41e6",
+      "teamBlobSha256": "65fa8257e217ece1ad5382bd5710ff421bc13d19fb65eca24a95aa21c2bb2801",
+      "identicalAfterLineEndingNormalization": true,
+      "teamMode": "100644"
+    },
+    {
+      "path": "scripts/verify_stage1_android.py",
+      "sourceSha256": "3694a65b5ab7bf6bd5e493ac4e7ff8be48be587703368095bb0eb64493fd50ff",
+      "identical": false,
+      "teamWorktreeSha256": "3694a65b5ab7bf6bd5e493ac4e7ff8be48be587703368095bb0eb64493fd50ff",
+      "teamBlobSha256": "b478540886a7ec7d7e6744034456eff35e2581ba549626e2f5ee50e931359c86",
+      "identicalAfterLineEndingNormalization": true,
+      "teamMode": "100644"
+    },
+    {
+      "path": "scripts/verify_stage25_android.py",
+      "sourceSha256": "8dc96926e3dfbdbeb0e8034c638333bb8d813214d18657a478dd6c642c0defb0",
+      "identical": false,
+      "teamWorktreeSha256": "8dc96926e3dfbdbeb0e8034c638333bb8d813214d18657a478dd6c642c0defb0",
+      "teamBlobSha256": "fa7f1e8b2321a1353d132221e5fd0ff9b3fb9026a9717fe61ec81b22b83a0ebf",
+      "identicalAfterLineEndingNormalization": true,
+      "teamMode": "100644"
+    },
+    {
+      "path": "scripts/verify_stage26_android.py",
+      "sourceSha256": "d0be673c1f044eebc08cad53b1920f686f22a4128c431e831241a5549f10d190",
+      "identical": false,
+      "teamWorktreeSha256": "d0be673c1f044eebc08cad53b1920f686f22a4128c431e831241a5549f10d190",
+      "teamBlobSha256": "1743d61dfa9252ff52d49e4275ee9a38838ba3f2f2f3d9b0a118a7c1c353bd5d",
+      "identicalAfterLineEndingNormalization": true,
+      "teamMode": "100644"
+    },
+    {
+      "path": "scripts/verify_stage27_android.py",
+      "sourceSha256": "7a53b253f290c7a781be8c3538023c5fb304fc826054bd926442dc9625796003",
+      "identical": false,
+      "teamWorktreeSha256": "7a53b253f290c7a781be8c3538023c5fb304fc826054bd926442dc9625796003",
+      "teamBlobSha256": "da19f9a50acf90157f24be2ed770742e5b19313dd24848944f5497aea4fcd7d7",
+      "identicalAfterLineEndingNormalization": true,
+      "teamMode": "100644"
+    },
+    {
+      "path": "scripts/verify_stage2_android.py",
+      "sourceSha256": "1a2387f88f9d36407442a9e1c61fa0380d0f11ec717eaec2b8c3f5e259dd1597",
+      "identical": false,
+      "teamWorktreeSha256": "1a2387f88f9d36407442a9e1c61fa0380d0f11ec717eaec2b8c3f5e259dd1597",
+      "teamBlobSha256": "636b042bfe7b874970a4325f2fede2d7f82de6fb4c11504ec32488dc7131acd7",
+      "identicalAfterLineEndingNormalization": true,
+      "teamMode": "100644"
+    },
+    {
+      "path": "settings.gradle.kts",
+      "sourceSha256": "7812d81d06ac8cdb91f1e9e5f31c8b9e63bbfb85a1b10004b9c2e626a245612d",
+      "identical": false,
+      "teamWorktreeSha256": "7812d81d06ac8cdb91f1e9e5f31c8b9e63bbfb85a1b10004b9c2e626a245612d",
+      "teamBlobSha256": "9acc7fd95003ef93edd54f2cdde551e92330c5e4eab3ca1b3229c40bcd0fec15",
+      "identicalAfterLineEndingNormalization": true,
+      "teamMode": "100644"
+    },
+    {
+      "path": "simulator/chair_sim.py",
+      "sourceSha256": "f6f3fea854baa5368e4f60b9905efb191f2a12c90933d529a1a0103b85e99b56",
+      "identical": false,
+      "teamWorktreeSha256": "f6f3fea854baa5368e4f60b9905efb191f2a12c90933d529a1a0103b85e99b56",
+      "teamBlobSha256": "d856fe75577d15ed00ddcc37c9bdb8b48c583df47dacb55927189aa49c9a2a36",
+      "identicalAfterLineEndingNormalization": true,
+      "teamMode": "100644"
+    }
+  ],
+  "byteIdenticalPublishedFiles": 8,
+  "unchangedContentFiles": 152,
+  "lineEndingOnlyFiles": 144,
+  "normalization": "Team root .gitattributes normalizes text CRLF/LF in Git; content comparison explicitly allows only that normalization. Raw source, worktree and staged blob SHA256 recorded separately. POSIX gradlew mode is 100755."
+}

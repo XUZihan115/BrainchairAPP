@@ -1,0 +1,34 @@
+{
+  "scope": "Android B INFO accept to decision/delivery; B-C in-process simulation, no UDP",
+  "firstObservedRawMs": 4555.152560003102,
+  "firstObservedRawAnalysisCount": 1,
+  "firstMockMotionMs": 4970.042,
+  "computeMs": [
+    11.0739,
+    3.8423,
+    3.8423,
+    4.681,
+    4.2644,
+    4.2644,
+    3.7658,
+    3.5652,
+    4.8295
+  ],
+  "periodMs": [
+    0,
+    207,
+    207,
+    206,
+    211,
+    211,
+    208,
+    212,
+    207
+  ],
+  "heapMinBytes": 4936416,
+  "heapMaxBytes": 12185312,
+  "processCpuPercentOneCore": 31.83735447950059,
+  "stopSocketToFinalMs": 0.4385,
+  "stopSocketToMockSendMs": 0.6975,
+  "mockSendToReceiveMs": 0.0143
+}

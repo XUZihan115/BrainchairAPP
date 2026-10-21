@@ -1,0 +1,11 @@
+event,offsetMs,detail
+INFO,3.326,
+first gated CCA,3090.1059,
+peer first FORWARD,3611.8748,
+A STOP sent,6000.4569,
+STOP received by UDP peer,6001.941,A-to-peer ms=0.2585; B invalidation ms=0.1141
+new LEFT INFO,6002.0154,
+LEFT diagnostic,9747.6958,RecognitionSnapshot(scores=[0.2506164254189936; 0.9999498546333476; 0.26061688085799706; 0.2556204641828894]; raw=LEFT; stable=LEFT; reason=门控通过（阈值未校准）; config=RecognitionConfig(absolute=0.65; difference=0.15; votes=3; debounceMs=300); generation=3; windowEnd=3725; decidedMs=464198276; analysisCount=15; computeMs=0.788; cpuMs=0.0; periodMs=251; cumulativeCpuMs=0.0; winner=LEFT; inputMs=464198270; control=ControlSnapshot(output=LEFT; reason=当前窗口门控与投票通过; changedMs=464198276; expiresMs=464199270; revision=23)) / ReceiverSnapshot(status=接收中; source=127.0.0.1:51175; info=StreamInfo(rate=1000; names=[O2; P2; PO4; Pz; O1; Oz; P1; POz; PO3]); received=1953; accepted=1953; rejected={}; duplicates=0; outOfOrder=0; missingPackets=0; missingSamples=0; buffered=3750; nextIndex=3750; lastTimeUs=1800000013745000; generation=3; rate=200.3487894952811; logs=[监听数据 51172 / 发现 51173; INFO 127.0.0.1:51175 1000Hz 9ch；清空旧窗口; 流已结束 reason=1; INFO 127.0.0.1:51175 1000Hz 9ch；清空旧窗口]; infoPackets=2; blockPackets=1950; stopPackets=1; stopAudits=[StopAudit(seq=1202; nextIndex=6000; reason=1; source=127.0.0.1:51175; acceptStartedNs=464194548745400; invalidationCompletedNs=464194548850600; listenersNotified=2; socketReceivedNs=464194548736500)]; streamId=2; streamStartedNs=464194550303300)
+peer LEFT after fresh warmup,9748.2842,
+data timeout STOP,10725.9763,silence ms=977.4915
+end,10727.2047,

@@ -1,0 +1,5 @@
+# Preserve the supplied source snapshots byte-for-byte across Windows checkouts.
+docs/stage1/sources/** -text
+
+gradlew text eol=lf
+*.bat text eol=crlf

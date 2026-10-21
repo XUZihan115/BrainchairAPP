@@ -1,0 +1,15 @@
+<?xml version="1.0" encoding="UTF-8"?>
+<testsuite name="com.yourteam.brainchair.control.Stage27IntegrationTest" tests="9" skipped="0" failures="0" errors="0" timestamp="2026-10-20T02:57:36" hostname="DESKTOP-B4DMF6G" time="10.259">
+  <properties/>
+  <testcase name="actualFourSecondUdpTimelineAndUnmodifiedLongDiagnostic" classname="com.yourteam.brainchair.control.Stage27IntegrationTest" time="10.044"/>
+  <testcase name="firstBlockMustProveStreamStartAndLateIdenticalInfoSafelyResets" classname="com.yourteam.brainchair.control.Stage27IntegrationTest" time="0.01"/>
+  <testcase name="emergencyPersistsAcrossStopRapidNewFlowsAndManualReleaseNeedsNewStream" classname="com.yourteam.brainchair.control.Stage27IntegrationTest" time="0.049"/>
+  <testcase name="rapidClicksNeverSpliceDifferentFlowWindowsAndRestartBeginsEmpty" classname="com.yourteam.brainchair.control.Stage27IntegrationTest" time="0.033"/>
+  <testcase name="newInfoPreemptsInFlightCcaAndNoOldVoteReappears" classname="com.yourteam.brainchair.control.Stage27IntegrationTest" time="0.017"/>
+  <testcase name="fourSecondClickHasNoCompleteAnalysisOrMotionAndStopClearsEveryLayer" classname="com.yourteam.brainchair.control.Stage27IntegrationTest" time="0.008"/>
+  <testcase name="crcGapLatePacketAndTimeoutRevokeActualDeliveredMotion" classname="com.yourteam.brainchair.control.Stage27IntegrationTest" time="0.057"/>
+  <testcase name="stopPreemptsInFlightActualCcaAndItsLaterResultCannotPublishMotion" classname="com.yourteam.brainchair.control.Stage27IntegrationTest" time="0.017"/>
+  <testcase name="retiredEndpointAndTimestampOriginCannotRefillNewFlow" classname="com.yourteam.brainchair.control.Stage27IntegrationTest" time="0.024"/>
+  <system-out><![CDATA[]]></system-out>
+  <system-err><![CDATA[]]></system-err>
+</testsuite>

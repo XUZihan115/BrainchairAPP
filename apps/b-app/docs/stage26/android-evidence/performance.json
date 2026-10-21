@@ -1,0 +1,14 @@
+{
+  "durationMs": 42501,
+  "cpuPercentOneCore": 12.658525681748666,
+  "medianPeriodMs": 211.0,
+  "p95PeriodMs": 418.0,
+  "maxPeriodMs": 422,
+  "maxComputeMs": 11.5736,
+  "sent": 8007,
+  "received": 8007,
+  "noStopRestWrongObservedRows": 9,
+  "lastRestMotionObservedMs": 1198.9378000143915,
+  "physicalDeviceValidated": false,
+  "safetyAccepted": false
+}

@@ -1,0 +1,5 @@
+<resources>
+    <string name="app_name">脑控轮椅实验室</string>
+    <string name="initial_connection">未连接 · 先连接模拟轮椅</string>
+    <string name="emergency_stop">急停</string>
+</resources>

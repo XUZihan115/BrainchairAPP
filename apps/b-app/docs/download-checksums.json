@@ -1,0 +1,18 @@
+{
+  "commandline.zip": {
+    "bytes": 155655386,
+    "sha256": "90ae805d20434428bffcb699c290860f19bb5f66a67e6b330067e3de801fb04a"
+  },
+  "gradle.zip": {
+    "bytes": 136920070,
+    "sha256": "f397b287023acdba1e9f6fc5ea72d22dd63669d59ed4a289a29b1a76eee151c6"
+  },
+  "jdk17.zip": {
+    "bytes": 186915383,
+    "sha256": "3d9006956fc8af5601cd24ffc4f468bef48279c7ebd8171b9bdf90d0aabfbf1f"
+  },
+  "studio.zip": {
+    "bytes": 1526567345,
+    "sha256": "6e83e7ce3e0a76c4e8e78d98eb5ef538cbc9fb386c745bda425fc0bacb9de6d4"
+  }
+}

@@ -1,0 +1,8 @@
+case,beforeStored,beforeRead,afterStored,afterRead,expected
+STREAM_STOP synchronous,FORWARD,STOP,STOP,STOP,STOP
+CRC current source,FORWARD,FORWARD,STOP,STOP,STOP
+1200ms stale window despite fresh incoming data,FORWARD,FORWARD,STOP,STOP,STOP
+foreign malformed ignored,FORWARD,FORWARD,FORWARD,FORWARD,FORWARD
+gap synchronous,FORWARD,STOP,STOP,STOP,STOP
+new INFO synchronous,FORWARD,STOP,STOP,STOP,STOP
+data timeout event,FORWARD,STOP,STOP,STOP,STOP

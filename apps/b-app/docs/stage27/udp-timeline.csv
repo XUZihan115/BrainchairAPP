@@ -1,0 +1,8 @@
+scenario,event,offsetMs,command,detail
+fourSeconds,INFO,0,STOP,4s window plus unchanged 0.5s warmup
+fourSeconds,source STOP sent,4002.3214,STOP,800 SAMPLE_BLOCK
+fourSeconds,B stop revoked,4004.518,STOP,1.837 ms socket to revoke
+fourSeconds,B mock send,4004.1935,STOP,1.8721 ms source STOP to B send
+fourSeconds,mock receive,4004.2018,STOP,0.0083 ms mock send to receive; NO B-C UDP
+sixSecondDiagnostic,first gated raw,4535.6246,FORWARD,actual causal filter + CCA
+sixSecondDiagnostic,first mock received stable motion,4946.6224,FORWARD,not a 4s click

@@ -21,6 +21,9 @@ docs/udp-protocol.md 的文字描述，不引用发送端任何代码。
     py -3 tools/udp_probe.py --no-discovery  # 不应答发现广播（App 里就必须填 IP）
     py -3 tools/udp_probe.py --no-cca        # 跳过 CCA 判定
     py -3 tools/udp_probe.py --save out.npy  # 把收到的采样存成 float32 矩阵
+    py -3 tools/udp_probe.py --stall-after 3 --stall-duration 20
+        # 流开始 3 秒后模拟「接收端假死」：数据 socket 保持绑定但不再读包，
+        # 20 秒后恢复。用于复现原始 bug 的「接收端在、但没人读」条件。
 """
 
 import argparse
@@ -334,8 +337,11 @@ def report(session, wall_seconds, want_cca, save_path):
     if session.names:
         shown = session.names if len(session.names) <= 8 else session.names[:8] + ['...']
         print('  通道名      : %s（共 %d 个）' % (', '.join(shown), len(session.names)))
-    print('  报文        : %d 个（含 1 个 STREAM_INFO、%d 个 SAMPLE_BLOCK、'
-          '1 个 STREAM_STOP）' % (session.packets, session.blocks))
+    stop_text = ('1 个 STREAM_STOP'
+                 if session.stop_reason is not None
+                 else '0 个 STREAM_STOP（被打断，或会话未正常收尾）')
+    print('  报文        : %d 个（含 1 个 STREAM_INFO、%d 个 SAMPLE_BLOCK、%s）'
+          % (session.packets, session.blocks, stop_text))
     print('  采样点      : %d（%.2f s @ %s Hz）'
           % (session.samples, session.duration_s, session.sample_rate))
     print('  字节        : %.2f MB' % (session.bytes / 1048576.0))
@@ -444,6 +450,10 @@ def main():
                     help='不应答发现广播（此时手机 App 里必须填 IP）')
     ap.add_argument('--name', default=None, help='应答时自报的名称，默认取本机主机名')
     ap.add_argument('--seconds', type=float, default=0, help='自动退出秒数，0 表示一直跑')
+    ap.add_argument('--stall-after', type=float, default=0,
+                    help='流开始多少秒后模拟接收端停滞（socket 保持绑定但不再读包）；0 不模拟')
+    ap.add_argument('--stall-duration', type=float, default=20,
+                    help='停滞模拟持续秒数，之后恢复读包（默认 20）')
     ap.add_argument('--no-cca', action='store_true', help='跳过 CCA 方向判定')
     ap.add_argument('--save', default=None, help='把最后一段采样存成 .npy')
     args = ap.parse_args()
@@ -476,6 +486,9 @@ def main():
     else:
         print('  发现应答  : 已关闭')
     print('  期望带宽  : 约 256 kB/s / 200 包每秒 / 每包 1280 字节')
+    if args.stall_after > 0:
+        print('  停滞模拟  : 流开始 %.1f 秒后停读 %.1f 秒（复现「接收端假死」的 bug 条件）'
+              % (args.stall_after, args.stall_duration))
 
     hints = local_ipv4_hints()
     if hints:
@@ -502,6 +515,8 @@ def main():
     t_start = time.time()
     last_tick = t_start
     last_session = None
+    stall_until = None
+    last_stall_tick = t_start
 
     try:
         while True:
@@ -509,7 +524,31 @@ def main():
             if args.seconds > 0 and now - t_start >= args.seconds:
                 break
 
+            # 停滞模拟结束：恢复读包
+            if stall_until is not None and now >= stall_until:
+                print('\n  !! [SIM] 停滞模拟结束，恢复读包')
+                stall_until = None
+
+            # 停滞模拟触发：会话开始后过了 --stall-after 秒（每段只触发一次）
+            if (args.stall_after > 0 and session is not None
+                    and stall_until is None
+                    and session_started is not None
+                    and (now - session_started) >= args.stall_after):
+                stall_until = now + args.stall_duration
+                print('\n  !! [SIM] 进入停滞模拟：数据端口 socket 保持绑定但不再读包，'
+                      '%.1f 秒后恢复（用于复现「接收端在、但没人读」的原始 bug 条件）'
+                      % args.stall_duration)
+
+            stalled = stall_until is not None and now < stall_until
+            if stalled and now - last_stall_tick > 3.0:
+                print('  ... 接收端停滞中（还剩 %.0f/%.0f s）'
+                      % (stall_until - now, args.stall_duration))
+                last_stall_tick = now
+
             watched = [sock] if disc is None else [sock, disc]
+            if stalled:
+                # 停滞期不读数据口：内核缓冲区会快速填满，手机端将先于我们看到停滞
+                watched = [disc] if disc is not None else []
             try:
                 ready, _, _ = select.select(watched, [], [], 0.5)
             except (OSError, ValueError):
@@ -538,7 +577,7 @@ def main():
                     continue
                 if answer_discover(disc, disco_data, disco_addr, args.port, announce_name):
                     disc_answered += 1
-                if sock not in ready:
+                if stalled or sock not in ready:
                     continue
 
             try:

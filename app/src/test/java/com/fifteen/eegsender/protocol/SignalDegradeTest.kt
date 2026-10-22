@@ -131,11 +131,11 @@ class SignalDegradeTest {
     fun confidenceMappingHitsBothEnds() {
         assertEquals(0f, SignalDegrade.noiseAlphaFor(100), 1e-6f)
         assertEquals(0f, SignalDegrade.notchAlphaFor(100), 1e-6f)
-        assertEquals(0.8204f, SignalDegrade.notchAlphaFor(0), 1e-4f)
+        assertEquals(0.8194f, SignalDegrade.notchAlphaFor(0), 1e-4f)
         assertEquals(8.0f, SignalDegrade.noiseAlphaFor(0), 1e-4f)
         // 中间点线性插值：50% 正好落在表中心
-        assertEquals(2.1223f, SignalDegrade.noiseAlphaFor(50), 1e-4f)
-        assertEquals(0.6043f, SignalDegrade.notchAlphaFor(50), 1e-4f)
+        assertEquals(1.9627f, SignalDegrade.noiseAlphaFor(50), 1e-4f)
+        assertEquals(0.6059f, SignalDegrade.notchAlphaFor(50), 1e-4f)
         // 越界钳位，不抛异常
         assertEquals(8.0f, SignalDegrade.noiseAlphaFor(-5), 1e-4f)
         assertEquals(0f, SignalDegrade.noiseAlphaFor(400), 1e-6f)
@@ -158,9 +158,9 @@ class SignalDegradeTest {
 
     @Test
     fun expectedRhoSpansCalibratedRange() {
-        assertEquals(0.7361f, SignalDegrade.expectedRho(100), 1e-4f)
+        assertEquals(0.7370f, SignalDegrade.expectedRho(100), 1e-4f)
         assertEquals(0.3000f, SignalDegrade.expectedRho(0), 1e-4f)
-        assertEquals(0.51805f, SignalDegrade.expectedRho(50), 1e-4f)
+        assertEquals(0.5185f, SignalDegrade.expectedRho(50), 1e-4f)
     }
 
     // ------------------------------------------------- 数据源层面的降质接入

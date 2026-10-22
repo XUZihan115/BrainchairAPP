@@ -21,5 +21,9 @@
         <item name="android:stateListAnimator">@null</item>
         <item name="android:gravity">center</item>
         <item name="android:letterSpacing">0.02</item>
+        <!-- 按下不抢焦点：否则 ScrollView 检测到子控件获焦会自动滚动，屏幕会“跳”到按键处 -->
+        <item name="android:focusable">false</item>
+        <item name="android:focusableInTouchMode">false</item>
+        <item name="android:clickable">true</item>
     </style>
 </resources>

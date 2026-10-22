@@ -1,5 +1,6 @@
 <?xml version="1.0" encoding="utf-8"?>
 <ScrollView xmlns:android="http://schemas.android.com/apk/res/android"
+    android:id="@+id/svRoot"
     android:layout_width="match_parent"
     android:layout_height="match_parent"
     android:background="@color/bg_dark"
@@ -187,7 +188,7 @@
                 android:textColor="@color/text_hint"
                 android:textSize="11sp" />
 
-            <!-- 噪声：整体信噪比下降，用来验证接收端的拒识能力 -->
+            <!-- 置信度：直接对应 B 端 3 秒窗 CCA 算出的相关值（确定性、可复现） -->
             <LinearLayout
                 android:layout_width="match_parent"
                 android:layout_height="wrap_content"
@@ -198,12 +199,12 @@
                     android:layout_width="0dp"
                     android:layout_height="wrap_content"
                     android:layout_weight="1"
-                    android:text="@string/label_noise"
+                    android:text="@string/label_confidence"
                     android:textColor="@color/text_primary"
                     android:textSize="13sp" />
 
                 <TextView
-                    android:id="@+id/tvNoiseValue"
+                    android:id="@+id/tvConfidenceValue"
                     android:layout_width="wrap_content"
                     android:layout_height="wrap_content"
                     android:fontFamily="monospace"
@@ -213,41 +214,7 @@
             </LinearLayout>
 
             <SeekBar
-                android:id="@+id/sbNoise"
-                android:layout_width="match_parent"
-                android:layout_height="wrap_content"
-                android:max="100"
-                android:progress="100"
-                android:progressBackgroundTint="@color/btn_direction"
-                android:progressTint="@color/primary"
-                android:thumbTint="@color/primary" />
-
-            <!-- 陷波：只削 SSVEP 谱线，用来给接收端标定「无指令」阈值 -->
-            <LinearLayout
-                android:layout_width="match_parent"
-                android:layout_height="wrap_content"
-                android:orientation="horizontal">
-
-                <TextView
-                    android:layout_width="0dp"
-                    android:layout_height="wrap_content"
-                    android:layout_weight="1"
-                    android:text="@string/label_notch"
-                    android:textColor="@color/text_primary"
-                    android:textSize="13sp" />
-
-                <TextView
-                    android:id="@+id/tvNotchValue"
-                    android:layout_width="wrap_content"
-                    android:layout_height="wrap_content"
-                    android:fontFamily="monospace"
-                    android:text="@string/degrade_value_full"
-                    android:textColor="@color/primary"
-                    android:textSize="12sp" />
-            </LinearLayout>
-
-            <SeekBar
-                android:id="@+id/sbNotch"
+                android:id="@+id/sbConfidence"
                 android:layout_width="match_parent"
                 android:layout_height="wrap_content"
                 android:max="100"

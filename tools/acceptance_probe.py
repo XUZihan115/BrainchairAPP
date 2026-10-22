@@ -2,28 +2,35 @@
 """A 端「人为降质 -> B 端判定」链路的**验收器**（desk acceptance verifier）。
 
 它同时就是一个**能跑的最小接收端原型**：收 A 端的 UDP 流 -> 频域带通 -> CCA ->
-双门控 -> 投票 -> 打印判决。算法口径与 tools/degrade_reference.py **完全一致**
-（直接 import 复用它的 cca/reference/bandlimit/degrade/evaluate），所以这里的
-rho 数字与 docs/receiver-handbook.md 里的标定表必须对得上 —— 对不上就是有 bug。
+双门控 -> 投票 -> 打印判决。
+
+口径（重要）：
+  * 离线验收固定为**试次头对齐窗**：A 端数据是 4 个 4000 点试次拼接成的段，
+    每个试次头（sampleOffset）取 `window`=3000 点 -> 窗口内普通 rfft 带通 ->
+    CCA（与 .tmp\\calib_3s_aligned.py / calib_3s_gate.py 同口径）。
+  * 复用 tools/degrade_reference.py 的 cca/reference/degrade/bandlimit 做降质与
+    打分原语，所以 rho 数字与 docs/receiver-handbook.md 的 3 s 标定表必须对得上
+    —— 对不上就是有 bug。2 s 窗 / 自由滑动窗在数据上无阈值（手册 §5.5/§6.1），
+    本工具不做为验收口径。
 
 四种用法
 --------
 
 1) 真机联调（A 端对着本机推流；A 端 IP 框留空即可自动发现本机）
        py -3 -u tools\\acceptance_probe.py
-   在 9001 应答 DISCOVER、在 9000 收流，每 200 ms 打印一行判决。
+    在 9001 应答 DISCOVER、在 9000 收流，每个试次头（4000 点）一个锚定窗判决。
 
 2) 桌面验收（**不需要手机**，直接读 app/src/main/assets/ssvep 回放）
        py -3 -u tools\\acceptance_probe.py --verify
-           校验标定表可复现：rho_true 应为 0.7361（手册 §5.3）。
+            校验标定表可复现：rho_true 应为 0.7370（手册 §5.3 的 3 s 表）。
        py -3 -u tools\\acceptance_probe.py --sweep
-           复现手册 §9.2 的 alpha -> rho 表，并给出**逐窗门控判决统计**
+            复现手册 §9.2 的 alpha -> rho 表，并给出**逐窗门控判决统计**
            （判对方向 / 判停 / 判错方向）—— 这才是手册 §9.4 真正要看的东西。
-       py -3 -u tools\\acceptance_probe.py --degrade notch --alpha 0.55
-           单点验证手册 §9.4 第 4 步：此时 B 端应稳定判「停」。
+       py -3 -u tools\\acceptance_probe.py --degrade notch --alpha 0.3607
+            单点验证手册 §9.4 第 4 步（滑块 80%）：此时 B 端多数判「停」。
        py -3 -u tools\\acceptance_probe.py --live-sim
-           用滑动窗模拟真机判决时间线；并对比 pad=0 与 pad=1500，
-           复现手册 §4.1「对每个窗单独带通会让 rho 虚高」的现象。
+            滑动演示 pad=0 与 pad=1500 的差别（复现手册 §4.1「对每个窗单独带通
+            让 rho 虚高」；滑动窗本身在 3 s 下无阈值，仅作对照）。
 
 3) 自检（不接网络、不读数据）
        py -3 tools\\acceptance_probe.py --selftest
@@ -68,16 +75,32 @@ STOP_REASON = {0x01: 'RELEASED', 0x02: 'ERROR', 0x03: 'SWITCHED'}
 ROOT = os.path.dirname(os.path.dirname(os.path.abspath(__file__)))
 DEF_ASSETS = os.path.join(ROOT, 'app', 'src', 'main', 'assets', 'ssvep')
 
-# degrade_reference.py 跑出来的 4 s 窗标定值（手册 §5.3 / §9.2 引用的就是这些）
+# 权威 3 s 试次头对齐口径的标定值（手册 §5.3 / §9.2，来自 .tmp\calib_3s_*.py）
+# 窗口 = 3000 点（试次头对齐），带通 = 窗口内普通 rfft 掩码，θ₁=0.631 / θ₂=0.171
 REF = {
-    'base': dict(rho_true=0.7361, rho_2nd=0.3760, rest_max=0.5388, dir_min=0.6018,
-                 gap_rest_max=0.2107, gap_dir_min=0.2783),
-    # 0.75 档在留档日志里只记到了 gap 值、rho_true 缺失，故不设参考值（不参与比对）
-    'notch': {0.00: 0.7361, 0.20: 0.6975, 0.40: 0.6334, 0.50: 0.5854, 0.55: 0.5557,
-              0.60: 0.5214, 0.65: 0.4819, 0.70: 0.4364, 0.80: 0.3263,
-              0.90: 0.1928},
-    'noise': {0.00: 0.7361, 0.50: 0.6761, 1.00: 0.6132, 1.50: 0.5652, 2.00: 0.5261,
-              2.50: 0.4932, 3.00: 0.4656, 3.50: 0.4422, 4.00: 0.4224, 8.00: 0.3375},
+    'base': dict(rho_true=0.7370, rho_2nd=0.4588, rest_max=0.5783, dir_min=0.6845,
+                 gap_rest_max=0.2139, gap_dir_min=0.1283),
+    # 置信度 0..100 -> 陷波 alpha 的权威反查表（SignalDegrade 常量同款）
+    'notch_conf': [0.8194, 0.7851, 0.7483, 0.7066, 0.6597, 0.6059,
+                   0.5417, 0.4625, 0.3607, 0.2192, 0.0000],
+    # 置信度 0..100 -> 加噪 alpha 的权威反查表（SignalDegrade 常量同款）
+    'noise_conf': [8.0000, 8.0000, 5.5140, 3.7695, 2.7068, 1.9627,
+                   1.3982, 0.9594, 0.6199, 0.3439, 0.0000],
+    # 逐档门控判决参考（calib_3s_gate.py 实测；theta1=0.631, theta2=0.171；
+    # 拒识返 -1，与 forward 索引 0 无冲突，门控数 = 判对方向窗数）
+    'notch_gate': {0.0000: '15/16', 0.2192: '15/16', 0.3607: '8/16', 0.4625: '5/16',
+                   0.5417: '2/16', 0.5738: '2/16', 0.6059: '1/16', 0.6597: '1/16',
+                   0.7066: '0/16', 0.7483: '0/16', 0.7851: '0/16', 0.8194: '0/16'},
+    'noise_gate': {0.0000: '15/16', 0.3439: '12/16', 0.6199: '8/16', 0.9594: '6/16',
+                   1.3982: '2/16', 1.9627: '1/16', 2.7068: '0/16', 3.7695: '0/16',
+                   5.5140: '0/16', 8.0000: '0/16'},
+    # 逐档 rho_true 参考（同一批实测；notch 为 SignalDegrade 权威语义，dref 同款）
+    'notch_rho': {0.0000: 0.7370, 0.2192: 0.6922, 0.3607: 0.6475, 0.4625: 0.6033,
+                  0.5417: 0.5592, 0.5738: 0.5383, 0.6059: 0.5155, 0.6597: 0.4724,
+                  0.7066: 0.4296, 0.7483: 0.3874, 0.7851: 0.3472, 0.8194: 0.3090},
+    'noise_rho': {0.0000: 0.7370, 0.3439: 0.6933, 0.6199: 0.6494, 0.9594: 0.6056,
+                  1.3982: 0.5619, 1.9627: 0.5182, 2.7068: 0.4742, 3.7695: 0.4308,
+                  5.5140: 0.3868, 8.0000: 0.3504},
 }
 
 ASCII = False
@@ -197,21 +220,61 @@ def iir_filtfilt(x, stages, fs=1000.0):
 
 
 # ----------------------------------------------------------------- 离线打分
+#
+# 权威 3 s 口径（手册 §5.3 / calib_3s_*.py）：
+#   * 窗 = 3000 点，**试次头对齐**：A 端段内是 4 个 4000 点试次的拼接，
+#     从每个试次头（sampleOffset）取前 3000 点，尾部 1000 点丢弃；
+#   * 带通 = **窗口内**普通 rfft 掩码（不是整段循环带通后切窗）。
+# 这里 dref.bandlimit 只保留给实时模式（连续流 + pad 缓冲）与对照演示用。
 
-def per_window_scores(regions, fs, picks, mode, alpha, rng, window):
-    """逐窗打分（**非重叠**，与 degrade_reference.score_windows 同口径但窗长可指定）。
+def bandpass_win(x, fs):
+    """窗口内普通 rfft 带通（4~45 Hz）。与 calib_3s_*.py 同口径。"""
+    spec = np.fft.rfft(x, axis=0)
+    f = np.fft.rfftfreq(x.shape[0], 1.0 / fs)
+    spec[(f < dref.BAND_LO) | (f > dref.BAND_HI)] = 0.0
+    return np.fft.irfft(spec, n=x.shape[0], axis=0)
 
-    返回 {label: ndarray(n_win, 4)}，列顺序 = LABELS。'stop' 段也在内。
+
+def trial_offsets(root):
+    """读 segments.json，返回 {label: [试次头相对合并 span 起点的偏移...]}。
+
+    A 端把同方向 4 个 4000 点试次拼成一段；`sampleOffset` 就是试次头。
+    calib_3s_gate.py 的 trials 字典与此相同。
+    """
+    meta = json.load(open(os.path.join(root, 'segments.json'), encoding='utf-8'))
+    spans = {}
+    for seg in meta['segments']:
+        lab = seg['label']
+        off, cnt = int(seg['sampleOffset']), int(seg['sampleCount'])
+        if lab in spans:
+            a, b = spans[lab]
+            spans[lab] = (min(a, off), max(b, off + cnt))
+        else:
+            spans[lab] = (off, off + cnt)
+    trials = {lab: [] for lab in spans}
+    for seg in meta['segments']:
+        trials[seg['label']].append(int(seg['sampleOffset']) - spans[seg['label']][0])
+    return trials
+
+
+def per_window_scores(regions, trials, fs, picks, mode, alpha, rng, window):
+    """试次头对齐窗逐窗打分（权威 3 s 口径）。
+
+    对每个 label：整段降质（dref.degrade）-> 从每个试次头取 window 点 ->
+    窗口内普通 rfft 带通 -> CCA。返回 {label: ndarray(n_trials, 4)}，
+    列顺序 = LABELS。'stop' 段也在内。
     """
     out = {}
     for lab in list(LABELS) + ['stop']:
         if lab not in regions:
             continue
         x = dref.degrade(regions[lab], mode, alpha, rng)
-        bl = dref.bandlimit(x, fs)
         rows = []
-        for s in range(0, bl.shape[0] - window + 1, window):
-            win = bl[s:s + window][:, picks]
+        for off in trials[lab]:
+            win = x[off:off + window][:, picks]
+            if win.shape[0] < window:
+                continue
+            win = bandpass_win(win, fs)
             rows.append([dref.cca(win, dref.reference(FREQS[l], fs, window)) for l in LABELS])
         out[lab] = np.array(rows)
     return out
@@ -238,6 +301,47 @@ def acceptance_stats(scores, theta1, theta2, an=None):
                            stop=sum(1 for d in dec if d == 'stop'),
                            wrong=sum(1 for d in dec if d != lab and d != 'stop'))
     return st
+
+
+def metrics_from_scores(scores):
+    """从逐窗得分算标定指标（试次头对齐口径，与 calib_3s_gate.evaluate 同语义）。
+
+    返回 dict：rho_true / rho_second / rest_max / dir_min / gap_dir_min /
+    gap_rest_max / acc / n_dir / n_rest。
+    """
+    true_scores, second_scores, dir_gaps, rest_gaps = [], [], [], []
+    hits, total = 0, 0
+    for lab in LABELS:
+        if lab not in scores:
+            continue
+        sc = scores[lab]
+        j = LABELS.index(lab)
+        for row in sc:
+            order = np.argsort(row)[::-1]
+            best, second = int(order[0]), int(order[1])
+            true_scores.append(float(row[j]))
+            second_scores.append(float(row[second]))
+            dir_gaps.append(float(row[best] - row[second]))
+            total += 1
+            if LABELS[best] == lab:
+                hits += 1
+    rest_peaks = []
+    if 'stop' in scores:
+        for row in scores['stop']:
+            r = np.sort(row)[::-1]
+            rest_peaks.append(float(r[0]))
+            rest_gaps.append(float(r[0] - r[1]))
+    return dict(
+        rho_true=float(np.mean(true_scores)) if true_scores else float('nan'),
+        rho_second=float(np.mean(second_scores)) if second_scores else float('nan'),
+        rest_max=float(np.max(rest_peaks)) if rest_peaks else float('nan'),
+        dir_min=float(np.min(true_scores)) if true_scores else float('nan'),
+        gap_dir_min=float(np.min(dir_gaps)) if dir_gaps else float('nan'),
+        gap_rest_max=float(np.max(rest_gaps)) if rest_gaps else float('nan'),
+        acc='%d/%d' % (hits, total),
+        n_dir=total,
+        n_rest=len(rest_peaks),
+    )
 
 
 def rho_true_of(scores):
@@ -484,6 +588,7 @@ def run_serve(args):
 
     votes = collections.deque(maxlen=args.vote)
     last_stable = None
+    last_decision_abs = -1       # 还没有任何判决；首次到达 step 就判
     next_win_abs = 0          # 下一个待评分窗口的起始绝对序号（每次推流从 0 起）
     t0 = time.time()
     last_stats = t0
@@ -606,7 +711,8 @@ def run_serve(args):
 # ----------------------------------------------------------------- 离线模式
 
 def load_regions(assets, verbose=False):
-    return dref.build(assets, verbose=verbose)
+    regions, fs, picks = dref.build(assets, verbose=verbose)
+    return regions, fs, picks, trial_offsets(assets)
 
 
 def long_sine(freq, fs, n, nch, amp=1.0, noise=0.01, rng=None):
@@ -619,10 +725,10 @@ def long_sine(freq, fs, n, nch, amp=1.0, noise=0.01, rng=None):
 
 
 def run_verify(args):
-    regions, fs, picks = load_regions(args.assets)
-    dref.WINDOW = args.window
+    regions, fs, picks, trials = load_regions(args.assets)
     rng = np.random.default_rng(20261018)
-    m = dref.evaluate(regions, fs, picks, 'noise', 0.0, rng)
+    scores = per_window_scores(regions, trials, fs, picks, 'noise', 0.0, rng, args.window)
+    m = metrics_from_scores(scores)
     ref = REF['base']
     rows = [
         ('rho_true   ' + S('（正确方向均值）', '(mean of correct direction)'),
@@ -630,21 +736,19 @@ def run_verify(args):
         ('rho_2nd    ' + S('（次优方向均值）', '(mean of runner-up)'),
          m['rho_second'], ref['rho_2nd']),
         (S('静息最高分  (绝对门下界候选)', 'rest max   (lower bound of abs gate)'),
-         m['abs_lo'], ref['rest_max']),
+         m['rest_max'], ref['rest_max']),
         (S('方向最低分  (绝对门上界候选)', 'dir min    (upper bound of abs gate)'),
-         m['abs_hi'], ref['dir_min']),
+         m['dir_min'], ref['dir_min']),
         (S('差值门 静息 gap 最大', 'gap gate: rest max'),
          m['gap_rest_max'], ref['gap_rest_max']),
         (S('差值门 方向 gap 最小', 'gap gate: dir min'),
          m['gap_dir_min'], ref['gap_dir_min']),
     ]
-    print(S('=== 标定表可复现性校验（复现手册 §5.3 的 4 s 窗数字）===',
-            '=== calibration reproducibility (handbook 5.3, 4 s window) ==='))
-    print(S('  窗 %d 点 (%.1f s)，非重叠切窗，方向窗 %s，静息窗 %s',
-            '  window %d pts (%.1fs), non-overlapping, dir wins %s, rest wins %s')
-          % (args.window, args.window / float(fs), m['acc'],
-             len(regions.get('stop', {}).get('x', [])) // args.window
-             if 'stop' in regions else '?'))
+    print(S('=== 标定表可复现性校验（复现手册 §5.3 的 3 s 试次头对齐数字）===',
+            '=== calibration reproducibility (handbook 5.3, 3 s trial-aligned) ==='))
+    print(S('  窗 %d 点 (%.1f s)，试次头对齐 + 窗口内普通 rfft 带通；方向窗 %s，静息窗 %d',
+            '  window %d pts (%.1fs), trial-aligned + per-window rfft; dir wins %s, rest %d')
+          % (args.window, args.window / float(fs), m['acc'], m['n_rest']))
     bad = 0
     for name, got, want in rows:
         ok = abs(got - want) <= args.tol
@@ -662,58 +766,81 @@ def run_verify(args):
     return 0
 
 
-def _sweep_one(regions, fs, picks, mode, alpha, args):
+def _sweep_one(regions, trials, fs, picks, mode, alpha, args):
     rng = np.random.default_rng(20261018)
-    scores = per_window_scores(regions, fs, picks, mode, alpha, rng, args.window)
+    scores = per_window_scores(regions, trials, fs, picks, mode, alpha, rng, args.window)
     st = acceptance_stats(scores, args.theta1, args.theta2)
     return rho_true_of(scores), rest_top1_of(scores), st
 
 
 def run_sweep(args, single_alpha=None):
-    regions, fs, picks = load_regions(args.assets)
+    regions, fs, picks, trials = load_regions(args.assets)
     if 'stop' not in regions:
         print(S('!! 数据里没有 stop 段，无法评估拒识能力', '!! no stop region'))
         return 1
-    modes = [('notch', dref.NOTCH_GRID, REF['notch']),
-             ('noise', dref.NOISE_GRID, REF['noise'])]
-    if single_alpha is not None:
-        modes = [(args.degrade, None, {single_alpha: REF[args.degrade].get(single_alpha, float('nan'))})]
 
-    print(S('=== 逐窗门控验收（窗 %d 点 / 非重叠；绝对门 %.3f，差值门 %.3f）===',
-            '=== per-window gate acceptance (window %d, theta1 %.3f, theta2 %.3f) ===')
+    # 档位 = 权威标定表（手册 §9.2），格式：[(置信度, alpha)]
+    def conf_points(table):
+        return [(10 * i, a) for i, a in enumerate(table)][::-1]  # 100%..0%
+
+    modes = [('notch', REF['notch_conf'], REF['notch_rho'], REF['notch_gate']),
+             ('noise', REF['noise_conf'], REF['noise_rho'], REF['noise_gate'])]
+    if single_alpha is not None:
+        table = REF['notch_conf'] if args.degrade == 'notch' else REF['noise_conf']
+        ref_rho = REF['notch_rho'] if args.degrade == 'notch' else REF['noise_rho']
+        ref_gate = REF['notch_gate'] if args.degrade == 'notch' else REF['noise_gate']
+        modes = [(args.degrade, table, ref_rho, ref_gate)]
+
+    print(S('=== 逐窗门控验收（3 s 试次头对齐窗 %d 点；绝对门 %.3f，差值门 %.3f）===',
+            '=== per-window gate acceptance (3s trial-aligned window %d, '
+            'theta1 %.3f, theta2 %.3f) ===')
           % (args.window, args.theta1, args.theta2))
     print(S('  rho_true 与参考值比对；判决列 = 方向窗/静息窗的实际门控结果\n',
             '  rho_true vs reference; decision columns are actual gate outcomes\n'))
     n_bad = 0
-    for mode, grid, refmap in modes:
-        alphas = [single_alpha] if single_alpha is not None else grid
+    for mode, conf_table, ref_rho, ref_gate in modes:
+        if single_alpha is not None:
+            pts = [(100, single_alpha)]
+        else:
+            pts = conf_points(conf_table)
         print(S('[%s]', '[%s]') % (S('陷波/SSVEP 削弱', 'notch') if mode == 'notch'
                                    else S('加噪/信号干扰', 'noise')))
-        print('  %-7s %-9s %-9s | %-34s | %s' % (
-            'alpha', 'rho_true', S('参考', 'ref'), S('门控判决统计', 'gate decisions'),
-            S('结论', 'verdict')))
-        print('  ' + '-' * 116)
-        for alpha in alphas:
-            rho, rest, st = _sweep_one(regions, fs, picks, mode, alpha, args)
-            ref = refmap.get(alpha, float('nan'))
+        print('  %-7s %-7s %-9s %-9s | %-34s | %s' % (
+            S('置信度', 'conf'), 'alpha', 'rho_true', S('参考', 'ref'),
+            S('门控判决统计', 'gate decisions'), S('结论', 'verdict')))
+        print('  ' + '-' * 120)
+        for conf, alpha in pts:
+            rho, rest, st = _sweep_one(regions, trials, fs, picks, mode, alpha, args)
+            ref = ref_rho.get(alpha, float('nan'))
             dev = '' if np.isnan(ref) else ('%+.4f' % (rho - ref))
             if not np.isnan(ref) and abs(rho - ref) > args.tol:
                 n_bad += 1
                 dev += ' !!'
-            print('  %-7.2f %-9.4f %-9s | %-34s | %s' % (
-                alpha, rho, ('%.4f %s' % (ref, dev)) if not np.isnan(ref) else '-',
-                fmt_stats(st), verdict_text(st)))
+            # 门控判决参考比对（判对方向数）
+            n_dir = sum(st[l]['n'] for l in LABELS if l in st)
+            n_ok = sum(st[l]['correct'] for l in LABELS if l in st)
+            g_ref = ref_gate.get(alpha)
+            gate_dev = ''
+            if g_ref is not None and n_dir:
+                expected_ok = int(g_ref.split('/')[0])
+                if n_ok != expected_ok:
+                    gate_dev = S('  !!门控参考 %s', '  !!gate ref %s') % g_ref
+                    n_bad += 1
+            print('  %-7s %-7.4f %-9.4f %-9s | %-34s | %s%s' % (
+                ('%d%%' % conf), alpha, rho,
+                ('%.4f %s' % (ref, dev)) if not np.isnan(ref) else '-',
+                fmt_stats(st), verdict_text(st), gate_dev))
         print()
     if n_bad:
-        print(S('注意：有 %d 处 rho_true 与参考值偏差 > %.4f', 'NOTE: %d rho_true dev > %.4f') % (n_bad, args.tol))
+        print(S('注意：有 %d 处与参考值不一致', 'NOTE: %d mismatches vs reference') % n_bad)
     else:
-        print(S('全部 rho_true 与参考值一致（这在 --verify 通过后是预期的）。',
-                'all rho_true match reference (expected once --verify passes).'))
+        print(S('全部 rho_true 与门控判决与参考表一致（这在 --verify 通过后是预期的）。',
+                'all rho_true and gate outcomes match reference tables.'))
     return 0
 
 
 def run_live_sim(args):
-    regions, fs, picks = load_regions(args.assets)
+    regions, fs, picks, trials = load_regions(args.assets)
     print(S('=== 滑动窗判决模拟（真机将看到的时间线）===',
             '=== sliding-window decision simulation ==='))
     print(S('  窗 %d 点，步进 %d 点，投票 %d 窗；两条路径用**同一套 CCA/门控**，'
@@ -741,7 +868,7 @@ def run_live_sim(args):
                 rho = an.score_window_at(raw, s)
                 lab_g, w, s2 = an.gate(rho)
                 votes.append(lab_g)
-                rows.append((s, s % args.window == 0,
+                rows.append((s, s % 4000 == 0,      # 试次头（4 s 试次周期）对齐标记
                              float(rho[j]) if j is not None else float(np.max(rho)),
                              lab_g))
             recs[lab] = rows
@@ -806,7 +933,7 @@ def run_live_sim(args):
 
 def run_filter_check(args):
     """带通实现体检：同一个 theta1 能不能跨滤波实现复用。"""
-    regions, fs, picks = load_regions(args.assets)
+    regions, fs, picks, trials = load_regions(args.assets)
     print(S('=== 带通实现体检：theta1 能否跨实现复用？ ===',
             '=== filter check: does theta1 survive a different filter? ==='))
     print(S('  同一段数据，只换带通实现，看 方向 rho 与 静息最高分 怎么变。'
@@ -887,12 +1014,13 @@ def run_selftest(args):
     ok = True
     print(S('=== 自检（不接网络、不读数据）===', '=== self-test ==='))
 
-    an = Analyzer(1000, 4000, args.theta1, args.theta2, args.pad)
+    n = args.window
+    an = Analyzer(args.fs, n, args.theta1, args.theta2, args.pad)
 
     # 1) 缓存版 CCA 必须与 degrade_reference.cca 完全一致
     rng = np.random.default_rng(7)
-    x = rng.standard_normal((4000, 9))
-    y = dref.reference(12.0, 1000, 4000)
+    x = rng.standard_normal((n, 9))
+    y = dref.reference(12.0, args.fs, n)
     a1 = an.cca(x, 'forward')
     a2 = dref.cca(x, y)
     d = abs(a1 - a2)
@@ -902,7 +1030,7 @@ def run_selftest(args):
     ok &= d < 1e-12
 
     # 2) 12 Hz 纯正弦 -> rho(forward) 应接近 1
-    sig = long_sine(12.00, 1000, 4000, 9, noise=0.01, rng=rng)
+    sig = long_sine(12.00, args.fs, n, 9, noise=0.01, rng=rng)
     rho = np.array([an.cca(sig, l) for l in LABELS])
     print('  2) %s  rho=%s  rho(forward)=%.4f  %s' % (
         S('12 Hz 正弦（正对照）', '12 Hz sine (positive)'),
@@ -911,7 +1039,7 @@ def run_selftest(args):
     ok &= rho[0] > 0.95 and rho[0] == np.max(rho)
 
     # 3) 白噪声 -> 各候选都低
-    nz = rng.standard_normal((4000, 9))
+    nz = rng.standard_normal((n, 9))
     rho_n = np.array([an.cca(nz, l) for l in LABELS])
     print('  3) %s  rho=%s  max=%.4f  %s' % (
         S('白噪声（负对照）', 'white noise (negative)'),
@@ -965,14 +1093,17 @@ def main():
     ap.add_argument('--discovery-port', type=int, default=9001)
     ap.add_argument('--name', default='BC-Verifier')
     ap.add_argument('--no-discovery', action='store_true')
-    ap.add_argument('--window', type=int, default=4000,
-                    help=S('分析窗点数（>=4000；2s 窗无可用阈值）', 'analysis window pts'))
-    ap.add_argument('--step', type=int, default=200, help='decision step (pts)')
-    ap.add_argument('--theta1', type=float, default=0.57,
-                    help=S('绝对门（手册 §6.2）', 'absolute gate'))
-    ap.add_argument('--theta2', type=float, default=0.245,
-                    help=S('差值门（手册 §6.2）', 'difference gate'))
-    ap.add_argument('--vote', type=int, default=3, help='consecutive windows to confirm')
+    ap.add_argument('--window', type=int, default=3000,
+                    help=S('试次头对齐窗点数（3 s 参考口径；2s/滑动窗无可用阈值）',
+                           'trial-aligned window pts (3 s reference)'))
+    ap.add_argument('--step', type=int, default=4000,
+                    help=S('判决节拍（真机 = 试次周期 4000 点；滑动演示用小步进）',
+                           'decision cadence (trial period 4000 pts)'))
+    ap.add_argument('--theta1', type=float, default=0.631,
+                    help=S('绝对门（手册 §6.2 / 3 s 标定）', 'absolute gate'))
+    ap.add_argument('--theta2', type=float, default=0.171,
+                    help=S('差值门（手册 §6.2 / 3 s 标定）', 'difference gate'))
+    ap.add_argument('--vote', type=int, default=2, help='consecutive windows to confirm')
     ap.add_argument('--pad', type=int, default=1500,
                     help=S('带通两侧缓冲点数（消边界振铃）', 'bandpass padding pts'))
     ap.add_argument('--fs', type=int, default=1000)

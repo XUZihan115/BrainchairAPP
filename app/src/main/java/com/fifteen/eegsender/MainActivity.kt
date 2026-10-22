@@ -20,6 +20,9 @@ import com.fifteen.eegsender.protocol.NetDiagnostics
 import com.fifteen.eegsender.protocol.SignalDegrade
 import com.fifteen.eegsender.protocol.UdpDiscovery
 import com.fifteen.eegsender.protocol.UdpEegSender
+import java.io.File
+import java.io.PrintWriter
+import java.io.StringWriter
 import java.text.SimpleDateFormat
 import java.util.Date
 import java.util.Locale
@@ -28,10 +31,15 @@ import java.util.concurrent.Executors
 /**
  * 发送端主界面。
  *
- * 交互约定：**点一下方向键 = 输出一个固定长度的该方向想象脑电试次**。
- * 按下瞬间起流，以 1000 Hz 采样率、按真实采集设备的报文格式推满
- * [TRIAL_SECONDS] 秒即静默闲置 —— **不补发 STREAM_STOP**，接收端按静默超时
- * 判定本次想象结束。抬手与试次长度无关。
+ * 交互约定：**按住方向键 = 一直输出该方向的想象脑电，松手才结束**。
+ * 按下瞬间起流，以 1000 Hz 采样率、按真实采集设备的报文格式持续推送，松手
+ * （ACTION_UP / ACTION_CANCEL）时补发一个 STREAM_STOP 作为「本次想象到此为止」
+ * 的显式标签。按住期间长度不设限，只有 [MAX_HOLD_SECONDS] 这个兜底上限。
+ *
+ * 按住期间可以随时拖动「信号置信度」滑块（0~100 = 置信度，100 = 原样发送）：
+ * 陷波强度是**每个报文重新读一次**的 volatile 字段，改一下立刻出现在码流里
+ * （延迟 ≤ 一个包 = 5 ms），不需要重开流。
+ * 注意配套的是接收端要 3 秒窗才出一次判决 —— 信号是瞬时的，**判决**是滞后的。
  *
  * 「停」键推的是真实静息段（无 SSVEP 刺激），对应接收端的 stop 指令。
  *
@@ -46,10 +54,8 @@ class MainActivity : AppCompatActivity(), UdpEegSender.Listener {
     private lateinit var tvStatus: TextView
     private lateinit var tvStream: TextView
     private lateinit var tvLog: TextView
-    private lateinit var sbNoise: SeekBar
-    private lateinit var sbNotch: SeekBar
-    private lateinit var tvNoiseValue: TextView
-    private lateinit var tvNotchValue: TextView
+    private lateinit var sbConfidence: SeekBar
+    private lateinit var tvConfidenceValue: TextView
     private lateinit var tvDegradeState: TextView
 
     /** 五个指令按键，数据未载入完成前整体禁用。 */
@@ -90,6 +96,7 @@ class MainActivity : AppCompatActivity(), UdpEegSender.Listener {
     private var streamToken = 0
 
     override fun onCreate(savedInstanceState: Bundle?) {
+        installCrashHandler()
         super.onCreate(savedInstanceState)
         setContentView(R.layout.activity_main)
 
@@ -98,6 +105,8 @@ class MainActivity : AppCompatActivity(), UdpEegSender.Listener {
         tvStatus = findViewById(R.id.tvStatus)
         tvStream = findViewById(R.id.tvStream)
         tvLog = findViewById(R.id.tvLog)
+        // 日志可长按选择复制：取证时直接把文本粘出来，比截图可靠（避免手机截图转文字失真）
+        tvLog.setTextIsSelectable(true)
 
         bindTap(R.id.btnForward, EegCommands.FORWARD)
         bindTap(R.id.btnLeft, EegCommands.LEFT)
@@ -114,8 +123,37 @@ class MainActivity : AppCompatActivity(), UdpEegSender.Listener {
 
         tvStream.text = getString(R.string.stream_idle)
         setStatus(getString(R.string.status_loading), R.color.warn)
+        showLastBreath()
         logEnvironment()
         loadDataset()
+    }
+
+    override fun onStart() {
+        super.onStart()
+        appendLog("LIFE onStart")
+    }
+
+    override fun onResume() {
+        super.onResume()
+        appendLog("LIFE onResume")
+    }
+
+    override fun onPause() {
+        appendLog("LIFE onPause")
+        super.onPause()
+    }
+
+    override fun onStop() {
+        // 界面不可见时把流收掉：此刻手指多半已经离开，ACTION_UP 永远不会到达，
+        // 不主动打断就会一直发到 MAX_HOLD_SECONDS。用 interrupt()（不补收尾报文）：
+        // 接收端不该把「App 退到后台」当成一次正常的想象结束。
+        if (sender?.isStreaming() == true) {
+            sender?.interrupt()
+            appendLog("⏸ 界面进入后台 → 打断当前推流（不发收尾报文）")
+        }
+        streamToken++ // 作废可能还在跑的自动发现
+        appendLog("LIFE onStop")
+        super.onStop()
     }
 
     override fun onDestroy() {
@@ -124,6 +162,7 @@ class MainActivity : AppCompatActivity(), UdpEegSender.Listener {
         sender?.shutdown()
         sender = null
         degradeExecutor.shutdownNow()
+        appendLog("LIFE onDestroy")
         super.onDestroy()
     }
 
@@ -132,15 +171,15 @@ class MainActivity : AppCompatActivity(), UdpEegSender.Listener {
     /**
      * 两个降质滑块：**拖动只改一个 float，立刻生效**，没有 FFT 参与。
      *
-     * 真正花时间的是「每段的 band / rms 预计算」，所以第一次离开 100% 时会在
-     * 后台把 5 个方向都预热一遍。预热完成前按下的方向会原样输出 ——
+     * 真正花时间的是「每段的 band / rms 预计算」。数据集载入完成后会立刻
+     * **无条件**把 5 个方向都预热一遍（见 [loadDataset]），所以第一次拖滑块时
+     * 参数一般已经就绪、改动一个包（5 ms）之内就出现在码流里。
+     * 万一某方向还没预热完，那一包原样输出 ——
      * 宁可这一包不降质，也不能为了降质把 5 ms 的推流节拍打乱。
      */
     private fun bindDegradeControls() {
-        sbNoise = findViewById(R.id.sbNoise)
-        sbNotch = findViewById(R.id.sbNotch)
-        tvNoiseValue = findViewById(R.id.tvNoiseValue)
-        tvNotchValue = findViewById(R.id.tvNotchValue)
+        sbConfidence = findViewById(R.id.sbConfidence)
+        tvConfidenceValue = findViewById(R.id.tvConfidenceValue)
         tvDegradeState = findViewById(R.id.tvDegradeState)
 
         val listener = object : SeekBar.OnSeekBarChangeListener {
@@ -152,29 +191,28 @@ class MainActivity : AppCompatActivity(), UdpEegSender.Listener {
 
             override fun onStopTrackingTouch(seekBar: SeekBar?) = Unit
         }
-        sbNoise.setOnSeekBarChangeListener(listener)
-        sbNotch.setOnSeekBarChangeListener(listener)
+        sbConfidence.setOnSeekBarChangeListener(listener)
 
         applyDegrade()
     }
 
-    /** 把两个滑块的百分比换算成强度写进数据源，并刷新界面文案。 */
+    /** 把置信度滑块换算成陷波强度写进数据源，并刷新界面文案。 */
     private fun applyDegrade() {
-        if (!::sbNoise.isInitialized) return
+        if (!::sbConfidence.isInitialized) return
 
-        val confidenceNoise = sbNoise.progress
-        val confidenceNotch = sbNotch.progress
+        val confidence = sbConfidence.progress
         val data = source
 
-        // 100% 时强度恰好为 0 —— 走的是「原样拷贝」快路径，一个字节都不动
-        data?.noiseAlpha = SignalDegrade.noiseAlphaFor(confidenceNoise)
-        data?.notchAlpha = SignalDegrade.notchAlphaFor(confidenceNotch)
+        // 100% 时强度恰好为 0 —— 走的是「原样拷贝」快路径，一个字节都不动。
+        // 置信度滑块只驱动陷波路径（确定性、单调）；加噪路径非确定且抬静息基线，
+        // 不作为「置信度」的可复现刻度（SignalDegrade 仍保留该能力供标定用）。
+        data?.noiseAlpha = 0f
+        data?.notchAlpha = SignalDegrade.notchAlphaFor(confidence)
 
-        tvNoiseValue.text = degradeValueText(confidenceNoise)
-        tvNotchValue.text = degradeValueText(confidenceNotch)
+        tvConfidenceValue.text = degradeValueText(confidence)
 
-        if (confidenceNoise >= MAX_CONFIDENCE && confidenceNotch >= MAX_CONFIDENCE) {
-            tvDegradeState.text = getString(R.string.degrade_off)
+        if (confidence >= MAX_CONFIDENCE) {
+            updateDegradeState()
             return
         }
         startDegradePreheat()
@@ -183,7 +221,7 @@ class MainActivity : AppCompatActivity(), UdpEegSender.Listener {
     private fun degradeValueText(confidence: Int): String = getString(
         R.string.degrade_value,
         confidence,
-        // 实测曲线是「4 秒窗」下的，界面上只作粗略刻度用
+        // 实测曲线是「3 秒窗」下的，界面上只作粗略刻度用
         SignalDegrade.expectedRho(confidence)
     )
 
@@ -239,6 +277,12 @@ class MainActivity : AppCompatActivity(), UdpEegSender.Listener {
             tvDegradeState.text = getString(R.string.degrade_preparing)
             return
         }
+        // 滑块在 100% 时其实**没有**降质，只是参数已经备好了。文案必须把这点
+        // 说清楚：否则用户看到「5/5 个方向已预热」会以为信号已经被改过了。
+        if (::sbConfidence.isInitialized && sbConfidence.progress >= MAX_CONFIDENCE) {
+            tvDegradeState.text = getString(R.string.degrade_off_ready)
+            return
+        }
         val ready = (0 until EegCommands.COUNT).count { data.isDegradeReady(it) }
         tvDegradeState.text = getString(R.string.degrade_ready, ready, EegCommands.COUNT)
     }
@@ -250,20 +294,17 @@ class MainActivity : AppCompatActivity(), UdpEegSender.Listener {
      * 能查到 —— 否则一旦某个方向还没预热完，看到的现象会像是降质根本不生效。
      */
     private fun degradeSummary(command: Int): String? {
-        if (!::sbNoise.isInitialized) return null
-        val noise = sbNoise.progress
-        val notch = sbNotch.progress
-        if (noise >= MAX_CONFIDENCE && notch >= MAX_CONFIDENCE) return null
+        if (!::sbConfidence.isInitialized) return null
+        val confidence = sbConfidence.progress
+        if (confidence >= MAX_CONFIDENCE) return null
 
         val ready = source?.isDegradeReady(command) == true
         val suffix = if (ready) "" else "（该方向尚未预热，本次原样输出）"
         return String.format(
             Locale.US,
-            "加噪 %d%%(α=%.3f)｜陷波 %d%%(α=%.3f)%s",
-            noise,
-            SignalDegrade.noiseAlphaFor(noise),
-            notch,
-            SignalDegrade.notchAlphaFor(notch),
+            "置信度 %d%%（陷波 α=%.3f）%s",
+            confidence,
+            SignalDegrade.notchAlphaFor(confidence),
             suffix
         )
     }
@@ -271,18 +312,21 @@ class MainActivity : AppCompatActivity(), UdpEegSender.Listener {
     // ---------------------------------------------------------------- 触摸绑定
 
     /**
-     * 把某个按键绑定成「点一下输出一个试次」。
+     * 把某个按键绑定成「按住一直发、松手收尾」。
      *
      * 用 OnTouchListener 而非 OnClickListener，是为了在**按下瞬间**就起流，
      * 而不是等抬手；同时按下时阻断父容器的滚动拦截，避免手指轻微移动就被
-     * ScrollView 抢走事件。抬手只复位按压态 —— 一次试次有多长由
-     * [TRIAL_SECONDS] 决定，与手指何时离开无关。
+     * ScrollView 抢走事件。抬手（含 ACTION_CANCEL）才收尾。
      */
     @SuppressLint("ClickableViewAccessibility")
     private fun bindTap(viewId: Int, command: Int) {
         val button = findViewById<Button>(viewId)
         commandButtons.add(button)
         button.isEnabled = false
+        // 不参与焦点（XML 样式已设，代码再兜底一次）：按下瞬间不让 ScrollView
+        // 因为子控件请求焦点而自动滚动，屏幕保持原位不跳动。
+        button.isFocusable = false
+        button.isFocusableInTouchMode = false
         button.setOnTouchListener { view, event ->
             when (event.actionMasked) {
                 MotionEvent.ACTION_DOWN -> {
@@ -295,12 +339,33 @@ class MainActivity : AppCompatActivity(), UdpEegSender.Listener {
                 MotionEvent.ACTION_UP, MotionEvent.ACTION_CANCEL -> {
                     view.parent?.requestDisallowInterceptTouchEvent(false)
                     view.isPressed = false
+                    endStream(command)
                     true
                 }
 
                 else -> false
             }
         }
+    }
+
+    /**
+     * 松手收尾：让当前这路流补发 STREAM_STOP 并退出。
+     *
+     * 两道守卫都是针对**多点触控**的：两根手指先后按下不同方向时，前一路会被
+     * 打断，此时先按的那根手指抬起就不该再动当前这条流 ——
+     * 所以「还在推流」与「推的就是我这一路」两个条件都要满足。
+     */
+    private fun endStream(command: Int) {
+        val active = sender ?: return
+        if (!active.isStreaming()) return
+        if (active.currentCommand() != command) return
+
+        appendLog("▲ 松手 → 收尾「${EegCommands.name(command)}」，补发 STREAM_STOP")
+        // release() 会等推流线程退出（正常不到 6 ms），回来时 isStreaming 已是 false，
+        // 所以紧接着再按同一个键不会撞上「上一路还在跑」的竞态。
+        val t0 = System.currentTimeMillis()
+        active.release()
+        appendLog("  release() 已返回（耗时 ${System.currentTimeMillis() - t0} ms）")
     }
 
     // ------------------------------------------------------------ 环境自检
@@ -312,6 +377,7 @@ class MainActivity : AppCompatActivity(), UdpEegSender.Listener {
      * 系统版本会不会触发局域网访问保护、权限有没有被系统拒掉。
      */
     private fun logEnvironment() {
+        appendLog("BUILD_TAG=${BUILD_TAG}")
         appendLog(
             "设备 ${Build.MANUFACTURER} ${Build.MODEL}｜Android ${Build.VERSION.RELEASE}" +
                 "（API ${Build.VERSION.SDK_INT}）｜targetSdk ${applicationInfo.targetSdkVersion}"
@@ -360,14 +426,15 @@ class MainActivity : AppCompatActivity(), UdpEegSender.Listener {
         }
 
         // 任意时刻只允许一路流。已在推流（或正在发现接收端）时：
-        //   * 点到**同一个方向** → 视作没按，忽略，让这一路试次照常发满 4 秒；
+        //   * 点到**同一个方向** → 视作重复按下（同一次按住里事件重发），忽略；
         //   * 点到**别的方向** → 立刻打断，重开一路新流。新流的 STREAM_INFO
         //     就是「上一次行为已结束」的标签，接收端收到即清窗、重新计时。
+        //     打断走 interrupt()：**不补 STREAM_STOP**，省掉一次无意义的收尾。
         val activeNow = sender
         if (activeNow != null && activeNow.isStreaming()) {
             val runningCmd = activeNow.currentCommand()
             if (runningCmd == command) {
-                appendLog("「${EegCommands.name(command)}」正在推流中，重复点按忽略")
+                appendLog("「${EegCommands.name(command)}」正在推流中，重复按下忽略")
                 return
             }
             appendLog(
@@ -375,7 +442,7 @@ class MainActivity : AppCompatActivity(), UdpEegSender.Listener {
             )
             // 同步等推流线程退出（循环每 5 ms 查一次停止标志）。退出后 sender 可立刻
             // 复用：下面的 startStreaming 会在同一个对象上 start 一路全新的流。
-            activeNow.shutdown()
+            activeNow.interrupt()
             activeCommand = -1
         } else if (activeCommand != -1) {
             // 还停在「发现中」（广播最长约 2 秒），规则同上。
@@ -394,7 +461,7 @@ class MainActivity : AppCompatActivity(), UdpEegSender.Listener {
         val hz = EegCommands.stimulusHz(command)
         val stimulusText =
             if (hz != null) String.format(Locale.US, "%.2f Hz 刺激", hz) else "静息（无刺激）"
-        appendLog("▼ 点按 ${EegCommands.name(command)}｜$stimulusText（本次试次 ${TRIAL_SECONDS} s）")
+        appendLog("▼ 按住 ${EegCommands.name(command)}｜$stimulusText（松手才结束，兜底上限 ${MAX_HOLD_SECONDS} s）")
         degradeSummary(command)?.let { appendLog("  降质：$it") }
 
         val host = etIp.text.toString().trim()
@@ -491,8 +558,9 @@ class MainActivity : AppCompatActivity(), UdpEegSender.Listener {
         activeCommand = command
 
         setStatus(getString(R.string.status_streaming, EegCommands.name(command)), R.color.warn)
-        // 一次试次 = TRIAL_SECONDS 秒。发满后由发送器自行收尾，不再依赖任何「松手」事件。
-        if (!active.start(command, TRIAL_SECONDS * data.sampleRate.toLong())) {
+        // 长度上限传 0 = 不限长：一直发到松手（endStream → release()）为止。
+        // 兜底上限 MAX_HOLD_SECONDS 只是防「抬手事件被系统吞掉」，正常用不到。
+        if (!active.start(command, MAX_HOLD_SECONDS * data.sampleRate.toLong())) {
             activeCommand = -1
             appendLog("推流线程启动失败")
         }
@@ -537,11 +605,18 @@ class MainActivity : AppCompatActivity(), UdpEegSender.Listener {
                         )
                     }
                     appendLog(getString(R.string.hint_trial))
+                    appendLog(
+                        "  建议单次按住不少于 ${TRIAL_SECONDS} s：接收端要凑满一个" +
+                            "${TRIAL_SECONDS} s 窗才出判决（信号是 5 ms 级的，判决不是）。"
+                    )
 
-                    // 数据集是后来才载入的，此刻才可能真正开始预热
-                    if (sbNoise.progress < MAX_CONFIDENCE || sbNotch.progress < MAX_CONFIDENCE) {
-                        applyDegrade()
-                    }
+                    // 数据集是后来才载入的，此刻才可能真正开始预处理。**无条件预热**：
+                    // 否则第一次把滑块拖离 100% 时才开始算，5 个方向串行约 2.5 秒，
+                    // 而早期版本一次试次只有 4 秒 —— 表现为「拖了滑块但信号没变」。
+                    // 现在按住持续发，预热慢一点尚可容忍，但把头一次的 2.5 秒空窗
+                    // 消掉仍然是值得的：用户一拖就能立刻看到效果。
+                    // 代价是常驻内存约 18 MB（4 个方向各 16000×62 float + 静息 8000×62）。
+                    startDegradePreheat()
                 }.onFailure { error ->
                     setStatus(getString(R.string.status_load_failed), R.color.error)
                     appendLog("数据集载入失败：${error.message ?: error.javaClass.simpleName}")
@@ -592,24 +667,36 @@ class MainActivity : AppCompatActivity(), UdpEegSender.Listener {
         packets: Long,
         bytesSent: Long
     ) {
-        val text = String.format(
-            Locale.US,
-            "「%s」推流结束｜共 %d 采样点｜%d 包｜%.2f MB",
-            EegCommands.name(command),
-            lastSampleIndex,
-            packets,
-            bytesSent / 1048576.0
-        )
         mainHandler.post {
-            // 「换方向」打断时，新一路流已经接管；这条只是旧流的讣告，
-            // 别把新流的状态（activeCommand / 状态栏 / 码流显示）清掉。
-            if (command != activeCommand) {
+            // text 里要用到 source 的采样率，所以放到主线程里再算（source 由主线程赋值）。
+            val text = String.format(
+                Locale.US,
+                "「%s」推流结束｜共 %.1f s｜%d 采样点｜%d 包｜%.2f MB",
+                EegCommands.name(command),
+                lastSampleIndex / sourceHz().toDouble(),
+                lastSampleIndex,
+                packets,
+                bytesSent / 1048576.0
+            )
+            // 两条「别乱改状态」的理由，都得拦：
+            //   * 换方向 / 多点触控换手打断时，新一路流已经接管 —— 这条只是旧流的讣告；
+            //   * 同一方向松手后立刻又按下时，新流已在跑（isStreaming 为真），
+            //     而 activeCommand 恰好还等于同一个值，光比命令号拦不住。
+            val takenOver = sender?.isStreaming() == true
+            if (takenOver || command != activeCommand) {
                 appendLog("⤫ 上一路「${EegCommands.name(command)}」已结束（被新试次接替）")
                 return@post
             }
             activeCommand = -1
             setStatus(getString(R.string.status_idle), R.color.ok)
-            appendLog("▲ 试次结束 ${EegCommands.name(command)}｜已发满 ${TRIAL_SECONDS}s，未补发 STREAM_STOP")
+            appendLog(
+                String.format(
+                    Locale.US,
+                    "▲ 试次结束「%s」｜已补发 STREAM_STOP（reason=0x%02X）",
+                    EegCommands.name(command),
+                    reason
+                )
+            )
             appendLog("  $text")
             tvStream.text = getString(R.string.stream_idle)
         }
@@ -631,6 +718,9 @@ class MainActivity : AppCompatActivity(), UdpEegSender.Listener {
 
     // ------------------------------------------------------------ 界面小工具
 
+    /** 采样率；数据集还没载入时退回 1000（只用于把采样点数换算成秒）。 */
+    private fun sourceHz(): Long = (source?.sampleRate ?: 1000).toLong()
+
     private fun setStatus(text: String, colorRes: Int) {
         tvStatus.text = text
         tvStatus.setTextColor(ContextCompat.getColor(this, colorRes))
@@ -642,25 +732,108 @@ class MainActivity : AppCompatActivity(), UdpEegSender.Listener {
         while (logLines.size > MAX_LOG_LINES) {
             logLines.removeFirst()
         }
-        tvLog.text = logLines.joinToString("\n")
+        // 倒序渲染：最新一条在最上方（聊天式），但不强制滚动位置——
+        // 按下按键时页面停在用户当前滚动位置，不跳回顶部。
+        tvLog.text = logLines.reversed().joinToString("\n")
+        persistLine(stamped)
+    }
+
+    /** 把日志行落盘：进程即使被系统静默杀掉，下次启动也能看到最后一刻发生了什么。 */
+    private fun persistLine(line: String) {
+        runCatching {
+            val file = File(filesDir, LAST_BREATH_FILE)
+            file.appendText(line + "\n")
+            if (file.length() > LAST_BREATH_MAX_BYTES) {
+                val tail = file.readLines().takeLast(LAST_BREATH_KEEP_LINES).joinToString("\n")
+                file.writeText(tail + "\n")
+            }
+        }
+    }
+
+    /**
+     * 启动时把「上次进程结束前」的最后几行捞回界面。
+     *
+     * 判断松手即退的真相全靠它：
+     * - 日志停在「▲ 松手」或「release() 已返回」处且没有 LIFE onPause/onStop/onDestroy
+     *   → 进程被系统直接杀掉，没走生命周期；
+     * - 有 onPause/onStop/onDestroy → 系统按正常流程把它移走了；
+     * - 有 UNCAUGHT 行 → App 是自己崩的，不是被杀。
+     */
+    private fun showLastBreath() {
+        val lines = runCatching {
+            File(filesDir, LAST_BREATH_FILE).readLines().takeLast(LAST_BREATH_SHOWN)
+        }.getOrDefault(emptyList())
+        if (lines.isEmpty()) return
+        // 配合倒序渲染：先入「本次会话」标题、再逆序入上次内容、最后入「上次会话」标题，
+        // 倒序显示后恢复成 上次标题→内容（时间序）→本次标题，段内不乱。
+        logLines.addLast("───── 本次会话 ─────")
+        lines.asReversed().forEach { logLines.addLast(it) }
+        logLines.addLast("───── 上次会话（进程结束前）─────")
+        while (logLines.size > MAX_LOG_LINES) {
+            logLines.removeFirst()
+        }
+        tvLog.text = logLines.reversed().joinToString("\n")
+    }
+
+    /** 未捕获异常兜底落盘：区分「App 自己崩溃」与「被系统杀掉」。 */
+    private fun installCrashHandler() {
+        val prev = Thread.getDefaultUncaughtExceptionHandler()
+        Thread.setDefaultUncaughtExceptionHandler { thread, throwable ->
+            val sw = StringWriter()
+            throwable.printStackTrace(PrintWriter(sw))
+            runCatching {
+                File(filesDir, LAST_BREATH_FILE).appendText(
+                    ">>> UNCAUGHT ${throwable.javaClass.simpleName} @ " +
+                        "${timeFormat.format(Date())} on ${thread.name} <<<\n$sw"
+                )
+            }
+            if (prev != null) {
+                prev.uncaughtException(thread, throwable)
+            } else {
+                throwable.printStackTrace(System.err)
+                android.os.Process.killProcess(android.os.Process.myPid())
+            }
+        }
     }
 
     private companion object {
         const val DEFAULT_PORT = 9000
 
         /**
-         * 一次试次的长度（秒）。按下方向键后固定推这么多秒，与手指何时抬起无关。
+         * 接收端出一次判决所需的窗口长度（秒）。
          *
-         * 取 4 秒而不是更短，是因为它等于 OpenBMI 素材的单试次长度、也是 SSVEP 的
-         * 经典取值：4 秒窗下 CCA 相关值最高（约 0.74）；压到 2 秒虽然指令更快，
-         * 但相关值会明显下降、更容易被判成「无指令」。
+         * 交互上**不再**用它限制推流长度（按住持续发，松手才停），只用来写提示文案：
+         * 「建议至少按住 4 秒」。取 4 秒是因为它等于 OpenBMI 素材的单试次长度、也是
+         * SSVEP 的经典取值：4 秒窗下 CCA 相关值最高（约 0.74）；压到 2 秒虽然指令
+         * 更快，但相关值会明显下降、更容易被判成「无指令」（实测 2 秒窗判决会倒挂）。
          */
-        const val TRIAL_SECONDS = 4
+        const val TRIAL_SECONDS = 3
+
+        /**
+         * 单次按住的**兜底**长度上限（秒）。
+         *
+         * 正常收尾靠 ACTION_UP。这个上限只防意外：抬手事件被系统吞掉（手势被别的
+         * 窗口抢走、界面被切到后台）时流不会永远发下去。素材单区段只有 16 秒，
+         * 超过后硬回绕重播，所以长按本身无害 —— 上限只是保险丝。
+         */
+        const val MAX_HOLD_SECONDS = 60
 
         /** 自动发现走的端口，与数据流分开，见 [UdpDiscovery]。 */
         const val DISCOVERY_PORT = 9001
 
-        const val MAX_LOG_LINES = 60
+        const val MAX_LOG_LINES = 120
+
+        /**
+         * 本次构建标记。日志第一行会打印它：截图里能看到这行，就证明跑的是
+         * 这份带 last-breath 日志的新代码（而不是旧 APK 没装成功）。
+         */
+        const val BUILD_TAG = "NIO-NOSCROLL-20261021"
+
+        /** last-breath 日志落盘文件名（filesDir 下），进程被杀后下次启动仍可读回。 */
+        const val LAST_BREATH_FILE = "last_breath.log"
+        const val LAST_BREATH_MAX_BYTES = 64 * 1024
+        const val LAST_BREATH_KEEP_LINES = 300
+        const val LAST_BREATH_SHOWN = 30
 
         /** 滑块上限：100% 表示不做任何降质。 */
         const val MAX_CONFIDENCE = 100

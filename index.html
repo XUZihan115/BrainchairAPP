@@ -1,0 +1,65 @@
+<!DOCTYPE html>
+<html lang="zh-CN">
+<head>
+<meta charset="utf-8">
+<meta name="viewport" content="width=device-width, initial-scale=1">
+<title>轮椅 3D 模拟器</title>
+<link rel="stylesheet" href="css/style.css">
+</head>
+<body>
+
+<canvas id="scene"></canvas>
+
+<!-- 顶部信息 -->
+<div class="topbar">
+  <div class="brand">
+    <span class="dot"></span>
+    <span>轮椅 3D 模拟器</span>
+  </div>
+  <div class="stats">
+    <div class="stat">
+      <span class="k">速度</span>
+      <span class="v" id="spd">0.00</span>
+      <span class="u">m/s</span>
+    </div>
+    <div class="stat">
+      <span class="k">里程</span>
+      <span class="v" id="dist">0.0</span>
+      <span class="u">m</span>
+    </div>
+    <div class="stat">
+      <span class="k">光环</span>
+      <span class="v" id="ring">0/5</span>
+      <span class="u"></span>
+    </div>
+    <div class="stat state" id="state">待机</div>
+  </div>
+</div>
+
+<!-- 左下操作台 -->
+<div class="pad" id="pad">
+  <div class="pad-title">驾驶台</div>
+  <div class="grid">
+    <button class="key" data-k="W"><b>W</b><span>前进</span></button>
+    <button class="key" data-k="A"><b>A</b><span>左转</span></button>
+    <button class="key" data-k="S"><b>S</b><span>后退</span></button>
+    <button class="key" data-k="D"><b>D</b><span>右转</span></button>
+  </div>
+  <button class="brake" data-k="BRAKE"><b>刹车</b><span>SPACE</span></button>
+</div>
+
+<!-- 右下工具栏 -->
+<div class="tools">
+  <button id="btnCam" title="切换机位 (C)">跟拍视角 · C</button>
+  <button id="btnReset" title="回到起点 (R)">重置 · R</button>
+  <button id="btnHelp" title="显示/隐藏操作台 (H)">隐藏面板 · H</button>
+</div>
+
+<div class="hint" id="hint">W / A / S / D 或方向键驾驶　·　Shift 加速　·　空格刹车　·　鼠标拖动可绕看</div>
+
+<div class="toast" id="toast"></div>
+
+<script src="lib/three.min.js"></script>
+<script src="js/app.js"></script>
+</body>
+</html>

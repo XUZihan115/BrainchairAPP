@@ -1,0 +1,55 @@
+[
+  {
+    "test": "forward STREAM_STOP",
+    "passed": true,
+    "detail": {
+      "observedUpperBoundMs": 161.67860000859946,
+      "reason": "流已结束 reason=1"
+    }
+  },
+  {
+    "test": "left STREAM_STOP",
+    "passed": true,
+    "detail": {
+      "observedUpperBoundMs": 155.93000000808388,
+      "reason": "流已结束 reason=1"
+    }
+  },
+  {
+    "test": "right STREAM_STOP",
+    "passed": true,
+    "detail": {
+      "observedUpperBoundMs": 156.6807999915909,
+      "reason": "流已结束 reason=1"
+    }
+  },
+  {
+    "test": "backward STREAM_STOP",
+    "passed": true,
+    "detail": {
+      "observedUpperBoundMs": 30.82790001644753,
+      "reason": "流已结束 reason=1"
+    }
+  },
+  {
+    "test": "stop STREAM_STOP",
+    "passed": true,
+    "detail": {
+      "observedUpperBoundMs": 40.44139999314211,
+      "reason": "流已结束 reason=1"
+    }
+  },
+  {
+    "test": "timeout clears session",
+    "passed": true,
+    "detail": "断流超时，等待新 STREAM_INFO"
+  },
+  {
+    "test": "all datagrams received",
+    "passed": true,
+    "detail": {
+      "sent": 21612,
+      "received": 21612
+    }
+  }
+]

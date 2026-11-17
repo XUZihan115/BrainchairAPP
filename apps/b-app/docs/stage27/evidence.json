@@ -1,0 +1,505 @@
+{
+  "stage": "2.7",
+  "createdUtc": "2026-10-20T03:03:03.692424+00:00",
+  "branch": "codex/a4s-switch-stop-integration",
+  "implementationCommit": "e09eea1ea58ab01a0b57ac6b07d95b470c09f06c",
+  "parentCommit": "3a35592",
+  "build": {
+    "success": true,
+    "apk": "D:\\college\\project-based CST\\脑控轮椅\\output\\stage27\\BrainChair-B-stage27.apk",
+    "apkBytes": 1006898,
+    "apkSha256": "2c772641a63ea1c4037231ed1d089b845e26415d61555bfeb7c6a932c7e5b7a0",
+    "package": "com.yourteam.brainchair.receiver",
+    "versionCode": 5,
+    "versionName": "0.3.3-a4s-stop",
+    "lintErrors": 0,
+    "lintWarnings": 3
+  },
+  "sourceApk": {
+    "path": "app-debug.apk.1",
+    "sha256": "5fdaaedb6cdcfa555d0fd15f8597da8419ad25fe80c626e647050e9e4e46f911",
+    "modified": false,
+    "role": "read-only raw EEG fixture source; A application not changed or claimed tested for new STOP behavior"
+  },
+  "junit": {
+    "tests": 15,
+    "failures": 0,
+    "errors": 0,
+    "skipped": 0,
+    "suites": [
+      {
+        "name": "com.yourteam.brainchair.control.Stage27ControlTest",
+        "tests": 6,
+        "failures": 0,
+        "errors": 0,
+        "skipped": 0,
+        "seconds": 0.036,
+        "cases": [
+          "sixCommandsMapToLatestDraftWithoutLegacyEstopCollision",
+          "simulatedReceiverWatchdogAndLatchedRestartRemainDistinctFromActualUnity",
+          "ordinaryStopAndExpiryRequireFreshMotionAndEmergencyRequiresExplicitLiveUnlock",
+          "queuedWakeupsReadCurrentStateAndCannotOverwriteStop",
+          "emergencyReleasePreservesHalfSecondFreshLinkRequirement",
+          "unconfirmedCodecRefusesAnyUdpAndNeverFallsBackToPrototypeFrame"
+        ]
+      },
+      {
+        "name": "com.yourteam.brainchair.control.Stage27IntegrationTest",
+        "tests": 9,
+        "failures": 0,
+        "errors": 0,
+        "skipped": 0,
+        "seconds": 10.259,
+        "cases": [
+          "actualFourSecondUdpTimelineAndUnmodifiedLongDiagnostic",
+          "firstBlockMustProveStreamStartAndLateIdenticalInfoSafelyResets",
+          "emergencyPersistsAcrossStopRapidNewFlowsAndManualReleaseNeedsNewStream",
+          "rapidClicksNeverSpliceDifferentFlowWindowsAndRestartBeginsEmpty",
+          "newInfoPreemptsInFlightCcaAndNoOldVoteReappears",
+          "fourSecondClickHasNoCompleteAnalysisOrMotionAndStopClearsEveryLayer",
+          "crcGapLatePacketAndTimeoutRevokeActualDeliveredMotion",
+          "stopPreemptsInFlightActualCcaAndItsLaterResultCannotPublishMotion",
+          "retiredEndpointAndTimestampOriginCannotRefillNewFlow"
+        ]
+      }
+    ]
+  },
+  "android": {
+    "checks": 32,
+    "passed": 32,
+    "device": "google/sdk_gphone64_x86_64/emu64xa:15/AE3A.240806.043/12960925:userdebug/dev-keys",
+    "checksList": [
+      {
+        "test": "emergency works before listening starts",
+        "passed": true
+      },
+      {
+        "test": "single forward 4s no analysis spans streams",
+        "passed": true
+      },
+      {
+        "test": "single forward 4s final and mock received",
+        "passed": true
+      },
+      {
+        "test": "single forward 4s no motion delivered",
+        "passed": true
+      },
+      {
+        "test": "forward to left before 4s no analysis spans streams",
+        "passed": true
+      },
+      {
+        "test": "forward to left before 4s final and mock received",
+        "passed": true
+      },
+      {
+        "test": "forward to left before 4s no motion delivered",
+        "passed": true
+      },
+      {
+        "test": "rapid directions INFO-only no analysis spans streams",
+        "passed": true
+      },
+      {
+        "test": "rapid directions INFO-only final and mock received",
+        "passed": true
+      },
+      {
+        "test": "rapid directions INFO-only no motion delivered",
+        "passed": true
+      },
+      {
+        "test": "switch includes explicit SWITCHED STOP no analysis spans streams",
+        "passed": true
+      },
+      {
+        "test": "switch includes explicit SWITCHED STOP final and mock received",
+        "passed": true
+      },
+      {
+        "test": "switch includes explicit SWITCHED STOP no motion delivered",
+        "passed": true
+      },
+      {
+        "test": "immediate restart right no analysis spans streams",
+        "passed": true
+      },
+      {
+        "test": "immediate restart right final and mock received",
+        "passed": true
+      },
+      {
+        "test": "immediate restart right no motion delivered",
+        "passed": true
+      },
+      {
+        "test": "CRC and missing packet no analysis spans streams",
+        "passed": true
+      },
+      {
+        "test": "CRC and missing packet final and mock received",
+        "passed": true
+      },
+      {
+        "test": "CRC and missing packet no motion delivered",
+        "passed": true
+      },
+      {
+        "test": "4s without STOP then timeout no analysis spans streams",
+        "passed": true
+      },
+      {
+        "test": "4s without STOP then timeout final and mock received",
+        "passed": true
+      },
+      {
+        "test": "4s without STOP then timeout no motion delivered",
+        "passed": true
+      },
+      {
+        "test": "no STOP timeout leaves invalid window",
+        "passed": true
+      },
+      {
+        "test": "new flow cannot release ESTOP no analysis spans streams",
+        "passed": true
+      },
+      {
+        "test": "new flow cannot release ESTOP final and mock received",
+        "passed": true
+      },
+      {
+        "test": "new flow cannot release ESTOP no motion delivered",
+        "passed": true
+      },
+      {
+        "test": "ordinary STOP cannot unlock",
+        "passed": true
+      },
+      {
+        "test": "emergency persists across B process restart",
+        "passed": true
+      },
+      {
+        "test": "manual unlock stays stopped",
+        "passed": true
+      },
+      {
+        "test": "6s diagnostic real Android CCA and mock motion",
+        "passed": true
+      },
+      {
+        "test": "STOP after observed motion reaches mock receiver",
+        "passed": true
+      },
+      {
+        "test": "Unity transport explicitly simulated",
+        "passed": true
+      }
+    ],
+    "scenarios": [
+      {
+        "name": "single forward 4s",
+        "analysisCount": 0,
+        "raw": "STOP",
+        "stable": "STOP",
+        "final": "STOP",
+        "sent": "STOP",
+        "received": "STOP",
+        "emergencyLocked": false,
+        "infoPacketsCumulative": 1,
+        "blockPacketsCumulative": 800,
+        "stopPacketsCumulative": 1,
+        "rejectedCumulative": {}
+      },
+      {
+        "name": "forward to left before 4s",
+        "analysisCount": 0,
+        "raw": "STOP",
+        "stable": "STOP",
+        "final": "STOP",
+        "sent": "STOP",
+        "received": "STOP",
+        "emergencyLocked": false,
+        "infoPacketsCumulative": 3,
+        "blockPacketsCumulative": 1800,
+        "stopPacketsCumulative": 2,
+        "rejectedCumulative": {
+          "retired-source": 2
+        }
+      },
+      {
+        "name": "rapid directions INFO-only",
+        "analysisCount": 0,
+        "raw": "STOP",
+        "stable": "STOP",
+        "final": "STOP",
+        "sent": "STOP",
+        "received": "STOP",
+        "emergencyLocked": false,
+        "infoPacketsCumulative": 7,
+        "blockPacketsCumulative": 2811,
+        "stopPacketsCumulative": 3,
+        "rejectedCumulative": {
+          "retired-source": 2
+        }
+      },
+      {
+        "name": "switch includes explicit SWITCHED STOP",
+        "analysisCount": 0,
+        "raw": "STOP",
+        "stable": "STOP",
+        "final": "STOP",
+        "sent": "STOP",
+        "received": "STOP",
+        "emergencyLocked": false,
+        "infoPacketsCumulative": 9,
+        "blockPacketsCumulative": 3711,
+        "stopPacketsCumulative": 5,
+        "rejectedCumulative": {
+          "retired-source": 2
+        }
+      },
+      {
+        "name": "immediate restart right",
+        "analysisCount": 0,
+        "raw": "STOP",
+        "stable": "STOP",
+        "final": "STOP",
+        "sent": "STOP",
+        "received": "STOP",
+        "emergencyLocked": false,
+        "infoPacketsCumulative": 10,
+        "blockPacketsCumulative": 4511,
+        "stopPacketsCumulative": 6,
+        "rejectedCumulative": {
+          "retired-source": 2
+        }
+      },
+      {
+        "name": "CRC and missing packet",
+        "analysisCount": 0,
+        "raw": "STOP",
+        "stable": "STOP",
+        "final": "STOP",
+        "sent": "STOP",
+        "received": "STOP",
+        "emergencyLocked": false,
+        "infoPacketsCumulative": 11,
+        "blockPacketsCumulative": 5309,
+        "stopPacketsCumulative": 7,
+        "rejectedCumulative": {
+          "retired-source": 2,
+          "crc": 1
+        }
+      },
+      {
+        "name": "4s without STOP then timeout",
+        "analysisCount": 0,
+        "raw": "STOP",
+        "stable": "STOP",
+        "final": "STOP",
+        "sent": "STOP",
+        "received": "STOP",
+        "emergencyLocked": false,
+        "infoPacketsCumulative": 12,
+        "blockPacketsCumulative": 6109,
+        "stopPacketsCumulative": 7,
+        "rejectedCumulative": {
+          "retired-source": 2,
+          "crc": 1
+        }
+      },
+      {
+        "name": "new flow cannot release ESTOP",
+        "analysisCount": 0,
+        "raw": "STOP",
+        "stable": "STOP",
+        "final": "ESTOP",
+        "sent": "ESTOP",
+        "received": "ESTOP",
+        "emergencyLocked": true,
+        "infoPacketsCumulative": 13,
+        "blockPacketsCumulative": 6909,
+        "stopPacketsCumulative": 8,
+        "rejectedCumulative": {
+          "retired-source": 2,
+          "crc": 1
+        }
+      }
+    ],
+    "diagnostic": {
+      "scope": "Android B INFO accept to decision/delivery; B-C in-process simulation, no UDP",
+      "firstObservedRawMs": 4555.152560003102,
+      "firstObservedRawAnalysisCount": 1,
+      "firstMockMotionMs": 4970.042,
+      "computeMs": [
+        11.0739,
+        3.8423,
+        3.8423,
+        4.681,
+        4.2644,
+        4.2644,
+        3.7658,
+        3.5652,
+        4.8295
+      ],
+      "periodMs": [
+        0,
+        207,
+        207,
+        206,
+        211,
+        211,
+        208,
+        212,
+        207
+      ],
+      "heapMinBytes": 4936416,
+      "heapMaxBytes": 12185312,
+      "processCpuPercentOneCore": 31.83735447950059,
+      "stopSocketToFinalMs": 0.4385,
+      "stopSocketToMockSendMs": 0.6975,
+      "mockSendToReceiveMs": 0.0143
+    },
+    "stopMeasurements": [
+      {
+        "socketReceivedNs": 51676338937340,
+        "socketToMockSendMs": 2.4454,
+        "mockSendToReceiveMs": 0.0272,
+        "socketToInvalidateMs": 2.3687,
+        "command": "STOP"
+      },
+      {
+        "socketReceivedNs": 51681689203940,
+        "socketToMockSendMs": 0.6766,
+        "mockSendToReceiveMs": 0.0295,
+        "socketToInvalidateMs": 0.2788,
+        "command": "STOP"
+      },
+      {
+        "socketReceivedNs": 51687046329340,
+        "socketToMockSendMs": 0.272,
+        "mockSendToReceiveMs": 0.013,
+        "socketToInvalidateMs": 0.1618,
+        "command": "STOP"
+      },
+      {
+        "socketReceivedNs": 51691913595040,
+        "socketToMockSendMs": 1.9534,
+        "mockSendToReceiveMs": 0.0344,
+        "socketToInvalidateMs": 1.5469,
+        "command": "STOP"
+      },
+      {
+        "socketReceivedNs": 51696186506440,
+        "socketToMockSendMs": 0.4821,
+        "mockSendToReceiveMs": 0.022,
+        "socketToInvalidateMs": 0.4197,
+        "command": "STOP"
+      },
+      {
+        "socketReceivedNs": 51700461003140,
+        "socketToMockSendMs": 5298.6028,
+        "mockSendToReceiveMs": 0.118,
+        "socketToInvalidateMs": 0.246,
+        "command": "STOP"
+      },
+      {
+        "socketReceivedNs": 51712972137840,
+        "socketToMockSendMs": 0.4842,
+        "mockSendToReceiveMs": 0.4788,
+        "socketToInvalidateMs": 0.3401,
+        "command": "ESTOP"
+      },
+      {
+        "socketReceivedNs": 51729302468140,
+        "socketToMockSendMs": 0.6975,
+        "mockSendToReceiveMs": 0.0143,
+        "socketToInvalidateMs": 1.623,
+        "command": "STOP"
+      }
+    ],
+    "performance": {
+      "distinctAnalyses": 7,
+      "computeMeanMs": 5.146014285714286,
+      "computeMaxMs": 11.0739,
+      "periodMedianMs": 207.5,
+      "periodMaxMs": 212,
+      "cpuScope": "App process CPU including receiver, UI, evidence and mock; single emulator run, not a phone benchmark"
+    }
+  },
+  "jvmRealtimeTimeline": [
+    {
+      "scenario": "fourSeconds",
+      "event": "INFO",
+      "offsetMs": "0",
+      "command": "STOP",
+      "detail": "4s window plus unchanged 0.5s warmup"
+    },
+    {
+      "scenario": "fourSeconds",
+      "event": "source STOP sent",
+      "offsetMs": "4002.3214",
+      "command": "STOP",
+      "detail": "800 SAMPLE_BLOCK"
+    },
+    {
+      "scenario": "fourSeconds",
+      "event": "B stop revoked",
+      "offsetMs": "4004.518",
+      "command": "STOP",
+      "detail": "1.837 ms socket to revoke"
+    },
+    {
+      "scenario": "fourSeconds",
+      "event": "B mock send",
+      "offsetMs": "4004.1935",
+      "command": "STOP",
+      "detail": "1.8721 ms source STOP to B send"
+    },
+    {
+      "scenario": "fourSeconds",
+      "event": "mock receive",
+      "offsetMs": "4004.2018",
+      "command": "STOP",
+      "detail": "0.0083 ms mock send to receive; NO B-C UDP"
+    },
+    {
+      "scenario": "sixSecondDiagnostic",
+      "event": "first gated raw",
+      "offsetMs": "4535.6246",
+      "command": "FORWARD",
+      "detail": "actual causal filter + CCA"
+    },
+    {
+      "scenario": "sixSecondDiagnostic",
+      "event": "first mock received stable motion",
+      "offsetMs": "4946.6224",
+      "command": "FORWARD",
+      "detail": "not a 4s click"
+    }
+  ],
+  "transportScope": {
+    "aToB": "actual local UDP in JVM and host-to-Android-emulator UDP",
+    "bToC": "SIMULATED_IN_PROCESS_NO_UDP",
+    "actualUnityUdpVerified": false,
+    "realPhonesVerified": false,
+    "realEegAccuracyReaccepted": false
+  },
+  "unresolved": [
+    "4s click ends before 0.5s warmup + 4s window + stable vote; no observable motion in normal cycle",
+    "Unity type/length/data/checksum layout and actual receiver unavailable; real UDP codec disabled",
+    "Frozen v2 lacks stream ID; indistinguishable same-endpoint late INFO/STOP and finite retired history limit absolute isolation",
+    "New real A STOP APK and A/B phones and actual Unity have not been jointly tested"
+  ],
+  "derivedFourSecondTiming": {
+    "scope": "derived from independent JVM sender scheduled four-second deadline and measured common-clock events; not original A APK",
+    "scheduledEegCycleEndMs": 4000.0,
+    "cycleEndToSourceStopSendMs": 2.3213999999998123,
+    "cycleEndToBMockStopSendMs": 4.193499999999858,
+    "sourceStopSendToBMockStopSendMs": 1.8721000000000458,
+    "bMockStopSendToMockReceiveMs": 0.008299999999962893
+  }
+}

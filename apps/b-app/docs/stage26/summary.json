@@ -1,0 +1,889 @@
+{
+  "before": {
+    "default": {
+      "single": {
+        "matrix": {
+          "forward": {
+            "forward": 0,
+            "left": 0,
+            "right": 0,
+            "backward": 0,
+            "stop": 2
+          },
+          "left": {
+            "forward": 0,
+            "left": 0,
+            "right": 0,
+            "backward": 0,
+            "stop": 2
+          },
+          "right": {
+            "forward": 0,
+            "left": 0,
+            "right": 0,
+            "backward": 0,
+            "stop": 2
+          },
+          "backward": {
+            "forward": 0,
+            "left": 0,
+            "right": 0,
+            "backward": 0,
+            "stop": 2
+          },
+          "stop": {
+            "forward": 0,
+            "left": 0,
+            "right": 0,
+            "backward": 0,
+            "stop": 1
+          }
+        },
+        "units": 9,
+        "motionUnits": 8,
+        "rejectedMotionUnits": 8,
+        "wrongMotionUnits": 0,
+        "restUnits": 1,
+        "restFalseMotionUnits": 0,
+        "eligibleMotionTicks": 0,
+        "eligibleRejectedTicks": 0
+      },
+      "repeat": {
+        "matrix": {
+          "forward": {
+            "forward": 2,
+            "left": 0,
+            "right": 0,
+            "backward": 0,
+            "stop": 0
+          },
+          "left": {
+            "forward": 0,
+            "left": 2,
+            "right": 0,
+            "backward": 0,
+            "stop": 0
+          },
+          "right": {
+            "forward": 0,
+            "left": 0,
+            "right": 2,
+            "backward": 0,
+            "stop": 0
+          },
+          "backward": {
+            "forward": 0,
+            "left": 0,
+            "right": 0,
+            "backward": 1,
+            "stop": 1
+          },
+          "stop": {
+            "forward": 0,
+            "left": 0,
+            "right": 0,
+            "backward": 0,
+            "stop": 1
+          }
+        },
+        "units": 9,
+        "motionUnits": 8,
+        "rejectedMotionUnits": 1,
+        "wrongMotionUnits": 0,
+        "restUnits": 1,
+        "restFalseMotionUnits": 0,
+        "eligibleMotionTicks": 304,
+        "eligibleRejectedTicks": 205
+      },
+      "mixedWindowMatrix": {
+        "forward": {
+          "forward": 136,
+          "left": 0,
+          "right": 0,
+          "backward": 0,
+          "stop": 2
+        },
+        "left": {
+          "forward": 0,
+          "left": 77,
+          "right": 0,
+          "backward": 0,
+          "stop": 61
+        },
+        "right": {
+          "forward": 0,
+          "left": 0,
+          "right": 28,
+          "backward": 0,
+          "stop": 110
+        },
+        "backward": {
+          "forward": 0,
+          "left": 0,
+          "right": 0,
+          "backward": 8,
+          "stop": 130
+        },
+        "stop": {
+          "forward": 0,
+          "left": 0,
+          "right": 0,
+          "backward": 0,
+          "stop": 58
+        }
+      },
+      "switchWindowMatrix": {
+        "forward": {
+          "forward": 16,
+          "left": 0,
+          "right": 0,
+          "backward": 0,
+          "stop": 2
+        },
+        "left": {
+          "forward": 4,
+          "left": 18,
+          "right": 0,
+          "backward": 0,
+          "stop": 18
+        },
+        "right": {
+          "forward": 0,
+          "left": 4,
+          "right": 5,
+          "backward": 0,
+          "stop": 31
+        },
+        "backward": {
+          "forward": 0,
+          "left": 0,
+          "right": 3,
+          "backward": 3,
+          "stop": 34
+        },
+        "stop": {
+          "forward": 0,
+          "left": 0,
+          "right": 0,
+          "backward": 0,
+          "stop": 40
+        }
+      },
+      "activeToRestMatrix": {
+        "forward": {
+          "forward": 16,
+          "left": 0,
+          "right": 0,
+          "backward": 0,
+          "stop": 2
+        },
+        "left": {
+          "forward": 0,
+          "left": 0,
+          "right": 0,
+          "backward": 0,
+          "stop": 0
+        },
+        "right": {
+          "forward": 0,
+          "left": 0,
+          "right": 0,
+          "backward": 0,
+          "stop": 0
+        },
+        "backward": {
+          "forward": 0,
+          "left": 0,
+          "right": 0,
+          "backward": 0,
+          "stop": 0
+        },
+        "stop": {
+          "forward": 5,
+          "left": 0,
+          "right": 0,
+          "backward": 0,
+          "stop": 35
+        }
+      },
+      "safetyAccepted": false
+    },
+    "candidate": {
+      "single": {
+        "matrix": {
+          "forward": {
+            "forward": 0,
+            "left": 0,
+            "right": 0,
+            "backward": 0,
+            "stop": 2
+          },
+          "left": {
+            "forward": 0,
+            "left": 0,
+            "right": 0,
+            "backward": 0,
+            "stop": 2
+          },
+          "right": {
+            "forward": 0,
+            "left": 0,
+            "right": 0,
+            "backward": 0,
+            "stop": 2
+          },
+          "backward": {
+            "forward": 0,
+            "left": 0,
+            "right": 0,
+            "backward": 0,
+            "stop": 2
+          },
+          "stop": {
+            "forward": 0,
+            "left": 0,
+            "right": 0,
+            "backward": 0,
+            "stop": 1
+          }
+        },
+        "units": 9,
+        "motionUnits": 8,
+        "rejectedMotionUnits": 8,
+        "wrongMotionUnits": 0,
+        "restUnits": 1,
+        "restFalseMotionUnits": 0,
+        "eligibleMotionTicks": 0,
+        "eligibleRejectedTicks": 0
+      },
+      "repeat": {
+        "matrix": {
+          "forward": {
+            "forward": 2,
+            "left": 0,
+            "right": 0,
+            "backward": 0,
+            "stop": 0
+          },
+          "left": {
+            "forward": 0,
+            "left": 2,
+            "right": 0,
+            "backward": 0,
+            "stop": 0
+          },
+          "right": {
+            "forward": 0,
+            "left": 0,
+            "right": 2,
+            "backward": 0,
+            "stop": 0
+          },
+          "backward": {
+            "forward": 0,
+            "left": 0,
+            "right": 0,
+            "backward": 2,
+            "stop": 0
+          },
+          "stop": {
+            "forward": 0,
+            "left": 0,
+            "right": 0,
+            "backward": 0,
+            "stop": 1
+          }
+        },
+        "units": 9,
+        "motionUnits": 8,
+        "rejectedMotionUnits": 0,
+        "wrongMotionUnits": 0,
+        "restUnits": 1,
+        "restFalseMotionUnits": 0,
+        "eligibleMotionTicks": 304,
+        "eligibleRejectedTicks": 130
+      },
+      "mixedWindowMatrix": {
+        "forward": {
+          "forward": 136,
+          "left": 0,
+          "right": 0,
+          "backward": 0,
+          "stop": 2
+        },
+        "left": {
+          "forward": 0,
+          "left": 130,
+          "right": 0,
+          "backward": 0,
+          "stop": 8
+        },
+        "right": {
+          "forward": 0,
+          "left": 0,
+          "right": 78,
+          "backward": 0,
+          "stop": 60
+        },
+        "backward": {
+          "forward": 0,
+          "left": 0,
+          "right": 0,
+          "backward": 34,
+          "stop": 104
+        },
+        "stop": {
+          "forward": 0,
+          "left": 0,
+          "right": 0,
+          "backward": 2,
+          "stop": 56
+        }
+      },
+      "switchWindowMatrix": {
+        "forward": {
+          "forward": 16,
+          "left": 0,
+          "right": 0,
+          "backward": 0,
+          "stop": 2
+        },
+        "left": {
+          "forward": 5,
+          "left": 25,
+          "right": 0,
+          "backward": 0,
+          "stop": 10
+        },
+        "right": {
+          "forward": 0,
+          "left": 6,
+          "right": 12,
+          "backward": 0,
+          "stop": 22
+        },
+        "backward": {
+          "forward": 0,
+          "left": 0,
+          "right": 6,
+          "backward": 8,
+          "stop": 26
+        },
+        "stop": {
+          "forward": 0,
+          "left": 0,
+          "right": 0,
+          "backward": 6,
+          "stop": 34
+        }
+      },
+      "activeToRestMatrix": {
+        "forward": {
+          "forward": 16,
+          "left": 0,
+          "right": 0,
+          "backward": 0,
+          "stop": 2
+        },
+        "left": {
+          "forward": 0,
+          "left": 0,
+          "right": 0,
+          "backward": 0,
+          "stop": 0
+        },
+        "right": {
+          "forward": 0,
+          "left": 0,
+          "right": 0,
+          "backward": 0,
+          "stop": 0
+        },
+        "backward": {
+          "forward": 0,
+          "left": 0,
+          "right": 0,
+          "backward": 0,
+          "stop": 0
+        },
+        "stop": {
+          "forward": 7,
+          "left": 0,
+          "right": 0,
+          "backward": 0,
+          "stop": 33
+        }
+      },
+      "safetyAccepted": false
+    }
+  },
+  "after": {
+    "default": {
+      "single": {
+        "matrix": {
+          "forward": {
+            "forward": 0,
+            "left": 0,
+            "right": 0,
+            "backward": 0,
+            "stop": 2
+          },
+          "left": {
+            "forward": 0,
+            "left": 0,
+            "right": 0,
+            "backward": 0,
+            "stop": 2
+          },
+          "right": {
+            "forward": 0,
+            "left": 0,
+            "right": 0,
+            "backward": 0,
+            "stop": 2
+          },
+          "backward": {
+            "forward": 0,
+            "left": 0,
+            "right": 0,
+            "backward": 0,
+            "stop": 2
+          },
+          "stop": {
+            "forward": 0,
+            "left": 0,
+            "right": 0,
+            "backward": 0,
+            "stop": 1
+          }
+        },
+        "units": 9,
+        "motionUnits": 8,
+        "rejectedMotionUnits": 8,
+        "wrongMotionUnits": 0,
+        "restUnits": 1,
+        "restFalseMotionUnits": 0,
+        "eligibleMotionTicks": 0,
+        "eligibleRejectedTicks": 0
+      },
+      "repeat": {
+        "matrix": {
+          "forward": {
+            "forward": 2,
+            "left": 0,
+            "right": 0,
+            "backward": 0,
+            "stop": 0
+          },
+          "left": {
+            "forward": 0,
+            "left": 2,
+            "right": 0,
+            "backward": 0,
+            "stop": 0
+          },
+          "right": {
+            "forward": 0,
+            "left": 0,
+            "right": 2,
+            "backward": 0,
+            "stop": 0
+          },
+          "backward": {
+            "forward": 0,
+            "left": 0,
+            "right": 0,
+            "backward": 1,
+            "stop": 1
+          },
+          "stop": {
+            "forward": 0,
+            "left": 0,
+            "right": 0,
+            "backward": 0,
+            "stop": 1
+          }
+        },
+        "units": 9,
+        "motionUnits": 8,
+        "rejectedMotionUnits": 1,
+        "wrongMotionUnits": 0,
+        "restUnits": 1,
+        "restFalseMotionUnits": 0,
+        "eligibleMotionTicks": 304,
+        "eligibleRejectedTicks": 205
+      },
+      "mixedWindowMatrix": {
+        "forward": {
+          "forward": 136,
+          "left": 0,
+          "right": 0,
+          "backward": 0,
+          "stop": 2
+        },
+        "left": {
+          "forward": 0,
+          "left": 77,
+          "right": 0,
+          "backward": 0,
+          "stop": 61
+        },
+        "right": {
+          "forward": 0,
+          "left": 0,
+          "right": 28,
+          "backward": 0,
+          "stop": 110
+        },
+        "backward": {
+          "forward": 0,
+          "left": 0,
+          "right": 0,
+          "backward": 8,
+          "stop": 130
+        },
+        "stop": {
+          "forward": 0,
+          "left": 0,
+          "right": 0,
+          "backward": 0,
+          "stop": 58
+        }
+      },
+      "switchWindowMatrix": {
+        "forward": {
+          "forward": 16,
+          "left": 0,
+          "right": 0,
+          "backward": 0,
+          "stop": 2
+        },
+        "left": {
+          "forward": 4,
+          "left": 18,
+          "right": 0,
+          "backward": 0,
+          "stop": 18
+        },
+        "right": {
+          "forward": 0,
+          "left": 4,
+          "right": 5,
+          "backward": 0,
+          "stop": 31
+        },
+        "backward": {
+          "forward": 0,
+          "left": 0,
+          "right": 3,
+          "backward": 3,
+          "stop": 34
+        },
+        "stop": {
+          "forward": 0,
+          "left": 0,
+          "right": 0,
+          "backward": 0,
+          "stop": 40
+        }
+      },
+      "activeToRestMatrix": {
+        "forward": {
+          "forward": 16,
+          "left": 0,
+          "right": 0,
+          "backward": 0,
+          "stop": 2
+        },
+        "left": {
+          "forward": 0,
+          "left": 0,
+          "right": 0,
+          "backward": 0,
+          "stop": 0
+        },
+        "right": {
+          "forward": 0,
+          "left": 0,
+          "right": 0,
+          "backward": 0,
+          "stop": 0
+        },
+        "backward": {
+          "forward": 0,
+          "left": 0,
+          "right": 0,
+          "backward": 0,
+          "stop": 0
+        },
+        "stop": {
+          "forward": 5,
+          "left": 0,
+          "right": 0,
+          "backward": 0,
+          "stop": 35
+        }
+      },
+      "safetyAccepted": false
+    },
+    "candidate": {
+      "single": {
+        "matrix": {
+          "forward": {
+            "forward": 0,
+            "left": 0,
+            "right": 0,
+            "backward": 0,
+            "stop": 2
+          },
+          "left": {
+            "forward": 0,
+            "left": 0,
+            "right": 0,
+            "backward": 0,
+            "stop": 2
+          },
+          "right": {
+            "forward": 0,
+            "left": 0,
+            "right": 0,
+            "backward": 0,
+            "stop": 2
+          },
+          "backward": {
+            "forward": 0,
+            "left": 0,
+            "right": 0,
+            "backward": 0,
+            "stop": 2
+          },
+          "stop": {
+            "forward": 0,
+            "left": 0,
+            "right": 0,
+            "backward": 0,
+            "stop": 1
+          }
+        },
+        "units": 9,
+        "motionUnits": 8,
+        "rejectedMotionUnits": 8,
+        "wrongMotionUnits": 0,
+        "restUnits": 1,
+        "restFalseMotionUnits": 0,
+        "eligibleMotionTicks": 0,
+        "eligibleRejectedTicks": 0
+      },
+      "repeat": {
+        "matrix": {
+          "forward": {
+            "forward": 2,
+            "left": 0,
+            "right": 0,
+            "backward": 0,
+            "stop": 0
+          },
+          "left": {
+            "forward": 0,
+            "left": 2,
+            "right": 0,
+            "backward": 0,
+            "stop": 0
+          },
+          "right": {
+            "forward": 0,
+            "left": 0,
+            "right": 2,
+            "backward": 0,
+            "stop": 0
+          },
+          "backward": {
+            "forward": 0,
+            "left": 0,
+            "right": 0,
+            "backward": 2,
+            "stop": 0
+          },
+          "stop": {
+            "forward": 0,
+            "left": 0,
+            "right": 0,
+            "backward": 0,
+            "stop": 1
+          }
+        },
+        "units": 9,
+        "motionUnits": 8,
+        "rejectedMotionUnits": 0,
+        "wrongMotionUnits": 0,
+        "restUnits": 1,
+        "restFalseMotionUnits": 0,
+        "eligibleMotionTicks": 304,
+        "eligibleRejectedTicks": 130
+      },
+      "mixedWindowMatrix": {
+        "forward": {
+          "forward": 136,
+          "left": 0,
+          "right": 0,
+          "backward": 0,
+          "stop": 2
+        },
+        "left": {
+          "forward": 0,
+          "left": 130,
+          "right": 0,
+          "backward": 0,
+          "stop": 8
+        },
+        "right": {
+          "forward": 0,
+          "left": 0,
+          "right": 78,
+          "backward": 0,
+          "stop": 60
+        },
+        "backward": {
+          "forward": 0,
+          "left": 0,
+          "right": 0,
+          "backward": 34,
+          "stop": 104
+        },
+        "stop": {
+          "forward": 0,
+          "left": 0,
+          "right": 0,
+          "backward": 2,
+          "stop": 56
+        }
+      },
+      "switchWindowMatrix": {
+        "forward": {
+          "forward": 16,
+          "left": 0,
+          "right": 0,
+          "backward": 0,
+          "stop": 2
+        },
+        "left": {
+          "forward": 5,
+          "left": 25,
+          "right": 0,
+          "backward": 0,
+          "stop": 10
+        },
+        "right": {
+          "forward": 0,
+          "left": 6,
+          "right": 12,
+          "backward": 0,
+          "stop": 22
+        },
+        "backward": {
+          "forward": 0,
+          "left": 0,
+          "right": 6,
+          "backward": 8,
+          "stop": 26
+        },
+        "stop": {
+          "forward": 0,
+          "left": 0,
+          "right": 0,
+          "backward": 6,
+          "stop": 34
+        }
+      },
+      "activeToRestMatrix": {
+        "forward": {
+          "forward": 16,
+          "left": 0,
+          "right": 0,
+          "backward": 0,
+          "stop": 2
+        },
+        "left": {
+          "forward": 0,
+          "left": 0,
+          "right": 0,
+          "backward": 0,
+          "stop": 0
+        },
+        "right": {
+          "forward": 0,
+          "left": 0,
+          "right": 0,
+          "backward": 0,
+          "stop": 0
+        },
+        "backward": {
+          "forward": 0,
+          "left": 0,
+          "right": 0,
+          "backward": 0,
+          "stop": 0
+        },
+        "stop": {
+          "forward": 7,
+          "left": 0,
+          "right": 0,
+          "backward": 0,
+          "stop": 33
+        }
+      },
+      "safetyAccepted": false
+    }
+  },
+  "normalWaveformOutputsIdentical": true,
+  "filterDiagnostics": {
+    "forward": {
+      "initialAlignedMean": 0.759211401419087,
+      "laterAlignedMean": 0.7444031960732683,
+      "maxAlignedStateDelta": 0.03681585064024151,
+      "mixedSlidingTrueRhoMinMedianMax": [
+        0.6817905829946581,
+        0.7606555618367439,
+        0.8218101693037205
+      ]
+    },
+    "left": {
+      "initialAlignedMean": 0.7854324320526969,
+      "laterAlignedMean": 0.7888319266991517,
+      "maxAlignedStateDelta": 0.012095773851580005,
+      "mixedSlidingTrueRhoMinMedianMax": [
+        0.5159024796406115,
+        0.6799939243785854,
+        0.8361424421439689
+      ]
+    },
+    "right": {
+      "initialAlignedMean": 0.7284783338621759,
+      "laterAlignedMean": 0.7223824139918364,
+      "maxAlignedStateDelta": 0.023828991074099082,
+      "mixedSlidingTrueRhoMinMedianMax": [
+        0.4031283224358951,
+        0.6080599161599363,
+        0.7552938187761229
+      ]
+    },
+    "backward": {
+      "initialAlignedMean": 0.6622500740331765,
+      "laterAlignedMean": 0.6650270925780392,
+      "maxAlignedStateDelta": 0.03336267842688945,
+      "mixedSlidingTrueRhoMinMedianMax": [
+        0.32103947470804434,
+        0.5182897397888759,
+        0.7250855568603451
+      ]
+    }
+  },
+  "fundamentalFilterGain": {
+    "12": 0.9999843623557853,
+    "8.57": 0.9957397463302229,
+    "6.67": 0.9710003195450805,
+    "5.45": 0.910908628231529
+  },
+  "newIndependentEvaluationData": false,
+  "thresholdsRetuned": false
+}

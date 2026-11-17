@@ -1,0 +1,374 @@
+{
+  "beforePeerFixCases": [
+    {
+      "case": "single-click-forward",
+      "infoDelta": 1,
+      "blocksDelta": 800,
+      "stopDelta": 0,
+      "peakSampleIndex": 4000,
+      "computedWindows": 0,
+      "outputs": [
+        "STOP"
+      ],
+      "finalReason": "断流超时，等待新 STREAM_INFO",
+      "rejected": {},
+      "sources": [
+        "10.0.2.15:47319"
+      ]
+    },
+    {
+      "case": "single-click-left",
+      "infoDelta": 1,
+      "blocksDelta": 800,
+      "stopDelta": 0,
+      "peakSampleIndex": 4000,
+      "computedWindows": 0,
+      "outputs": [
+        "STOP"
+      ],
+      "finalReason": "断流超时，等待新 STREAM_INFO",
+      "rejected": {},
+      "sources": [
+        "10.0.2.15:33481"
+      ]
+    },
+    {
+      "case": "single-click-right",
+      "infoDelta": 1,
+      "blocksDelta": 800,
+      "stopDelta": 0,
+      "peakSampleIndex": 4000,
+      "computedWindows": 0,
+      "outputs": [
+        "STOP"
+      ],
+      "finalReason": "断流超时，等待新 STREAM_INFO",
+      "rejected": {},
+      "sources": [
+        "10.0.2.15:52645"
+      ]
+    },
+    {
+      "case": "single-click-backward",
+      "infoDelta": 1,
+      "blocksDelta": 800,
+      "stopDelta": 0,
+      "peakSampleIndex": 4000,
+      "computedWindows": 0,
+      "outputs": [
+        "STOP"
+      ],
+      "finalReason": "断流超时，等待新 STREAM_INFO",
+      "rejected": {},
+      "sources": [
+        "10.0.2.15:48933"
+      ]
+    },
+    {
+      "case": "single-click-rest-button",
+      "infoDelta": 1,
+      "blocksDelta": 800,
+      "stopDelta": 0,
+      "peakSampleIndex": 4000,
+      "computedWindows": 0,
+      "outputs": [
+        "STOP"
+      ],
+      "finalReason": "断流超时，等待新 STREAM_INFO",
+      "rejected": {},
+      "sources": [
+        "10.0.2.15:36620"
+      ]
+    },
+    {
+      "case": "rapid-direction-new-stream",
+      "infoDelta": 1,
+      "blocksDelta": 172,
+      "stopDelta": 0,
+      "peakSampleIndex": 860,
+      "computedWindows": 0,
+      "outputs": [
+        "STOP"
+      ],
+      "finalReason": "断流超时，等待新 STREAM_INFO",
+      "rejected": {
+        "foreign-source": 198,
+        "missing-info": 603
+      },
+      "sources": [
+        "10.0.2.15:58151"
+      ]
+    },
+    {
+      "case": "hold-and-release",
+      "infoDelta": 1,
+      "blocksDelta": 800,
+      "stopDelta": 0,
+      "peakSampleIndex": 4000,
+      "computedWindows": 0,
+      "outputs": [
+        "STOP"
+      ],
+      "finalReason": "断流超时，等待新 STREAM_INFO",
+      "rejected": {
+        "foreign-source": 198,
+        "missing-info": 603
+      },
+      "sources": [
+        "10.0.2.15:56355"
+      ]
+    },
+    {
+      "case": "a-process-loss",
+      "infoDelta": 1,
+      "blocksDelta": 186,
+      "stopDelta": 0,
+      "peakSampleIndex": 930,
+      "computedWindows": 0,
+      "outputs": [
+        "STOP"
+      ],
+      "finalReason": "断流超时，等待新 STREAM_INFO",
+      "rejected": {
+        "foreign-source": 198,
+        "missing-info": 603
+      },
+      "sources": [
+        "10.0.2.15:36564"
+      ]
+    },
+    {
+      "case": "automatic-discovery",
+      "infoDelta": 1,
+      "blocksDelta": 800,
+      "stopDelta": 0,
+      "peakSampleIndex": 4000,
+      "computedWindows": 0,
+      "outputs": [
+        "STOP"
+      ],
+      "finalReason": "断流超时，等待新 STREAM_INFO",
+      "rejected": {
+        "foreign-source": 198,
+        "missing-info": 603
+      },
+      "sources": [
+        "10.0.2.15:50322"
+      ]
+    }
+  ],
+  "afterPeerFixCases": [
+    {
+      "case": "rapid-direction-new-stream",
+      "infoDelta": 2,
+      "blocksDelta": 995,
+      "stopDelta": 0,
+      "peakSampleIndex": 4000,
+      "computedWindows": 0,
+      "outputs": [
+        "STOP"
+      ],
+      "finalReason": "断流超时，等待新 STREAM_INFO",
+      "rejected": {},
+      "sources": [
+        "10.0.2.15:36114",
+        "10.0.2.15:60770"
+      ]
+    },
+    {
+      "case": "early-touch-release",
+      "infoDelta": 1,
+      "blocksDelta": 800,
+      "stopDelta": 0,
+      "peakSampleIndex": 4000,
+      "computedWindows": 0,
+      "outputs": [
+        "STOP"
+      ],
+      "finalReason": "断流超时，等待新 STREAM_INFO",
+      "rejected": {},
+      "sources": [
+        "10.0.2.15:34570"
+      ]
+    }
+  ],
+  "contractSender": {
+    "cases": [
+      {
+        "label": "forward",
+        "seconds": 16.0,
+        "outputs": [
+          "FORWARD",
+          "STOP"
+        ],
+        "matchedAtLeastOnce": true,
+        "stopAudit": {
+          "seq": 3202,
+          "nextIndex": 16000,
+          "reason": 1,
+          "source": "10.0.2.2:51116",
+          "acceptStartedNs": 48313513925940,
+          "invalidationCompletedNs": 48313515175240,
+          "listenersNotified": 1,
+          "processingMs": 1.2493,
+          "socketReceivedNs": 48313513869040,
+          "receiveToInvalidationMs": 1.3062
+        }
+      },
+      {
+        "label": "left",
+        "seconds": 16.0,
+        "outputs": [
+          "LEFT",
+          "STOP"
+        ],
+        "matchedAtLeastOnce": true,
+        "stopAudit": {
+          "seq": 3202,
+          "nextIndex": 16000,
+          "reason": 1,
+          "source": "10.0.2.2:51116",
+          "acceptStartedNs": 48329764409740,
+          "invalidationCompletedNs": 48329764530040,
+          "listenersNotified": 1,
+          "processingMs": 0.1203,
+          "socketReceivedNs": 48329764313140,
+          "receiveToInvalidationMs": 0.2169
+        }
+      },
+      {
+        "label": "right",
+        "seconds": 16.0,
+        "outputs": [
+          "RIGHT",
+          "STOP"
+        ],
+        "matchedAtLeastOnce": true,
+        "stopAudit": {
+          "seq": 3202,
+          "nextIndex": 16000,
+          "reason": 1,
+          "source": "10.0.2.2:51116",
+          "acceptStartedNs": 48346016865840,
+          "invalidationCompletedNs": 48346016976640,
+          "listenersNotified": 1,
+          "processingMs": 0.1108,
+          "socketReceivedNs": 48346016819740,
+          "receiveToInvalidationMs": 0.1569
+        }
+      },
+      {
+        "label": "backward",
+        "seconds": 16.0,
+        "outputs": [
+          "BACKWARD",
+          "STOP"
+        ],
+        "matchedAtLeastOnce": true,
+        "stopAudit": {
+          "seq": 3202,
+          "nextIndex": 16000,
+          "reason": 1,
+          "source": "10.0.2.2:51116",
+          "acceptStartedNs": 48362389912740,
+          "invalidationCompletedNs": 48362390042840,
+          "listenersNotified": 1,
+          "processingMs": 0.1301,
+          "socketReceivedNs": 48362389596940,
+          "receiveToInvalidationMs": 0.4459
+        }
+      },
+      {
+        "label": "stop",
+        "seconds": 8.0,
+        "outputs": [
+          "STOP"
+        ],
+        "matchedAtLeastOnce": true,
+        "stopAudit": {
+          "seq": 1602,
+          "nextIndex": 8000,
+          "reason": 1,
+          "source": "10.0.2.2:51116",
+          "acceptStartedNs": 48370710048840,
+          "invalidationCompletedNs": 48370710194540,
+          "listenersNotified": 1,
+          "processingMs": 0.1457,
+          "socketReceivedNs": 48370709993040,
+          "receiveToInvalidationMs": 0.2015
+        }
+      }
+    ],
+    "checks": 23,
+    "allChecksPassed": true,
+    "actualAAppUsed": false,
+    "physicalDevices": false,
+    "serial": "emulator-5554",
+    "target": [
+      "127.0.0.1",
+      19000
+    ],
+    "timingBoundary": "B socket.receive returned -> all synchronous invalidation callbacks completed; local final STOP by then",
+    "maxInternalStopMs": 1.3062,
+    "stopSamples": 11
+  },
+  "junit": [
+    {
+      "name": "com.yourteam.brainchair.receiver.ReceiverTest",
+      "tests": "11",
+      "skipped": "0",
+      "failures": "0",
+      "errors": "0",
+      "timestamp": "2026-10-20T01:58:36",
+      "hostname": "DESKTOP-B4DMF6G",
+      "time": "30.189"
+    },
+    {
+      "name": "com.yourteam.brainchair.SafetyTest",
+      "tests": "7",
+      "skipped": "0",
+      "failures": "0",
+      "errors": "0",
+      "timestamp": "2026-10-20T01:58:36",
+      "hostname": "DESKTOP-B4DMF6G",
+      "time": "0.021"
+    },
+    {
+      "name": "com.yourteam.brainchair.signal.AbIntegrationTest",
+      "tests": "7",
+      "skipped": "0",
+      "failures": "0",
+      "errors": "0",
+      "timestamp": "2026-10-20T01:59:06",
+      "hostname": "DESKTOP-B4DMF6G",
+      "time": "0.08"
+    },
+    {
+      "name": "com.yourteam.brainchair.signal.RecognitionControlTest",
+      "tests": "2",
+      "skipped": "0",
+      "failures": "0",
+      "errors": "0",
+      "timestamp": "2026-10-20T01:59:06",
+      "hostname": "DESKTOP-B4DMF6G",
+      "time": "0.0"
+    },
+    {
+      "name": "com.yourteam.brainchair.signal.SignalTest",
+      "tests": "8",
+      "skipped": "0",
+      "failures": "0",
+      "errors": "0",
+      "timestamp": "2026-10-20T01:59:06",
+      "hostname": "DESKTOP-B4DMF6G",
+      "time": "8.389"
+    }
+  ],
+  "bApkSha256": "49afd00467df73f169a7c6b1ebbf37eb23cec72432da9848e61795b17f274742",
+  "beforePeerFixBApkSha256": "8ae1e3074941ad8fd13153dd171f3d898939fa44d824c1d6ce24dc3602b01b04",
+  "aApkSha256": "5fdaaedb6cdcfa555d0fd15f8597da8419ad25fe80c626e647050e9e4e46f911",
+  "physicalPhonesTested": false,
+  "actualAMatchesHoldReleaseContract": false,
+  "recognitionSafetyAccepted": false,
+  "BCProtocolFrozen": false
+}

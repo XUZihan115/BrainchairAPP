@@ -1,0 +1,263 @@
+{
+  "version": "0.4.4-eeg-feedback-fix",
+  "versionCode": 10,
+  "baseline": "cd39a59",
+  "branch": "codex/eeg-feedback-recovery",
+  "apk": "BrainChair-B-0.4.4-eeg-feedback-fix.apk",
+  "apkSha256": "9f8ad4eb9bcfcc4f123d4bdfa7f3bcf71aa3e69b4774f455502b95fdf67c3e21",
+  "before": {
+    "tests": 5,
+    "failures": 4,
+    "cases": [
+      {
+        "name": "allFourActualCcaDirectionsCanRestartAfterStreamStopAndCoastingFeedbackOverUdp",
+        "passed": false
+      },
+      {
+        "name": "verifiedZReleaseClearsItsFeedbackLatchButNeverReplaysOldEegMotion",
+        "passed": false
+      },
+      {
+        "name": "coastingDoesNotQualifyAsStationaryForFaultReauthorization",
+        "passed": true
+      },
+      {
+        "name": "stopWithResidualLinearOrAngularMotionIsNormalDecelerationNotAFault",
+        "passed": false
+      },
+      {
+        "name": "realFaultEstopUnknownAndRestartRemainBlockingAndRecordTheTrigger",
+        "passed": false
+      }
+    ]
+  },
+  "after": [
+    {
+      "name": "com.yourteam.brainchair.control.ControlFixTest",
+      "tests": 13,
+      "failures": 0,
+      "errors": 0,
+      "skipped": 0,
+      "cases": [
+        {
+          "name": "laterManualActionCancelsQueuedConfigurationAndOldDeadline",
+          "seconds": 0.003
+        },
+        {
+          "name": "policyIsConfigurableButCannotOverrideIndependentFreshnessSafety",
+          "seconds": 0.001
+        },
+        {
+          "name": "allUserButtonsImmediatelyTakeManualAndEegCannotTakeBackOwnership",
+          "seconds": 0.0
+        },
+        {
+          "name": "diagnosticEventHistoryIsBoundedAndDoesNotLogEveryGuardCallback",
+          "seconds": 0.005
+        },
+        {
+          "name": "resumeNeedsNewAnalysisAndNewSamplesAndCannotApplyAnOldQueuedSelection",
+          "seconds": 0.0
+        },
+        {
+          "name": "staleInputAndExpiredJudgementStopBeforeGraceCouldMaskThem",
+          "seconds": 0.0
+        },
+        {
+          "name": "manualDeadlineIsFourSecondsAndReplacementCancelsTheOldDeadline",
+          "seconds": 0.0
+        },
+        {
+          "name": "differentDirectionCannotSwitchBeforeOriginalVotingAndDebounceRulesPass",
+          "seconds": 0.0
+        },
+        {
+          "name": "stopAndEmergencyCancelMotionAndRemainManualWithoutLocalOnlyUnlock",
+          "seconds": 0.0
+        },
+        {
+          "name": "repeatedRejectionAndDuplicateWatchdogCallbacksCannotExtendGrace",
+          "seconds": 0.0
+        },
+        {
+          "name": "singleRejectedWindowKeepsConfirmedDirectionWhileOriginalVotesRebuild",
+          "seconds": 0.001
+        },
+        {
+          "name": "firstUnstableVotesNeverStartMotionAndHardInvalidationNeverGetsGrace",
+          "seconds": 0.0
+        },
+        {
+          "name": "alternatingGatePassesAndRejectionsCannotRenewAnOldDirectionForever",
+          "seconds": 0.001
+        }
+      ]
+    },
+    {
+      "name": "com.yourteam.brainchair.control.EegFeedbackRecoveryTest",
+      "tests": 5,
+      "failures": 0,
+      "errors": 0,
+      "skipped": 0,
+      "cases": [
+        {
+          "name": "allFourActualCcaDirectionsCanRestartAfterStreamStopAndCoastingFeedbackOverUdp",
+          "seconds": 0.288
+        },
+        {
+          "name": "verifiedZReleaseClearsItsFeedbackLatchButNeverReplaysOldEegMotion",
+          "seconds": 0.007
+        },
+        {
+          "name": "coastingDoesNotQualifyAsStationaryForFaultReauthorization",
+          "seconds": 0.001
+        },
+        {
+          "name": "stopWithResidualLinearOrAngularMotionIsNormalDecelerationNotAFault",
+          "seconds": 0.0
+        },
+        {
+          "name": "realFaultEstopUnknownAndRestartRemainBlockingAndRecordTheTrigger",
+          "seconds": 0.0
+        }
+      ]
+    },
+    {
+      "name": "com.yourteam.brainchair.control.EmergencyReliabilityTest",
+      "tests": 7,
+      "failures": 0,
+      "errors": 0,
+      "skipped": 0,
+      "cases": [
+        {
+          "name": "aRealUdpRuntimeCannotAccidentallyUseTheEphemeralFixtureStore",
+          "seconds": 0.001
+        },
+        {
+          "name": "commitFalseExceptionAndReadbackMismatchStayLockedAcrossRecreation",
+          "seconds": 0.022
+        },
+        {
+          "name": "blockedStoreCannotDelayEmergencyOrPrioritySendAndMailboxIsBounded",
+          "seconds": 0.025
+        },
+        {
+          "name": "missingCorruptUnreadableAndPreviouslyUnlockedRecordsAllStartLocked",
+          "seconds": 0.012
+        },
+        {
+          "name": "allThreeInitialEstopsCanBeLostAndLaterRetriesStillObtainRemoteLatchReport",
+          "seconds": 0.78
+        },
+        {
+          "name": "newerEmergencySupersedesBlockedOldUnlockPersistence",
+          "seconds": 0.002
+        },
+        {
+          "name": "failedUnlockWriteNeverClearsLocalLockAndRetryRequiresRemoteHandshake",
+          "seconds": 0.669
+        }
+      ]
+    },
+    {
+      "name": "com.yourteam.brainchair.control.FeedbackSafetyTest",
+      "tests": 8,
+      "failures": 0,
+      "errors": 0,
+      "skipped": 0,
+      "cases": [
+        {
+          "name": "firstMotionRequiresHealthyFeedbackAndRejectedRequestIsNeverReplayed",
+          "seconds": 0.001
+        },
+        {
+          "name": "storageAndTransportFaultsCannotBeBypassedByFreshFeedbackOrManualInput",
+          "seconds": 0.0
+        },
+        {
+          "name": "healthyRecoveryRequiresStationaryStatusAndAnExplicitNewManualAction",
+          "seconds": 0.0
+        },
+        {
+          "name": "remoteFaultUnknownAndEmergencyStatesRevokePermitImmediately",
+          "seconds": 0.0
+        },
+        {
+          "name": "eegRecoveryCannotUseOldVotesOrResumeFromRestoredFeedbackAlone",
+          "seconds": 0.0
+        },
+        {
+          "name": "manualAndContinuousEegStopAtTheSingleFeedbackBoundary",
+          "seconds": 0.0
+        },
+        {
+          "name": "oldTargetFeedbackCannotRenewOrAuthorizeANewTarget",
+          "seconds": 0.0
+        },
+        {
+          "name": "feedbackLossBypassesCcaGraceAndEstopStillHasHighestPriority",
+          "seconds": 0.0
+        }
+      ]
+    },
+    {
+      "name": "com.yourteam.brainchair.control.SimulationSafetySettingsTest",
+      "tests": 11,
+      "failures": 0,
+      "errors": 0,
+      "skipped": 0,
+      "cases": [
+        {
+          "name": "relaxedRuntimeStillSendsStopAndHonorsRemoteFaultAndRemoteEstopOverUdp",
+          "seconds": 1.217
+        },
+        {
+          "name": "disablingTimeoutCannotClearARemoteFaultOrTransportFault",
+          "seconds": 0.0
+        },
+        {
+          "name": "savedManualOrRemoteEstopSurvivesRelaxedServiceAndProcessRecreation",
+          "seconds": 0.004
+        },
+        {
+          "name": "anEstopDuringRestoreSupersedesThePendingUnlockedStartup",
+          "seconds": 0.001
+        },
+        {
+          "name": "startupAndFeedbackPoliciesAreIndependentAndStrictStartupStillLocks",
+          "seconds": 0.018
+        },
+        {
+          "name": "relaxedStartupInitializesAMissingRecordWithoutManufacturingEstop",
+          "seconds": 0.002
+        },
+        {
+          "name": "disabledFeedbackTimeoutDoesNotBlockManualButFourSecondDeadlineStillStops",
+          "seconds": 0.0
+        },
+        {
+          "name": "disabledFeedbackTimeoutAllowsFreshEegButNotEegDataExpiryOrStreamStop",
+          "seconds": 0.0
+        },
+        {
+          "name": "corruptUnreadableAndFailedStorageCannotBecomeAnUnlockedRelaxedStartup",
+          "seconds": 0.006
+        },
+        {
+          "name": "enablingProtectionStopsFirstAndRestoredFeedbackCannotReplayOldMotion",
+          "seconds": 0.0
+        },
+        {
+          "name": "defaultsAreOffAndAllFourSettingsCombinationsRoundTripIndependently",
+          "seconds": 0.001
+        }
+      ]
+    }
+  ],
+  "protocolCcaAndTimingUnchanged": true,
+  "oldApkUnchanged": true,
+  "realUnityTriggerProven": false,
+  "realABUnityRetested": false,
+  "androidEmulatorRun": false,
+  "apkSourceCommit": "0324762fd0e4dcd465597a5dfd135089e07eaa35"
+}

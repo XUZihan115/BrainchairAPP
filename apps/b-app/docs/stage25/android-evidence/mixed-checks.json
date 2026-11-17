@@ -1,0 +1,23 @@
+[
+  {
+    "test": "stop STREAM_STOP",
+    "passed": true,
+    "detail": {
+      "observedUpperBoundMs": 34.818299987819046,
+      "reason": "流已结束 reason=1"
+    }
+  },
+  {
+    "test": "timeout clears session",
+    "passed": true,
+    "detail": "断流超时，等待新 STREAM_INFO"
+  },
+  {
+    "test": "all datagrams received",
+    "passed": true,
+    "detail": {
+      "sent": 3204,
+      "received": 3204
+    }
+  }
+]

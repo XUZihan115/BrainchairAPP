@@ -1,0 +1,26 @@
+{
+  "config": {
+    "absolute": 0.55,
+    "difference": 0.05,
+    "votes": 3,
+    "debounceMs": 300,
+    "calibrationCorrect": 285,
+    "deploymentApproved": false,
+    "rule": "zero calibration wrong-motion and rest-motion; maximize correct motion, ties prefer larger threshold sum"
+  },
+  "durationMs": 110416,
+  "processCpuPercentOneCore": 10.263911027387335,
+  "computeMeanMs": 3.363566004962779,
+  "computeP95Ms": 4.601109999999998,
+  "computeMaxMs": 10.0898,
+  "periodMedianMs": 205.0,
+  "periodP95Ms": 208.0,
+  "periodMaxMs": 409,
+  "heapMinBytes": 4822048,
+  "heapMaxBytes": 11404320,
+  "sent": 21612,
+  "received": 21612,
+  "analysisSamples": 403,
+  "actualAAppUsed": false,
+  "physicalDeviceTested": false
+}

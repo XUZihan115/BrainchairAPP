@@ -1,0 +1,85 @@
+{
+  "data": {
+    "path": "D:\\college\\project-based CST\\脑控轮椅\\output\\stage25\\data",
+    "declaredSource": "sess01_subj01_EEG_SSVEP.mat",
+    "originalMatAvailable": false,
+    "sampleRate": 1000,
+    "channels": 62,
+    "totalSamples": 72000,
+    "byteCount": 17856000,
+    "segments": 18,
+    "motionOriginalTrials": 16,
+    "restSegments": 2,
+    "labels": {
+      "forward": 4,
+      "left": 4,
+      "right": 4,
+      "backward": 4,
+      "stop": 2
+    },
+    "hashes": {
+      "segments.bin": "9edd9bc61e7e02a2d5d00f2a4c19edb3044cd19f4b061b1d90cfaecdb3abda20",
+      "segments.json": "f190864ef956bdce7b64918fa1ce9bbcc6461b75b43b14e5e63694867bc873ad",
+      "names.txt": "8ca5d35a52fe34bca1111591530f6b9c2cd915153d881176e528347aef0f2419",
+      "plan.tsv": "5e1a6d78c53c01c5d6efd45d55cd62267753b1fcdbaa1883e978493fc0a909d2"
+    },
+    "pastExposure": "All segments and both historical splits have been inspected/tuned in prior stages; this is retrospective paired exploration, not unseen validation.",
+    "independence": "16 distinct original motion trial IDs; two non-overlapping pre_rest clips from one recording, physiological independence not established; one subject/session."
+  },
+  "config": {
+    "absolute": 0.65,
+    "difference": 0.15,
+    "votes": 3,
+    "debounceMs": 300,
+    "warmupMs": 500,
+    "stepMs": 250,
+    "deadlineMs": 4000,
+    "deadlineExclusive": true
+  },
+  "execution": {
+    "sourceSha256": {
+      "app\\src\\main\\java\\com\\yourteam\\brainchair\\signal\\Cca.kt": "194fcbd5d9aef38c5aff0c70f33a37ef2fb578e2d1055ad0a1a82baa234ba17f",
+      "app\\src\\main\\java\\com\\yourteam\\brainchair\\signal\\Bandpass.kt": "5024eed831ccdae2dfcdeb8f6e76388bf4578e7711a214239b655c36683dea5f",
+      "app\\src\\main\\java\\com\\yourteam\\brainchair\\signal\\DecisionGate.kt": "172e6375620993500df53154a35714f90633a624027affa406f3e2a6e7d3c0b5",
+      "app\\src\\main\\java\\com\\yourteam\\brainchair\\signal\\RecognitionControl.kt": "97a8f8f66ce8832fa5eef3dd817d6512c97fd7ff4d220c82ab5e959ec0f9d1fb",
+      "app\\src\\main\\java\\com\\yourteam\\brainchair\\signal\\ControlOutputSource.kt": "2cc32e22caa5af6c84a68e0274e00ea54735559951182c75cc422a51e2177009",
+      "app\\src\\main\\java\\com\\yourteam\\brainchair\\signal\\SignalEngine.kt": "e7f969b282e6cbd7957503f14f855ea9f8cc5a4a24039b632cdd94677330afe6",
+      "app\\src\\main\\java\\com\\yourteam\\brainchair\\receiver\\EegProtocol.kt": "6533b8213e2b35a6d056dd1298b65a0747bb5e8252e37921d554de5740aec0e5",
+      "app\\src\\main\\java\\com\\yourteam\\brainchair\\receiver\\StreamSession.kt": "956b56e67519d747791c76ce507de051c99e606fa205f918fcc2d352ae27019c",
+      "app\\src\\main\\java\\com\\yourteam\\brainchair\\control\\ControlAuthority.kt": "6cccdbe1a7de94f7c2b28542b9911b3c31a449e72b77c8f3677bfcdbb71ffd8c",
+      "scripts\\cca_window_comparison.py": "e533452bb6c40f56287de53aa2db834f8a731321bca4ccbe547d24d50324a99b",
+      "scripts\\CcaWindowComparison.kt": "7285fe32517e6a8b4ec59e3440438c8b15bcf338a50d0fdae56cc5a85296e881",
+      "scripts\\CcaWindowParity.kt": "8b213a40580638755ffb3f52aaaf9470a4b7b9b5643ea73ae1246a76c2ef8918"
+    },
+    "experimentPatch": "D:\\college\\project-based CST\\脑控轮椅\\output\\cca-window-comparison\\runtime\\d1340a0ee563d73f\\sources\\window-only.patch",
+    "elapsedWallSeconds": 13.350257700018119,
+    "fourSecondNumericParityTrials": 18,
+    "fourSecondNumericMaxDelta": 0.0,
+    "repeatEventRows": 1368,
+    "repeatOutputsIdentical": true,
+    "compilation": "Standalone cached Kotlin JVM only; Android/Gradle/APK not rebuilt"
+  },
+  "checks": {
+    "checks": 1368,
+    "passed": 1368,
+    "eventRows": 1368,
+    "numericWindowComparisons": 324,
+    "maxScoreDelta": 0.0,
+    "syntheticEegUsed": false,
+    "asynchronousNetworkTest": false
+  },
+  "protectedFilesUnchanged": {
+    "app\\src\\main\\java\\com\\yourteam\\brainchair\\signal\\Cca.kt": "194fcbd5d9aef38c5aff0c70f33a37ef2fb578e2d1055ad0a1a82baa234ba17f",
+    "app\\src\\main\\java\\com\\yourteam\\brainchair\\signal\\Bandpass.kt": "5024eed831ccdae2dfcdeb8f6e76388bf4578e7711a214239b655c36683dea5f",
+    "app\\src\\main\\java\\com\\yourteam\\brainchair\\signal\\DecisionGate.kt": "172e6375620993500df53154a35714f90633a624027affa406f3e2a6e7d3c0b5",
+    "app\\src\\main\\java\\com\\yourteam\\brainchair\\signal\\RecognitionControl.kt": "97a8f8f66ce8832fa5eef3dd817d6512c97fd7ff4d220c82ab5e959ec0f9d1fb",
+    "app\\src\\main\\java\\com\\yourteam\\brainchair\\signal\\ControlOutputSource.kt": "2cc32e22caa5af6c84a68e0274e00ea54735559951182c75cc422a51e2177009",
+    "app\\src\\main\\java\\com\\yourteam\\brainchair\\signal\\SignalEngine.kt": "e7f969b282e6cbd7957503f14f855ea9f8cc5a4a24039b632cdd94677330afe6",
+    "app\\src\\main\\java\\com\\yourteam\\brainchair\\receiver\\EegProtocol.kt": "6533b8213e2b35a6d056dd1298b65a0747bb5e8252e37921d554de5740aec0e5",
+    "app\\src\\main\\java\\com\\yourteam\\brainchair\\receiver\\StreamSession.kt": "956b56e67519d747791c76ce507de051c99e606fa205f918fcc2d352ae27019c",
+    "app\\src\\main\\java\\com\\yourteam\\brainchair\\control\\ControlAuthority.kt": "6cccdbe1a7de94f7c2b28542b9911b3c31a449e72b77c8f3677bfcdbb71ffd8c",
+    "output\\stage27\\BrainChair-B-stage27.apk": "2c772641a63ea1c4037231ed1d089b845e26415d61555bfeb7c6a932c7e5b7a0"
+  },
+  "metricPolicy": "One conservative outcome per original segment/config; any wrong motion makes trial wrong; overlaps diagnostic only; missing latencies censored at 4s.",
+  "performanceScope": "Sample-time offline scheduling, not Android or network real-time; no Unity test; no accepted real EEG safety certification."
+}

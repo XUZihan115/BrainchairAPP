@@ -1,0 +1,87 @@
+{
+  "scope": "Actual JVM/Android-emulator UDP against independent peer; no real A/B phones or Unity runtime.",
+  "unitSuites": [
+    {
+      "name": "com.yourteam.brainchair.control.Stage3ControlTest",
+      "tests": 11,
+      "failures": 0,
+      "errors": 0,
+      "skipped": 0,
+      "seconds": 4.386
+    },
+    {
+      "name": "com.yourteam.brainchair.control.Stage3IntegrationTest",
+      "tests": 1,
+      "failures": 0,
+      "errors": 0,
+      "skipped": 0,
+      "seconds": 10.732
+    },
+    {
+      "name": "com.yourteam.brainchair.control.Stage3ProtocolTest",
+      "tests": 5,
+      "failures": 0,
+      "errors": 0,
+      "skipped": 0,
+      "seconds": 1.063
+    },
+    {
+      "name": "com.yourteam.brainchair.control.Stage3ReplayTest",
+      "tests": 1,
+      "failures": 0,
+      "errors": 0,
+      "skipped": 0,
+      "seconds": 0.632
+    }
+  ],
+  "unitTests": 18,
+  "emulatorAssertions": 23,
+  "restartValidation": "Requires a newly written state file, fresh actual feedback and safe STOP after process restart; no stale-file-only assertion.",
+  "actualUdpSenderThreads": [
+    "control-delivery"
+  ],
+  "emulatorReceivedDatagrams": 119,
+  "emulatorInvalidDatagrams": 0,
+  "estopPackets": 3,
+  "estopBurstGapsMs": [
+    32.1429,
+    31.1516
+  ],
+  "emulatorEegTimelines": [
+    {
+      "label": "forward",
+      "hasStreamStop": true,
+      "firstCorrectPeerMs": 3692.1485,
+      "sourceEndToFirstStopPeerMs": 1.8078,
+      "lastCommandBeforeEnd": 1,
+      "wrongDirectionPackets": 0
+    },
+    {
+      "label": "left",
+      "hasStreamStop": true,
+      "firstCorrectPeerMs": 3704.1307,
+      "sourceEndToFirstStopPeerMs": 0.8453,
+      "lastCommandBeforeEnd": 3,
+      "wrongDirectionPackets": 0
+    },
+    {
+      "label": "forward",
+      "hasStreamStop": false,
+      "firstCorrectPeerMs": 3666.8821,
+      "sourceEndToFirstStopPeerMs": 928.3186,
+      "lastCommandBeforeEnd": 1,
+      "wrongDirectionPackets": 0
+    }
+  ],
+  "emulatorUniqueObservedAnalyses": 9,
+  "computeMedianMs": 2.954197,
+  "computeP95Ms": 9.187936399999998,
+  "threadCpuMedianMs": 2.596991,
+  "threadCpuP95Ms": 8.2228412,
+  "decisionPeriodMedianMs": 254,
+  "decisionPeriodP95Ms": 257.7,
+  "sampledJavaHeapMaxBytes": 8858848,
+  "memoryScope": "Sampled Java heap during run; meminfo.txt is a separate post-restart PSS observation, not peak memory.",
+  "apkBytes": 1024968,
+  "apkSha256": "0c5d43405f13161510a38bfb21fcd3e7b40b3af8376710affc4b1026661545a3"
+}

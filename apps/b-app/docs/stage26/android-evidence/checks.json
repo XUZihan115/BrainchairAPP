@@ -1,0 +1,69 @@
+[
+  {
+    "test": "active before rest",
+    "passed": true,
+    "detail": "FORWARD"
+  },
+  {
+    "test": "valid STREAM_STOP",
+    "passed": true,
+    "detail": {
+      "observedMs": 225.95870000077412,
+      "reason": "流已结束 reason=1",
+      "controlReason": "流已结束 reason=1"
+    }
+  },
+  {
+    "test": "active before CRC",
+    "passed": true,
+    "detail": "FORWARD"
+  },
+  {
+    "test": "current source CRC final output STOP",
+    "passed": true,
+    "detail": {
+      "observedMs": 113.9431000337936,
+      "reason": "滤波预热0.5秒后积累4秒窗口",
+      "controlReason": "滤波预热0.5秒后积累4秒窗口"
+    }
+  },
+  {
+    "test": "CRC counted",
+    "passed": true,
+    "detail": {
+      "crc": 1
+    }
+  },
+  {
+    "test": "restart can classify fresh window",
+    "passed": true,
+    "detail": "FORWARD"
+  },
+  {
+    "test": "timeout final output STOP",
+    "passed": true,
+    "detail": "断流超时，等待新 STREAM_INFO"
+  },
+  {
+    "test": "restart after timeout",
+    "passed": true,
+    "detail": "FORWARD"
+  },
+  {
+    "test": "STOP after restart",
+    "passed": true,
+    "detail": {
+      "observedMs": 134.4505000161007,
+      "reason": "流已结束 reason=1",
+      "controlReason": "流已结束 reason=1"
+    }
+  },
+  {
+    "test": "all datagrams accounted",
+    "passed": true,
+    "detail": {
+      "sent": 8007,
+      "received": 8007
+    }
+  }
+]

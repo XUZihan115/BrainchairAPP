@@ -1,0 +1,6 @@
+# GLB 是二进制，别让 git 尝试做文本 diff / 换行转换
+*.glb binary
+*.png binary
+
+# Three.js 打包成一个 1.2 MB 单行文件，diff 没有意义，也不要计入语言统计
+vendor/*.js -diff linguist-vendored

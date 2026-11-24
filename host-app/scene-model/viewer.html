@@ -1,0 +1,132 @@
+<!DOCTYPE html>
+<html lang="zh-CN">
+<head>
+<meta charset="utf-8">
+<meta name="viewport" content="width=device-width,initial-scale=1">
+<title>Brainchair · 轮椅与场景模型查看器</title>
+<script type="importmap">
+{ "imports": { "three": "./vendor/three.module.js" } }
+</script>
+<style>
+  :root{
+    --accent:#38e1c8; --bg:#070d16; --panel:#101b2b; --line:#1d2c40;
+    --text:#dbe9f7; --muted:#7f95ad;
+  }
+  *{box-sizing:border-box}
+  html,body{height:100%;margin:0}
+  body{
+    background:var(--bg); color:var(--text); overflow:hidden;
+    font-family:"Segoe UI","Microsoft YaHei","PingFang SC",sans-serif;
+    font-size:13px;
+  }
+  #stage{position:fixed;inset:0}
+  canvas{display:block;width:100%;height:100%}
+
+  .panel{
+    position:fixed;top:16px;left:16px;width:286px;max-height:calc(100% - 32px);
+    display:flex;flex-direction:column;gap:12px;
+    padding:16px;border-radius:14px;
+    background:rgba(16,27,43,.9); border:1px solid var(--line);
+    backdrop-filter:blur(10px);
+    box-shadow:0 18px 46px -18px rgba(0,0,0,.85);
+    overflow:auto;
+  }
+  .panel h1{
+    margin:0;font-size:15px;font-weight:650;letter-spacing:.2px;
+    display:flex;align-items:center;gap:8px;
+  }
+  .dot{width:7px;height:7px;border-radius:50%;background:var(--accent);box-shadow:0 0 10px var(--accent)}
+  .sub{margin:-6px 0 0;color:var(--muted);font-size:11.5px;line-height:1.6}
+
+  .group-title{
+    font-size:10.5px;letter-spacing:1.4px;text-transform:uppercase;
+    color:var(--muted);margin:2px 0 -4px;
+  }
+
+  .seg{display:flex;gap:6px;flex-wrap:wrap}
+  .seg button{
+    flex:1 1 auto;min-width:62px;
+    padding:7px 6px;border-radius:9px;cursor:pointer;
+    font:inherit;font-size:12px;color:var(--text);
+    background:#152337;border:1px solid var(--line);
+    transition:.15s;
+  }
+  .seg button:hover{background:#1b2c44}
+  .seg button.on{background:rgba(56,225,200,.16);border-color:rgba(56,225,200,.55);color:#bff5ec}
+
+  .rows{display:flex;flex-direction:column;gap:0}
+  .row{
+    display:flex;justify-content:space-between;gap:10px;padding:5px 0;
+    border-bottom:1px dashed rgba(29,44,64,.7);font-size:12px;
+  }
+  .row:last-child{border-bottom:0}
+  .row span{color:var(--muted)}
+  .row b{font-weight:600;font-variant-numeric:tabular-nums}
+
+  .parts{display:flex;flex-wrap:wrap;gap:5px}
+  .parts button{
+    padding:5px 8px;border-radius:7px;cursor:pointer;font:inherit;font-size:11.5px;
+    background:#152337;border:1px solid var(--line);color:#a9c0d6;transition:.15s;
+  }
+  .parts button:hover{border-color:rgba(56,225,200,.5);color:#bff5ec}
+
+  .toggles{display:flex;flex-direction:column;gap:7px}
+  label.chk{display:flex;align-items:center;gap:8px;cursor:pointer;font-size:12px;color:#b7cadc}
+  input[type=checkbox]{accent-color:var(--accent);width:14px;height:14px}
+
+  .dl{
+    display:block;text-align:center;text-decoration:none;
+    padding:9px;border-radius:10px;font-size:12.5px;
+    color:#04201c;background:linear-gradient(180deg,#4ff0d6,#25c4ad);
+    font-weight:650;
+  }
+  .dl:hover{filter:brightness(1.07)}
+
+  .hint{color:var(--muted);font-size:11px;line-height:1.65;margin:0}
+
+  .badge{
+    position:fixed;right:16px;bottom:14px;
+    color:var(--muted);font-size:11.5px;
+    background:rgba(16,27,43,.8);border:1px solid var(--line);
+    padding:6px 11px;border-radius:999px;backdrop-filter:blur(8px);
+  }
+  .badge b{color:var(--accent);font-variant-numeric:tabular-nums}
+</style>
+</head>
+<body>
+
+<div id="stage"><canvas id="gl"></canvas></div>
+
+<aside class="panel">
+  <h1><i class="dot"></i>轮椅与场景模型</h1>
+  <p class="sub">纯程序化建模，无外部模型文件。拖动旋转 · 滚轮缩放。</p>
+
+  <div class="group-title">相机</div>
+  <div class="seg" id="camSeg">
+    <button data-cam="follow" class="on">跟随</button>
+    <button data-cam="side">侧视</button>
+    <button data-cam="top">俯视</button>
+  </div>
+
+  <div class="group-title">尺寸（实测包围盒）</div>
+  <div class="rows" id="dimRows"></div>
+
+  <div class="group-title">部件（点击定位）</div>
+  <div class="parts" id="partList"></div>
+
+  <div class="group-title">显示</div>
+  <div class="toggles">
+    <label class="chk"><input type="checkbox" id="ckTrack" checked> 显示跑道</label>
+    <label class="chk"><input type="checkbox" id="ckWire"> 线框</label>
+    <label class="chk"><input type="checkbox" id="ckDrive" checked> 自动巡游</label>
+  </div>
+
+  <a class="dl" href="./wheelchair.glb" download>下载 wheelchair.glb</a>
+  <p class="hint">GLB 只含轮椅本体（不含跑道），可直接拖进 Unity / Blender / three.js editor。</p>
+</aside>
+
+<div class="badge" id="badge">—</div>
+
+<script type="module" src="./viewer.js"></script>
+</body>
+</html>

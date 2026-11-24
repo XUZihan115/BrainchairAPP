@@ -1,0 +1,109 @@
+{
+  "source": "scene-model/wheelchair.js · WHEELCHAIR_SPEC",
+  "license": "与仓库一致；Three.js 为 MIT",
+  "unit": "m",
+  "axes": {
+    "forward": "+Z",
+    "up": "+Y",
+    "left": "+X",
+    "origin": "地面 · 两后轮轴心中点"
+  },
+  "measured": {
+    "length_z": 1.036891,
+    "width_x": 0.702,
+    "height_y": 1.083906,
+    "min_y": 0
+  },
+  "triangles": 8620,
+  "spec": {
+    "unit": "m",
+    "axes": {
+      "forward": "+Z",
+      "up": "+Y",
+      "left": "+X",
+      "origin": "地面 · 两后轮轴心中点"
+    },
+    "rearWheel": {
+      "radius": 0.281,
+      "tube": 0.029,
+      "treadRadius": 0.31,
+      "width": 0.058,
+      "spokes": 10,
+      "track": 0.644,
+      "axleY": 0.31,
+      "axleZ": -0.155,
+      "handrimRadius": 0.255,
+      "handrimTube": 0.012
+    },
+    "caster": {
+      "radius": 0.062,
+      "tube": 0.021,
+      "treadRadius": 0.083,
+      "track": 0.476,
+      "pivotY": 0.16,
+      "axleZ": 0.315,
+      "forkDrop": 0.077
+    },
+    "seat": {
+      "width": 0.5,
+      "depth": 0.44,
+      "topY": 0.55,
+      "cushion": 0.075
+    },
+    "backrest": {
+      "width": 0.45,
+      "height": 0.44,
+      "centerY": 0.79,
+      "tiltRad": -0.16,
+      "tiltDeg": 9.2
+    },
+    "armrest": {
+      "topY": 0.735,
+      "width": 0.065,
+      "length": 0.36,
+      "track": 0.57
+    },
+    "footrest": {
+      "plateY": 0.156,
+      "plateDepth": 0.24,
+      "plateWidth": 0.15,
+      "frontZ": 0.415
+    },
+    "pushHandle": {
+      "topY": 1.065,
+      "z": -0.5,
+      "track": 0.47
+    },
+    "overall": {
+      "length": 1.037,
+      "width": 0.702,
+      "height": 1.084,
+      "wheelbase": 0.47,
+      "mass": "—"
+    }
+  },
+  "parts": {
+    "rearWheelL": "左后轮（轮胎 / 轮圈 / 轮毂 / 10 根辐条 / 手推圈）",
+    "rearWheelR": "右后轮",
+    "casterL": "左前万向轮（转向轴 + 叉架 + 轮）",
+    "casterR": "右前万向轮",
+    "frame": "车架管件（4 根）",
+    "seat": "座框 + 坐垫 + 前缘",
+    "backrest": "靠背（后倾 9.2°）+ 顶部横管 + 立柱",
+    "armrestL": "左扶手（垫 + 两根支撑）",
+    "armrestR": "右扶手",
+    "footrestL": "左脚踏（吊架 + 踏板 + 小腿挡板）",
+    "footrestR": "右脚踏",
+    "pushHandleL": "左推手",
+    "pushHandleR": "右推手",
+    "controller": "控制器外壳 + 摇杆 + 摇杆球 + 指示灯",
+    "battery": "电池包 + 发光条"
+  },
+  "animation": {
+    "rearWheelSpin": "rearWheelL / rearWheelR 绕自身 X 轴，角速度 = v / 0.281 rad/s",
+    "casterSteer": "casterL / casterR 绕 Y 轴，角度 = steer（rad）",
+    "casterSpin": "casterL/R 内部 casterWheel 绕 X 轴，转速 = 后轮 × 3.4",
+    "pitch": "整车绕 X 轴，角度 = −坡道倾角；rotation.order = YXZ（先偏航后俯仰）",
+    "note": "轮胎半径 0.281 是胎面中线，外缘 0.310；轴心高度按外缘算，所以轮子刚好落地"
+  }
+}

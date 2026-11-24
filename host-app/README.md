@@ -130,7 +130,7 @@ python tools/decode_ssvep.py --subjects 1 2 3    # 重新生成 data/ 下两个�
 | `index.html` | 手机三页（连接 / 控制 / 状态）+ 3D 舞台 + 演示脚本弹窗 |
 | `css/style.css` | 全部视觉。主色 `#38E1C8`、底 `#0B1220`、卡片 `#16233A`，与 A 端 `colors.xml` 一致 |
 | `js/rules.js` | 规则常量、CRC-32、B→C 24 字节指令帧编码 |
-| `js/scene3d.js` | 跑道地形、轮椅程序化建模、三种相机、光照 |
+| `js/scene3d.js` | 兼容层，一行 `export *` 转发到 `scene-model/`，老代码不用改 |
 | `js/app.js` | 状态机（脑机帧 / 锚定窗 / 双门控 / 看门狗 / 急停）、交互、日志 |
 | `js/eegreal.js` | 真实脑电回放源：读 `data/eeg-track.json`，按 4 s 节拍喂判决、画波形 |
 | `data/eeg-track.json` | 从公开数据集解码出的 60 个真实判定窗（含波形缩略，39 KB） |
@@ -138,6 +138,7 @@ python tools/decode_ssvep.py --subjects 1 2 3    # 重新生成 data/ 下两个�
 | `tools/fetch_data.py` | 下载公开数据集被试数据（NEMAR 直链，无需注册） |
 | `tools/decode_ssvep.py` | CCA / FBCCA 解码、阈值标定、导出上面两个文件 |
 | `vendor/three.module.js` | Three.js r160，本地副本 |
+| `scene-model/` | **轮椅与场景建模独立包**：`wheelchair.js` / `track.js` / `materials.js` / `world.js`，另含 `wheelchair.glb`（可直接拖进 Unity）、`dimensions.json`、`viewer.html`。用法见 [`scene-model/README.md`](scene-model/README.md) |
 
 ---
 

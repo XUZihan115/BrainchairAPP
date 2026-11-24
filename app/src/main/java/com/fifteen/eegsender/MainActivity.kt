@@ -2,16 +2,22 @@ package com.fifteen.eegsender
 
 import android.annotation.SuppressLint
 import android.content.pm.PackageManager
+import android.graphics.Color
+import android.graphics.Typeface
+import android.graphics.drawable.GradientDrawable
+import android.graphics.drawable.StateListDrawable
 import android.os.Build
 import android.os.Bundle
 import android.os.Handler
 import android.os.Looper
+import android.view.Gravity
 import android.view.MotionEvent
 import android.view.View
+import android.view.ViewGroup
 import android.widget.Button
-import android.widget.CheckBox
 import android.widget.EditText
 import android.widget.LinearLayout
+import android.widget.ScrollView
 import android.widget.SeekBar
 import android.widget.TextView
 import androidx.appcompat.app.AppCompatActivity
@@ -26,15 +32,16 @@ import com.fifteen.eegsender.protocol.UdpEegSender
 import java.io.File
 import java.io.PrintWriter
 import java.io.StringWriter
-import java.nio.ByteBuffer
-import java.nio.ByteOrder
 import java.text.SimpleDateFormat
 import java.util.Date
 import java.util.Locale
 import java.util.concurrent.Executors
 
 /**
- * 发送端主界面。
+ * 发送端主界面（极简白 + 交通灯方向键）。
+ *
+ * ⚠️ 本文件只重写了「界面外观」：UDP 推流、降质、自动发现、日志落盘等真实逻辑
+ * 全部保持原样（见下方 beginStream / degrade / discovery / callbacks 各节）。
  *
  * 交互约定：**按住方向键 = 一直输出该方向的想象脑电，松手才结束**。
  * 按下瞬间起流，以 1000 Hz 采样率、按真实采集设备的报文格式持续推送，松手
@@ -44,7 +51,6 @@ import java.util.concurrent.Executors
  * 按住期间可以随时拖动「信号置信度」滑块（0~100 = 置信度，100 = 原样发送）：
  * 陷波强度是**每个报文重新读一次**的 volatile 字段，改一下立刻出现在码流里
  * （延迟 ≤ 一个包 = 5 ms），不需要重开流。
- * 注意配套的是接收端要 3 秒窗才出一次判决 —— 信号是瞬时的，**判决**是滞后的。
  *
  * 「停」键推的是真实静息段（无 SSVEP 刺激），对应接收端的 stop 指令。
  *
@@ -53,6 +59,18 @@ import java.util.concurrent.Executors
  * - **填了 IP** → 定向直发，不做任何发现。
  */
 class MainActivity : AppCompatActivity(), UdpEegSender.Listener {
+
+    // ---- 极简白 + 红蓝对比 令牌（与 B 端保持一致）----
+    private val BLUE = Color.parseColor("#2563EB")
+    private val RED = Color.parseColor("#EF4444")
+    private val GREEN = Color.parseColor("#22C55E")
+    private val AMBER = Color.parseColor("#F59E0B")
+    private val INK = Color.parseColor("#1F2937")
+    private val MUTED = Color.parseColor("#6B7280")
+    private val LINE = Color.parseColor("#E5E7EB")
+    private val SOFT = Color.parseColor("#F5F7FA")
+
+    private fun dp(v: Int) = (v * resources.displayMetrics.density).toInt()
 
     private lateinit var etIp: EditText
     private lateinit var etPort: EditText
@@ -63,21 +81,9 @@ class MainActivity : AppCompatActivity(), UdpEegSender.Listener {
     private lateinit var tvConfidenceValue: TextView
     private lateinit var tvDegradeState: TextView
 
-    // ---- 波形预览（只影响显示，不改变推流数据）----
-    private lateinit var waveView: EegWaveformView
-    private lateinit var spectrumView: EegSpectrumView
-    private lateinit var llChannels: LinearLayout
-    private lateinit var cbDenoise: CheckBox
-    private lateinit var cbSpectrum: CheckBox
-
-    private var sampleRing: EegSampleRing? = null
-    private var waveNames: List<String> = emptyList()
-    private var waveChannelIndices: IntArray = IntArray(0)
-    private var sampleTmp = FloatArray(0)
-    private var waveRefreshPosted = false
-
-    /** 五个指令按键，数据未载入完成前整体禁用。 */
-    private val commandButtons = ArrayList<Button>()
+    /** 五盏方向灯（数据未载入完成前整体禁用）。 */
+    private val commandButtons = ArrayList<View>()
+    private val lamps = HashMap<Int, TextView>()
 
     private val mainHandler = Handler(Looper.getMainLooper())
     private val timeFormat = SimpleDateFormat("HH:mm:ss.SSS", Locale.US)
@@ -91,10 +97,8 @@ class MainActivity : AppCompatActivity(), UdpEegSender.Listener {
     private var activeCommand = -1
 
     /**
-     * 降质参数预热线程。
-     *
-     * 每段的 `band` / `rms` 要跑 62 次 16384 点 FFT（约 0.5 秒），只能在后台算：
-     * 在 UI 线程算会卡住界面，在推流线程算会卡出成片丢包。单线程串行即可。
+     * 降质参数预热线程。每段的 band / rms 要跑 62 次 16384 点 FFT（约 0.5 秒），
+     * 只能在后台算：在 UI 线程算会卡住界面，在推流线程算会卡出成片丢包。
      */
     private val degradeExecutor = Executors.newSingleThreadExecutor { runnable ->
         Thread(runnable, "eeg-degrade-prep").apply { isDaemon = true }
@@ -103,42 +107,19 @@ class MainActivity : AppCompatActivity(), UdpEegSender.Listener {
     /** 降质参数是否正在后台预热（只在主线程读写）。 */
     private var degradePreparing = false
 
-    /**
-     * 推流/发现令牌：每次「点按」自增，页面销毁时再自增。
-     *
-     * 自动发现在后台线程里跑，可能比一次试次还慢。页面销毁时把令牌推进一格，
-     * 发现线程回来对不上号就丢弃结果 —— 避免它回来时触碰已销毁的界面。
-     * 后台线程会读它，故 volatile。
-     */
+    /** 推流/发现令牌：每次「点按」自增，页面销毁时再自增。后台线程会读，故 volatile。 */
     @Volatile
     private var streamToken = 0
 
     override fun onCreate(savedInstanceState: Bundle?) {
         installCrashHandler()
         super.onCreate(savedInstanceState)
-        setContentView(R.layout.activity_main)
-
-        etIp = findViewById(R.id.etIp)
-        etPort = findViewById(R.id.etPort)
-        tvStatus = findViewById(R.id.tvStatus)
-        tvStream = findViewById(R.id.tvStream)
-        tvLog = findViewById(R.id.tvLog)
-        // 日志可长按选择复制：取证时直接把文本粘出来，比截图可靠（避免手机截图转文字失真）
-        tvLog.setTextIsSelectable(true)
-
-        bindTap(R.id.btnForward, EegCommands.FORWARD)
-        bindTap(R.id.btnLeft, EegCommands.LEFT)
-        bindTap(R.id.btnStop, EegCommands.STOP)
-        bindTap(R.id.btnRight, EegCommands.RIGHT)
-        bindTap(R.id.btnBackward, EegCommands.BACKWARD)
-
-        findViewById<Button>(R.id.btnClearLog).setOnClickListener {
-            logLines.clear()
-            tvLog.text = ""
+        window.statusBarColor = Color.WHITE
+        if (Build.VERSION.SDK_INT >= Build.VERSION_CODES.M) {
+            window.decorView.systemUiVisibility = View.SYSTEM_UI_FLAG_LIGHT_STATUS_BAR
         }
 
-        bindDegradeControls()
-        bindWaveformControls()
+        buildUi()
 
         tvStream.text = getString(R.string.stream_idle)
         setStatus(getString(R.string.status_loading), R.color.warn)
@@ -146,6 +127,221 @@ class MainActivity : AppCompatActivity(), UdpEegSender.Listener {
         logEnvironment()
         loadDataset()
     }
+
+    // ============================================================ 界面构建（仅外观）
+    @SuppressLint("SetTextI18n")
+    private fun buildUi() {
+        val root = LinearLayout(this).apply {
+            orientation = LinearLayout.VERTICAL
+            setBackgroundColor(Color.WHITE)
+            setPadding(dp(18), dp(14), dp(18), dp(20))
+        }
+
+        // ---- 标题 + 状态胶囊 ----
+        val header = LinearLayout(this).apply {
+            orientation = LinearLayout.HORIZONTAL
+            gravity = Gravity.CENTER_VERTICAL
+        }
+        header.addView(TextView(this).apply {
+            text = "BrainChair · 发射端"
+            textSize = 19f
+            setTextColor(INK)
+            typeface = Typeface.DEFAULT_BOLD
+        }, LinearLayout.LayoutParams(0, -2, 1f))
+        tvStatus = TextView(this).apply {
+            text = getString(R.string.status_loading)
+            textSize = 12f
+            setTextColor(BLUE)
+            gravity = Gravity.CENTER
+            background = pill(Color.parseColor("#EFF6FF"), BLUE)
+            setPadding(dp(10), dp(5), dp(10), dp(5))
+        }
+        header.addView(tvStatus)
+        root.addView(header)
+
+        // ---- 接收端地址（IP 留空 = 自动发现）----
+        val addrRow = LinearLayout(this).apply { orientation = LinearLayout.HORIZONTAL }
+        etIp = editText("接收端 IPv4（留空自动发现）", "", InputTypeText)
+        etPort = editText("端口", "9000", InputTypeNumber)
+        addrRow.addView(etIp, LinearLayout.LayoutParams(0, -2, 2f))
+        addrRow.addView(etPort, LinearLayout.LayoutParams(0, -2, 1f).apply { leftMargin = dp(8) })
+        root.addView(addrRow, LinearLayout.LayoutParams(-1, -2).apply { topMargin = dp(14) })
+
+        // ---- 码流状态行 ----
+        tvStream = TextView(this).apply {
+            text = getString(R.string.stream_idle)
+            textSize = 12f
+            setTextColor(BLUE)
+            typeface = Typeface.MONOSPACE
+        }
+        root.addView(tvStream, LinearLayout.LayoutParams(-1, -2).apply { topMargin = dp(8) })
+
+        // ---- 交通灯：四个方向箭头 + 中间圆形停止灯 ----
+        root.addView(buildLampPad(), LinearLayout.LayoutParams(-1, -2).apply { topMargin = dp(16) })
+
+        // ---- 置信度滑块（蓝轨 + 红 thumbs，红蓝对比）----
+        val confHead = LinearLayout(this).apply { orientation = LinearLayout.HORIZONTAL }
+        confHead.addView(TextView(this).apply {
+            text = "信号置信度"
+            textSize = 13f
+            setTextColor(INK)
+            typeface = Typeface.DEFAULT_BOLD
+        }, LinearLayout.LayoutParams(0, -2, 1f))
+        tvConfidenceValue = TextView(this).apply {
+            text = getString(R.string.degrade_value_full)
+            textSize = 12f
+            setTextColor(BLUE)
+            typeface = Typeface.MONOSPACE
+        }
+        confHead.addView(tvConfidenceValue)
+        root.addView(confHead, LinearLayout.LayoutParams(-1, -2).apply { topMargin = dp(16) })
+
+        sbConfidence = SeekBar(this).apply {
+            max = MAX_CONFIDENCE
+            progress = MAX_CONFIDENCE
+            progressTintList = android.content.res.ColorStateList.valueOf(BLUE)
+            thumbTintList = android.content.res.ColorStateList.valueOf(RED)
+            progressBackgroundTintList = android.content.res.ColorStateList.valueOf(LINE)
+        }
+        root.addView(sbConfidence, LinearLayout.LayoutParams(-1, -2).apply { topMargin = dp(4) })
+        tvDegradeState = TextView(this).apply {
+            text = getString(R.string.degrade_off)
+            textSize = 11f
+            setTextColor(MUTED)
+        }
+        root.addView(tvDegradeState, LinearLayout.LayoutParams(-1, -2).apply { topMargin = dp(2) })
+
+        // ---- 日志（折叠）----
+        val logBody = LinearLayout(this).apply {
+            orientation = LinearLayout.VERTICAL
+            setPadding(dp(12), dp(8), dp(12), dp(12))
+        }
+        val clearLog = smallButton("清空") { logLines.clear(); tvLog.text = "" }
+        val logBar = LinearLayout(this).apply { orientation = LinearLayout.HORIZONTAL; gravity = Gravity.END }
+        logBar.addView(clearLog)
+        logBody.addView(logBar)
+        tvLog = TextView(this).apply {
+            text = ""; textSize = 11f; setTextColor(MUTED); typeface = Typeface.MONOSPACE
+            setTextIsSelectable(true)
+            setLineSpacing(dp(3).toFloat(), 1f)
+        }
+        logBody.addView(tvLog, LinearLayout.LayoutParams(-1, -2).apply { topMargin = dp(8) })
+        root.addView(section("发送日志", logBody), LinearLayout.LayoutParams(-1, -2).apply { topMargin = dp(12) })
+
+        bindDegradeControls()
+        setContentView(ScrollView(this).apply { addView(root) })
+    }
+
+    /** 十字灯组：上=前进(绿)，下=后退(蓝)，左/右=转向(琥珀)，中=停止(红)。 */
+    private fun buildLampPad(): View {
+        val pad = LinearLayout(this).apply {
+            orientation = LinearLayout.VERTICAL
+            gravity = Gravity.CENTER_HORIZONTAL
+        }
+        // 上：前进
+        pad.addView(lampCell(EegCommands.FORWARD, "»", 90f, "前进", GREEN))
+        // 中排：左 / 停 / 右
+        val mid = LinearLayout(this).apply {
+            orientation = LinearLayout.HORIZONTAL
+            gravity = Gravity.CENTER_VERTICAL
+        }
+        mid.addView(lampCell(EegCommands.LEFT, "»", 0f, "左转", AMBER))
+        mid.addView(lampCell(EegCommands.STOP, "■", 0f, "停", RED, round = true))
+        mid.addView(lampCell(EegCommands.RIGHT, "»", 180f, "右转", AMBER))
+        pad.addView(mid, LinearLayout.LayoutParams(-2, -2).apply { topMargin = dp(8) })
+        // 下：后退
+        pad.addView(lampCell(EegCommands.BACKWARD, "»", -90f, "后退", BLUE),
+            LinearLayout.LayoutParams(-2, -2).apply { topMargin = dp(8) })
+        return pad
+    }
+
+    /**
+     * 一盏灯。熄灭时是浅灰灯罩 + 灰箭头；按住时用 StateListDrawable 切成亮色描边，
+     * 并在 touch 里给箭头加白热字色 + 彩色辉光（贴近真实按钮灯）。
+     * rotation 让 "»" 指向对应方向：前进朝上 90°、后退朝下 -90°、左 0°、右 180°。
+     */
+    @SuppressLint("ClickableViewAccessibility")
+    private fun lampCell(command: Int, glyph: String, angle: Float, label: String, color: Int, round: Boolean = false): View {
+        val cell = LinearLayout(this).apply {
+            orientation = LinearLayout.VERTICAL
+            gravity = Gravity.CENTER_HORIZONTAL
+            setPadding(dp(8), dp(4), dp(8), dp(4))
+        }
+        val lamp = TextView(this).apply {
+            text = glyph
+            textSize = 30f
+            gravity = Gravity.CENTER
+            setTextColor(Color.parseColor("#B7C0CC"))
+            typeface = Typeface.DEFAULT_BOLD
+            rotation = angle
+            background = lampFace(color, round)
+            if (round) {
+                layoutParams = LinearLayout.LayoutParams(dp(62), dp(62))
+            } else {
+                layoutParams = LinearLayout.LayoutParams(dp(72), dp(56))
+            }
+        }
+        cell.addView(lamp)
+        cell.addView(TextView(this).apply {
+            text = label; textSize = 11f; setTextColor(MUTED); gravity = Gravity.CENTER
+        }, LinearLayout.LayoutParams(-2, -2).apply { topMargin = dp(4) })
+
+        lamps[command] = lamp
+        bindTap(lamp, command, color)
+        return cell
+    }
+
+    // ---- UI 辅助 ----
+    private val InputTypeText = android.text.InputType.TYPE_CLASS_TEXT
+    private val InputTypeNumber = android.text.InputType.TYPE_CLASS_NUMBER
+
+    private fun pill(bg: Int, stroke: Int) = GradientDrawable().apply {
+        shape = GradientDrawable.RECTANGLE; setColor(bg); cornerRadius = dp(999).toFloat(); setStroke(dp(1), stroke)
+    }
+    private fun lampFace(color: Int, round: Boolean) = StateListDrawable().apply {
+        val radius = if (round) dp(999).toFloat() else dp(12).toFloat()
+        val n = GradientDrawable(GradientDrawable.Orientation.TL_BR,
+            intArrayOf(Color.WHITE, SOFT)).apply {
+            shape = GradientDrawable.RECTANGLE; cornerRadius = radius; setStroke(dp(1), LINE)
+        }
+        val p = GradientDrawable().apply {
+            setColor(Color.parseColor("#F8FAFC")); cornerRadius = radius; setStroke(dp(2), color)
+        }
+        addState(intArrayOf(android.R.attr.state_pressed), p)
+        addState(intArrayOf(), n)
+    }
+    private fun editText(hint: String, value: String, type: Int) = EditText(this).apply {
+        this.hint = hint; setText(value); isSingleLine = true; inputType = type
+        textSize = 13f; setTextColor(INK); setHintTextColor(MUTED)
+        setPadding(dp(10), dp(9), dp(10), dp(9))
+        background = GradientDrawable().apply {
+            setColor(Color.WHITE); cornerRadius = dp(10).toFloat(); setStroke(dp(1), LINE)
+        }
+    }
+    private fun smallButton(label: String, action: (View) -> Unit) = TextView(this).apply {
+        text = label; textSize = 12f; setTextColor(BLUE); gravity = Gravity.CENTER
+        background = GradientDrawable().apply {
+            setColor(Color.WHITE); cornerRadius = dp(9).toFloat(); setStroke(dp(1), LINE)
+        }
+        setPadding(dp(10), dp(6), dp(10), dp(6)); setOnClickListener(action)
+    }
+    private fun section(title: String, body: View): LinearLayout {
+        val box = LinearLayout(this).apply {
+            orientation = LinearLayout.VERTICAL
+            background = GradientDrawable().apply {
+                setColor(Color.WHITE); cornerRadius = dp(12).toFloat(); setStroke(dp(1), LINE)
+            }
+        }
+        val head = TextView(this).apply {
+            text = "$title   ⌄"; textSize = 14f; setTextColor(INK); typeface = Typeface.DEFAULT_BOLD
+            setPadding(dp(12), dp(11), dp(12), dp(11))
+            setOnClickListener { body.visibility = if (body.visibility == View.VISIBLE) View.GONE else View.VISIBLE }
+        }
+        box.addView(head); body.visibility = View.GONE; box.addView(body)
+        return box
+    }
+
+    // ============================================================ 真实逻辑（保持原样）
 
     override fun onStart() {
         super.onStart()
@@ -178,8 +374,6 @@ class MainActivity : AppCompatActivity(), UdpEegSender.Listener {
     override fun onDestroy() {
         // 作废可能还在跑的自动发现，避免它回来时触碰已销毁的界面
         streamToken++
-        waveRefreshPosted = false
-        sampleRing = null
         sender?.shutdown()
         sender = null
         degradeExecutor.shutdownNow()
@@ -190,30 +384,17 @@ class MainActivity : AppCompatActivity(), UdpEegSender.Listener {
     // ------------------------------------------------------------ 人为降质开关
 
     /**
-     * 两个降质滑块：**拖动只改一个 float，立刻生效**，没有 FFT 参与。
-     *
-     * 真正花时间的是「每段的 band / rms 预计算」。数据集载入完成后会立刻
-     * **无条件**把 5 个方向都预热一遍（见 [loadDataset]），所以第一次拖滑块时
-     * 参数一般已经就绪、改动一个包（5 ms）之内就出现在码流里。
-     * 万一某方向还没预热完，那一包原样输出 ——
-     * 宁可这一包不降质，也不能为了降质把 5 ms 的推流节拍打乱。
+     * 拖动只改一个 float，立刻生效。真正的 band / rms 预计算在数据集载入后一次性完成。
      */
     private fun bindDegradeControls() {
-        sbConfidence = findViewById(R.id.sbConfidence)
-        tvConfidenceValue = findViewById(R.id.tvConfidenceValue)
-        tvDegradeState = findViewById(R.id.tvDegradeState)
-
         val listener = object : SeekBar.OnSeekBarChangeListener {
             override fun onProgressChanged(seekBar: SeekBar?, progress: Int, fromUser: Boolean) {
                 applyDegrade()
             }
-
             override fun onStartTrackingTouch(seekBar: SeekBar?) = Unit
-
             override fun onStopTrackingTouch(seekBar: SeekBar?) = Unit
         }
         sbConfidence.setOnSeekBarChangeListener(listener)
-
         applyDegrade()
     }
 
@@ -224,9 +405,7 @@ class MainActivity : AppCompatActivity(), UdpEegSender.Listener {
         val confidence = sbConfidence.progress
         val data = source
 
-        // 100% 时强度恰好为 0 —— 走的是「原样拷贝」快路径，一个字节都不动。
-        // 置信度滑块只驱动陷波路径（确定性、单调）；加噪路径非确定且抬静息基线，
-        // 不作为「置信度」的可复现刻度（SignalDegrade 仍保留该能力供标定用）。
+        // 100% 时强度恰好为 0 —— 走「原样拷贝」快路径，一个字节都不动。
         data?.noiseAlpha = 0f
         data?.notchAlpha = SignalDegrade.notchAlphaFor(confidence)
 
@@ -242,15 +421,10 @@ class MainActivity : AppCompatActivity(), UdpEegSender.Listener {
     private fun degradeValueText(confidence: Int): String = getString(
         R.string.degrade_value,
         confidence,
-        // 实测曲线是「3 秒窗」下的，界面上只作粗略刻度用
         SignalDegrade.expectedRho(confidence)
     )
 
-    /**
-     * 后台把 5 个方向的降质参数都算好，这样按哪个键都不会漏。
-     *
-     * 只跑一次：算过的方向会被缓存（约 4 MB/方向），之后拖滑块、切方向都不再重算。
-     */
+    /** 后台把 5 个方向的降质参数都算好，只跑一次（算过的方向会被缓存）。 */
     private fun startDegradePreheat() {
         val data = source ?: return
         if (degradePreparing) return
@@ -298,8 +472,6 @@ class MainActivity : AppCompatActivity(), UdpEegSender.Listener {
             tvDegradeState.text = getString(R.string.degrade_preparing)
             return
         }
-        // 滑块在 100% 时其实**没有**降质，只是参数已经备好了。文案必须把这点
-        // 说清楚：否则用户看到「5/5 个方向已预热」会以为信号已经被改过了。
         if (::sbConfidence.isInitialized && sbConfidence.progress >= MAX_CONFIDENCE) {
             tvDegradeState.text = getString(R.string.degrade_off_ready)
             return
@@ -308,12 +480,7 @@ class MainActivity : AppCompatActivity(), UdpEegSender.Listener {
         tvDegradeState.text = getString(R.string.degrade_ready, ready, EegCommands.COUNT)
     }
 
-    /**
-     * 把当前降质状态压成一行，写进发送日志。
-     *
-     * 事后拿抓包记录逐段比对时，「这一段到底有没有降质、强度是多少」必须在日志里
-     * 能查到 —— 否则一旦某个方向还没预热完，看到的现象会像是降质根本不生效。
-     */
+    /** 把当前降质状态压成一行，写进发送日志。 */
     private fun degradeSummary(command: Int): String? {
         if (!::sbConfidence.isInitialized) return null
         val confidence = sbConfidence.progress
@@ -330,155 +497,55 @@ class MainActivity : AppCompatActivity(), UdpEegSender.Listener {
         )
     }
 
-    // ------------------------------------------------------------ 波形预览
-
-    private fun bindWaveformControls() {
-        waveView = findViewById(R.id.waveView)
-        spectrumView = findViewById(R.id.spectrumView)
-        llChannels = findViewById(R.id.llChannels)
-        cbDenoise = findViewById(R.id.cbDenoise)
-        cbSpectrum = findViewById(R.id.cbSpectrum)
-
-        cbDenoise.setOnCheckedChangeListener { _, checked -> waveView.denoise = checked }
-        cbSpectrum.setOnCheckedChangeListener { _, checked ->
-            spectrumView.visibility = if (checked) View.VISIBLE else View.GONE
-        }
-    }
-
-    /** 数据集就绪后按通道名挑出 9 个枕顶通道，并生成通道选项。 */
-    private fun setupWaveform(data: EegSignalSource) {
-        val want = listOf("Pz", "O1", "Oz", "O2", "P1", "P2", "POz", "PO3", "PO4")
-        val names = ArrayList<String>()
-        val indices = ArrayList<Int>()
-        for (name in want) {
-            val i = data.channelNames.indexOf(name)
-            if (i >= 0) {
-                names.add(name)
-                indices.add(i)
-            }
-        }
-        if (names.isEmpty()) {
-            appendLog("波形预览：数据集中没有找到枕顶通道")
-            return
-        }
-
-        waveNames = names
-        waveChannelIndices = indices.toIntArray()
-        sampleTmp = FloatArray(names.size)
-
-        val ring = EegSampleRing(names.size, (data.sampleRate * 8).coerceAtLeast(2048))
-        sampleRing = ring
-        waveView.ring = ring
-        waveView.sampleRate = data.sampleRate
-        spectrumView.ring = ring
-        spectrumView.sampleRate = data.sampleRate
-
-        llChannels.removeAllViews()
-        val defaultOn = setOf("Oz", "O1", "O2", "Pz")
-        for (k in names.indices) {
-            val cb = CheckBox(this)
-            cb.text = names[k]
-            cb.textSize = 12f
-            cb.setTextColor(ContextCompat.getColor(this, R.color.text_primary))
-            cb.buttonTintList = ContextCompat.getColorStateList(this, R.color.primary)
-            cb.isChecked = names[k] in defaultOn
-            cb.setOnCheckedChangeListener { _, _ -> updateWaveChannels() }
-            val lp = LinearLayout.LayoutParams(
-                LinearLayout.LayoutParams.WRAP_CONTENT,
-                LinearLayout.LayoutParams.WRAP_CONTENT
-            )
-            lp.marginEnd = (4 * resources.displayMetrics.density).toInt()
-            llChannels.addView(cb, lp)
-        }
-
-        updateWaveChannels()
-        startWaveRefresh()
-        appendLog("波形预览就绪：${names.joinToString("/")}（勾选显示，左侧 +/− 调振幅）")
-    }
-
-    private fun updateWaveChannels() {
-        if (waveNames.isEmpty()) return
-        val selNames = ArrayList<String>()
-        val selRing = ArrayList<Int>()
-        for (k in 0 until llChannels.childCount) {
-            val cb = llChannels.getChildAt(k) as? CheckBox ?: continue
-            if (cb.isChecked) {
-                selNames.add(waveNames[k])
-                selRing.add(k)
-            }
-        }
-
-        val picked = selRing.toIntArray()
-        waveView.setChannels(selNames, picked)
-        spectrumView.ringChannel = if (picked.isNotEmpty()) picked[0] else 0
-
-        val rows = selNames.size.coerceAtLeast(1)
-        val heightDp = (rows * 84).coerceAtLeast(120)
-        val lp = waveView.layoutParams
-        lp.height = (heightDp * resources.displayMetrics.density).toInt()
-        waveView.layoutParams = lp
-    }
-
-    /** 约 30 FPS 刷新波形；推流结束后 ring 不再写入，画面自然定格。 */
-    private fun startWaveRefresh() {
-        if (waveRefreshPosted) return
-        waveRefreshPosted = true
-        val tick = object : Runnable {
-            override fun run() {
-                if (!waveRefreshPosted) return
-                waveView.invalidate()
-                if (spectrumView.visibility == View.VISIBLE) spectrumView.invalidate()
-                mainHandler.postDelayed(this, 33)
-            }
-        }
-        mainHandler.post(tick)
-    }
-
     // ---------------------------------------------------------------- 触摸绑定
 
     /**
-     * 把某个按键绑定成「按住一直发、松手收尾」。
-     *
-     * 用 OnTouchListener 而非 OnClickListener，是为了在**按下瞬间**就起流，
-     * 而不是等抬手；同时按下时阻断父容器的滚动拦截，避免手指轻微移动就被
-     * ScrollView 抢走事件。抬手（含 ACTION_CANCEL）才收尾。
+     * 把某盏灯绑定成「按住一直发、松手收尾」。用 OnTouchListener 在按下瞬间起流，
+     * 同时点亮灯的辉光；抬手（含 ACTION_CANCEL）收尾并熄灭。
      */
     @SuppressLint("ClickableViewAccessibility")
-    private fun bindTap(viewId: Int, command: Int) {
-        val button = findViewById<Button>(viewId)
-        commandButtons.add(button)
-        button.isEnabled = false
-        // 不参与焦点（XML 样式已设，代码再兜底一次）：按下瞬间不让 ScrollView
-        // 因为子控件请求焦点而自动滚动，屏幕保持原位不跳动。
-        button.isFocusable = false
-        button.isFocusableInTouchMode = false
-        button.setOnTouchListener { view, event ->
+    private fun bindTap(view: View, command: Int, color: Int) {
+        commandButtons.add(view)
+        view.isEnabled = false
+        view.isFocusable = false
+        view.isFocusableInTouchMode = false
+        view.setOnTouchListener { v, event ->
             when (event.actionMasked) {
                 MotionEvent.ACTION_DOWN -> {
-                    view.parent?.requestDisallowInterceptTouchEvent(true)
-                    view.isPressed = true
+                    v.parent?.requestDisallowInterceptTouchEvent(true)
+                    v.isPressed = true
+                    lightLamp(command, true, color)
                     beginStream(command)
                     true
                 }
-
                 MotionEvent.ACTION_UP, MotionEvent.ACTION_CANCEL -> {
-                    view.parent?.requestDisallowInterceptTouchEvent(false)
-                    view.isPressed = false
+                    v.parent?.requestDisallowInterceptTouchEvent(false)
+                    v.isPressed = false
+                    lightLamp(command, false, color)
                     endStream(command)
                     true
                 }
-
                 else -> false
             }
         }
     }
 
+    /** 点亮/熄灭一盏灯：白热字色 + 彩色辉光。 */
+    private fun lightLamp(command: Int, on: Boolean, color: Int) {
+        val lamp = lamps[command] ?: return
+        if (on) {
+            lamp.setTextColor(Color.WHITE)
+            lamp.setShadowLayer(dp(14).toFloat(), 0f, 0f, color)
+        } else {
+            lamp.setTextColor(Color.parseColor("#B7C0CC"))
+            lamp.setShadowLayer(0f, 0f, 0f, Color.TRANSPARENT)
+        }
+        lamp.invalidate()
+    }
+
     /**
      * 松手收尾：让当前这路流补发 STREAM_STOP 并退出。
-     *
-     * 两道守卫都是针对**多点触控**的：两根手指先后按下不同方向时，前一路会被
-     * 打断，此时先按的那根手指抬起就不该再动当前这条流 ——
-     * 所以「还在推流」与「推的就是我这一路」两个条件都要满足。
+     * 两道守卫针对多点触控：还在推流 且 推的就是我这一路。
      */
     private fun endStream(command: Int) {
         val active = sender ?: return
@@ -486,8 +553,6 @@ class MainActivity : AppCompatActivity(), UdpEegSender.Listener {
         if (active.currentCommand() != command) return
 
         appendLog("▲ 松手 → 收尾「${EegCommands.name(command)}」，补发 STREAM_STOP")
-        // release() 会等推流线程退出（正常不到 6 ms），回来时 isStreaming 已是 false，
-        // 所以紧接着再按同一个键不会撞上「上一路还在跑」的竞态。
         val t0 = System.currentTimeMillis()
         active.release()
         appendLog("  release() 已返回（耗时 ${System.currentTimeMillis() - t0} ms）")
@@ -495,12 +560,7 @@ class MainActivity : AppCompatActivity(), UdpEegSender.Listener {
 
     // ------------------------------------------------------------ 环境自检
 
-    /**
-     * 启动时把「设备 / 系统 / 网卡 / 局域网权限」打进日志。
-     *
-     * 真机联调时这几行几乎能定位所有「连不上」的问题：手机到底有没有连上局域网、
-     * 系统版本会不会触发局域网访问保护、权限有没有被系统拒掉。
-     */
+    /** 启动时把「设备 / 系统 / 网卡 / 局域网权限」打进日志。 */
     private fun logEnvironment() {
         appendLog("BUILD_TAG=${BUILD_TAG}")
         appendLog(
@@ -519,12 +579,7 @@ class MainActivity : AppCompatActivity(), UdpEegSender.Listener {
         appendLog("  ${localNetworkPermissionText()}")
     }
 
-    /**
-     * 局域网访问权限的状态；未授予时**尽力申请一次**。
-     *
-     * 只影响展示，绝不阻塞推流：在多数系统上它是普通权限（装机即授予），
-     * 申请只是为了让个别需要用户确认的 ROM 有机会弹框。
-     */
+    /** 局域网访问权限的状态；未授予时尽力申请一次，绝不阻塞推流。 */
     private fun localNetworkPermissionText(): String {
         if (Build.VERSION.SDK_INT < LOCAL_NETWORK_MIN_API) {
             return "局域网权限：API ${Build.VERSION.SDK_INT} < $LOCAL_NETWORK_MIN_API，本系统无此限制"
@@ -550,11 +605,7 @@ class MainActivity : AppCompatActivity(), UdpEegSender.Listener {
             return
         }
 
-        // 任意时刻只允许一路流。已在推流（或正在发现接收端）时：
-        //   * 点到**同一个方向** → 视作重复按下（同一次按住里事件重发），忽略；
-        //   * 点到**别的方向** → 立刻打断，重开一路新流。新流的 STREAM_INFO
-        //     就是「上一次行为已结束」的标签，接收端收到即清窗、重新计时。
-        //     打断走 interrupt()：**不补 STREAM_STOP**，省掉一次无意义的收尾。
+        // 任意时刻只允许一路流。
         val activeNow = sender
         if (activeNow != null && activeNow.isStreaming()) {
             val runningCmd = activeNow.currentCommand()
@@ -565,12 +616,9 @@ class MainActivity : AppCompatActivity(), UdpEegSender.Listener {
             appendLog(
                 "⇄ 打断「${EegCommands.name(runningCmd)}」→ 切换到「${EegCommands.name(command)}」"
             )
-            // 同步等推流线程退出（循环每 5 ms 查一次停止标志）。退出后 sender 可立刻
-            // 复用：下面的 startStreaming 会在同一个对象上 start 一路全新的流。
             activeNow.interrupt()
             activeCommand = -1
         } else if (activeCommand != -1) {
-            // 还停在「发现中」（广播最长约 2 秒），规则同上。
             if (activeCommand == command) {
                 appendLog("「${EegCommands.name(command)}」正在发现接收端，重复点按忽略")
                 return
@@ -579,7 +627,7 @@ class MainActivity : AppCompatActivity(), UdpEegSender.Listener {
                 "⇄ 打断发现中的「${EegCommands.name(activeCommand)}」" +
                     " → 切换到「${EegCommands.name(command)}」"
             )
-            streamToken++ // 作废正在进行的那次发现
+            streamToken++
             activeCommand = -1
         }
 
@@ -595,9 +643,7 @@ class MainActivity : AppCompatActivity(), UdpEegSender.Listener {
             return
         }
 
-        // 定向直发必须先校验地址。UDP 是无连接的：往一个打错但格式合法的地址发包，
-        // sendto 照样成功、界面照样显示「推流中 250 kB/s」，而包全被丢给默认网关，
-        // 接收端一个都收不到。这种「假成功」比直接报错危险得多，必须提前拦掉。
+        // 定向直发必须先校验地址，拦住「假成功」。
         val target = LocalNetwork.parseIpv4(host)
         if (target == null) {
             setStatus(getString(R.string.status_bad_ip), R.color.error)
@@ -606,7 +652,6 @@ class MainActivity : AppCompatActivity(), UdpEegSender.Listener {
             return
         }
 
-        // 同网段校验。手机没暴露任何网卡时不做判断，免得误杀能用的情况。
         val subnets = LocalNetwork.subnets()
         if (subnets.isNotEmpty() && subnets.none { it.contains(target) }) {
             setStatus(getString(R.string.status_ip_off_lan), R.color.error)
@@ -625,12 +670,7 @@ class MainActivity : AppCompatActivity(), UdpEegSender.Listener {
         startStreaming(host, port, command, data)
     }
 
-    /**
-     * IP 留空时的路径：先在局域网内广播 DISCOVER，拿到接收端的 IP 与数据端口再推流。
-     *
-     * 发现是阻塞式的（最长等约 2 秒），所以放在后台线程；结果回到主线程才使用。
-     * 数据端口以**接收端应答里声明的为准**，而不是本机端口输入框 —— 免去两边对端口。
-     */
+    /** IP 留空时的路径：广播 DISCOVER，拿到接收端 IP 与数据端口再推流。 */
     private fun beginAutoDiscovery(command: Int, data: EegSignalSource) {
         val token = ++streamToken
         activeCommand = command
@@ -649,13 +689,11 @@ class MainActivity : AppCompatActivity(), UdpEegSender.Listener {
             val found = discovery.discover()
 
             mainHandler.post {
-                // 页面销毁会推进令牌，对不上就说明这次发现已作废
                 if (token != streamToken) return@post
 
                 if (found == null) {
                     activeCommand = -1
                     setStatus(getString(R.string.status_discover_failed), R.color.error)
-                    // 发送被系统拒绝时只会「收不到应答」，把真实原因摊开，免得误判成网络不通
                     val why = discovery.lastError
                     if (why != null) appendLog("  广播发送失败：${NetDiagnostics.explain(why)}")
                     appendLog("  未发现接收端：请确认接收端已启动，并在 UDP $DISCOVERY_PORT 上应答；")
@@ -665,8 +703,6 @@ class MainActivity : AppCompatActivity(), UdpEegSender.Listener {
 
                 val label = if (found.name.isEmpty()) "（未命名）" else found.name
                 appendLog("  已发现接收端 $label｜${found.endpoint}")
-                // 把刚验证过的地址回填进 IP 框：之后想走定向直发直接按就行，
-                // 不用手输 —— 手输正是最容易把 10.14.166.234 打成 10.14.16.234 的地方。
                 etIp.setText(found.address)
                 appendLog("  地址已填入 IP 框，下次可直接定向直发（想再自动发现就把 IP 清空）")
                 startStreaming(found.address, found.dataPort, command, data)
@@ -683,8 +719,6 @@ class MainActivity : AppCompatActivity(), UdpEegSender.Listener {
         activeCommand = command
 
         setStatus(getString(R.string.status_streaming, EegCommands.name(command)), R.color.warn)
-        // 长度上限传 0 = 不限长：一直发到松手（endStream → release()）为止。
-        // 兜底上限 MAX_HOLD_SECONDS 只是防「抬手事件被系统吞掉」，正常用不到。
         if (!active.start(command, MAX_HOLD_SECONDS * data.sampleRate.toLong())) {
             activeCommand = -1
             appendLog("推流线程启动失败")
@@ -715,7 +749,6 @@ class MainActivity : AppCompatActivity(), UdpEegSender.Listener {
                     commandButtons.forEach { it.isEnabled = true }
                     setStatus(getString(R.string.status_ready), R.color.ok)
                     appendLog("数据集就绪：${loaded.summary()}")
-                    setupWaveform(loaded)
 
                     val names = loaded.channelNames
                     val shown = if (names.size <= 12) names else names.take(12) + "…"
@@ -736,12 +769,6 @@ class MainActivity : AppCompatActivity(), UdpEegSender.Listener {
                             "${TRIAL_SECONDS} s 窗才出判决（信号是 5 ms 级的，判决不是）。"
                     )
 
-                    // 数据集是后来才载入的，此刻才可能真正开始预处理。**无条件预热**：
-                    // 否则第一次把滑块拖离 100% 时才开始算，5 个方向串行约 2.5 秒，
-                    // 而早期版本一次试次只有 4 秒 —— 表现为「拖了滑块但信号没变」。
-                    // 现在按住持续发，预热慢一点尚可容忍，但把头一次的 2.5 秒空窗
-                    // 消掉仍然是值得的：用户一拖就能立刻看到效果。
-                    // 代价是常驻内存约 18 MB（4 个方向各 16000×62 float + 静息 8000×62）。
                     startDegradePreheat()
                 }.onFailure { error ->
                     setStatus(getString(R.string.status_load_failed), R.color.error)
@@ -794,7 +821,6 @@ class MainActivity : AppCompatActivity(), UdpEegSender.Listener {
         bytesSent: Long
     ) {
         mainHandler.post {
-            // text 里要用到 source 的采样率，所以放到主线程里再算（source 由主线程赋值）。
             val text = String.format(
                 Locale.US,
                 "「%s」推流结束｜共 %.1f s｜%d 采样点｜%d 包｜%.2f MB",
@@ -804,10 +830,6 @@ class MainActivity : AppCompatActivity(), UdpEegSender.Listener {
                 packets,
                 bytesSent / 1048576.0
             )
-            // 两条「别乱改状态」的理由，都得拦：
-            //   * 换方向 / 多点触控换手打断时，新一路流已经接管 —— 这条只是旧流的讣告；
-            //   * 同一方向松手后立刻又按下时，新流已在跑（isStreaming 为真），
-            //     而 activeCommand 恰好还等于同一个值，光比命令号拦不住。
             val takenOver = sender?.isStreaming() == true
             if (takenOver || command != activeCommand) {
                 appendLog("⤫ 上一路「${EegCommands.name(command)}」已结束（被新试次接替）")
@@ -830,7 +852,6 @@ class MainActivity : AppCompatActivity(), UdpEegSender.Listener {
 
     override fun onStreamFailed(command: Int, message: String) {
         mainHandler.post {
-            // 同上：被打断的旧流即使以异常收尾，也不该把新流的状态清掉。
             if (command != activeCommand) {
                 appendLog("⤫ 上一路「${EegCommands.name(command)}」已结束（被新试次接替）：$message")
                 return@post
@@ -839,27 +860,6 @@ class MainActivity : AppCompatActivity(), UdpEegSender.Listener {
             setStatus(getString(R.string.status_failed, message), R.color.error)
             appendLog("推流失败（${EegCommands.name(command)}）：$message")
             tvStream.text = getString(R.string.stream_idle)
-        }
-    }
-
-    /**
-     * 推流线程每个 SAMPLE_BLOCK 回调。只把 9 个枕顶通道解码进展示环形缓冲，
-     * **不碰 staging、不回写**，所以不影响实际发出的字节。
-     */
-    override fun onSamples(samples: ByteArray, sampleCount: Int, channelCount: Int) {
-        val ring = sampleRing ?: return
-        val n = ring.channelCount
-        if (n == 0 || waveChannelIndices.isEmpty()) return
-        if (sampleTmp.size < n) sampleTmp = FloatArray(n)
-
-        val buffer = ByteBuffer.wrap(samples).order(ByteOrder.LITTLE_ENDIAN)
-        val stride = channelCount * 4
-        for (s in 0 until sampleCount) {
-            val base = s * stride
-            for (k in 0 until n) {
-                sampleTmp[k] = buffer.getFloat(base + waveChannelIndices[k] * 4)
-            }
-            ring.push(sampleTmp)
         }
     }
 
@@ -879,8 +879,6 @@ class MainActivity : AppCompatActivity(), UdpEegSender.Listener {
         while (logLines.size > MAX_LOG_LINES) {
             logLines.removeFirst()
         }
-        // 倒序渲染：最新一条在最上方（聊天式），但不强制滚动位置——
-        // 按下按键时页面停在用户当前滚动位置，不跳回顶部。
         tvLog.text = logLines.reversed().joinToString("\n")
         persistLine(stamped)
     }
@@ -897,22 +895,12 @@ class MainActivity : AppCompatActivity(), UdpEegSender.Listener {
         }
     }
 
-    /**
-     * 启动时把「上次进程结束前」的最后几行捞回界面。
-     *
-     * 判断松手即退的真相全靠它：
-     * - 日志停在「▲ 松手」或「release() 已返回」处且没有 LIFE onPause/onStop/onDestroy
-     *   → 进程被系统直接杀掉，没走生命周期；
-     * - 有 onPause/onStop/onDestroy → 系统按正常流程把它移走了；
-     * - 有 UNCAUGHT 行 → App 是自己崩的，不是被杀。
-     */
+    /** 启动时把「上次进程结束前」的最后几行捞回界面。 */
     private fun showLastBreath() {
         val lines = runCatching {
             File(filesDir, LAST_BREATH_FILE).readLines().takeLast(LAST_BREATH_SHOWN)
         }.getOrDefault(emptyList())
         if (lines.isEmpty()) return
-        // 配合倒序渲染：先入「本次会话」标题、再逆序入上次内容、最后入「上次会话」标题，
-        // 倒序显示后恢复成 上次标题→内容（时间序）→本次标题，段内不乱。
         logLines.addLast("───── 本次会话 ─────")
         lines.asReversed().forEach { logLines.addLast(it) }
         logLines.addLast("───── 上次会话（进程结束前）─────")
@@ -945,50 +933,16 @@ class MainActivity : AppCompatActivity(), UdpEegSender.Listener {
 
     private companion object {
         const val DEFAULT_PORT = 9000
-
-        /**
-         * 接收端出一次判决所需的窗口长度（秒）。
-         *
-         * 交互上**不再**用它限制推流长度（按住持续发，松手才停），只用来写提示文案：
-         * 「建议至少按住 4 秒」。取 4 秒是因为它等于 OpenBMI 素材的单试次长度、也是
-         * SSVEP 的经典取值：4 秒窗下 CCA 相关值最高（约 0.74）；压到 2 秒虽然指令
-         * 更快，但相关值会明显下降、更容易被判成「无指令」（实测 2 秒窗判决会倒挂）。
-         */
         const val TRIAL_SECONDS = 3
-
-        /**
-         * 单次按住的**兜底**长度上限（秒）。
-         *
-         * 正常收尾靠 ACTION_UP。这个上限只防意外：抬手事件被系统吞掉（手势被别的
-         * 窗口抢走、界面被切到后台）时流不会永远发下去。素材单区段只有 16 秒，
-         * 超过后硬回绕重播，所以长按本身无害 —— 上限只是保险丝。
-         */
         const val MAX_HOLD_SECONDS = 60
-
-        /** 自动发现走的端口，与数据流分开，见 [UdpDiscovery]。 */
         const val DISCOVERY_PORT = 9001
-
         const val MAX_LOG_LINES = 120
-
-        /**
-         * 本次构建标记。日志第一行会打印它：截图里能看到这行，就证明跑的是
-         * 这份带 last-breath 日志的新代码（而不是旧 APK 没装成功）。
-         */
         const val BUILD_TAG = "NIO-NOSCROLL-20261021"
-
-        /** last-breath 日志落盘文件名（filesDir 下），进程被杀后下次启动仍可读回。 */
         const val LAST_BREATH_FILE = "last_breath.log"
         const val LAST_BREATH_MAX_BYTES = 64 * 1024
         const val LAST_BREATH_KEEP_LINES = 300
         const val LAST_BREATH_SHOWN = 30
-
-        /** 滑块上限：100% 表示不做任何降质。 */
         const val MAX_CONFIDENCE = 100
-
-        /**
-         * Android 16+ 引入「局域网访问保护」，应用访问局域网设备需要该权限。
-         * 只在 API >= [LOCAL_NETWORK_MIN_API] 时才去申请，老系统上系统不认这个权限名。
-         */
         const val LOCAL_NETWORK_PERMISSION = "android.permission.ACCESS_LOCAL_NETWORK"
         const val LOCAL_NETWORK_MIN_API = 36
         const val REQUEST_LOCAL_NETWORK = 0x4C4E

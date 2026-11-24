@@ -50,7 +50,7 @@ class EegWaveformView @JvmOverloads constructor(
     private val defaultAmpIndex = 3
     private var ampIndex = defaultAmpIndex
 
-    private val windowSeconds = 4f
+    private val windowSeconds = 2f
     private var buf: Array<FloatArray> = emptyArray()
     private var filtered: Array<FloatArray> = emptyArray()
     private var bufLen = 0
@@ -87,6 +87,23 @@ class EegWaveformView @JvmOverloads constructor(
         color = Color.parseColor("#8FA3BF")
         textSize = sp(12f)
     }
+    private val subPaint = Paint(Paint.ANTI_ALIAS_FLAG).apply {
+        color = Color.parseColor("#5C7392")
+        textSize = sp(9f)
+    }
+
+    /** 通道名下方的位置注释（P=顶区 / O=枕区 / z=中线，数字奇左偶右）。 */
+    private val channelHints = mapOf(
+        "Pz" to "顶区中线",
+        "O1" to "左枕区",
+        "Oz" to "枕区中线",
+        "O2" to "右枕区",
+        "P1" to "左顶区",
+        "P2" to "右顶区",
+        "POz" to "枕顶中线",
+        "PO3" to "左枕顶",
+        "PO4" to "右枕顶"
+    )
     private val valuePaint = Paint(Paint.ANTI_ALIAS_FLAG).apply {
         color = Color.parseColor("#E6EDF7")
         textSize = sp(12f)
@@ -232,7 +249,11 @@ class EegWaveformView @JvmOverloads constructor(
         }
 
         for (i in 0 until n) {
-            canvas.drawText(channels[i], dp(4f), top + i * rowH + sp(13f), namePaint)
+            val yName = top + i * rowH + sp(13f)
+            canvas.drawText(channels[i], dp(4f), yName, namePaint)
+            channelHints[channels[i]]?.let {
+                canvas.drawText(it, dp(4f), yName + sp(11f), subPaint)
+            }
         }
     }
 
@@ -250,11 +271,13 @@ class EegWaveformView @JvmOverloads constructor(
         val amp = ampSteps[ampIndex]
         val mid = y0 + rowH / 2f
         val half = rowH * 0.42f
-        val denom = max(1, samples - 1)
+        // 按真实时间轴铺开：数据不足一个窗时靠右对齐，左侧留空（不画 0 直线）
+        val span = max(1, bufLen - 1)
+        val shift = (bufLen - samples).coerceAtLeast(0)
 
         path.reset()
         for (k in 0 until samples) {
-            val x = controlW + rightW * (k.toFloat() / denom)
+            val x = controlW + rightW * ((k + shift).toFloat() / span)
             var v = src[k] / amp
             if (v > 1f) v = 1f
             if (v < -1f) v = -1f

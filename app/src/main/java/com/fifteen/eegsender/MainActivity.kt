@@ -410,7 +410,7 @@ class MainActivity : AppCompatActivity(), UdpEegSender.Listener {
 
         val picked = selRing.toIntArray()
         waveView.setChannels(selNames, picked)
-        spectrumView.ringChannel = if (picked.isNotEmpty()) picked[0] else 0
+        spectrumView.ringChannels = picked
 
         val rows = selNames.size.coerceAtLeast(1)
         val heightDp = (rows * 84).coerceAtLeast(120)
@@ -757,6 +757,7 @@ class MainActivity : AppCompatActivity(), UdpEegSender.Listener {
     // ------------------------------------------------------------ 推流回调
 
     override fun onStreamStarted(command: Int, samplesPerPacket: Int, packetsPerSecond: Int) {
+        sampleRing?.clear()
         mainHandler.post {
             appendLog(
                 "  STREAM_INFO 已发送｜每包 $samplesPerPacket 采样点" +

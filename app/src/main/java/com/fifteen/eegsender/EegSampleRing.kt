@@ -76,4 +76,15 @@ class EegSampleRing(
 
     /** 已积累的采样点数（≤ capacity）。 */
     fun available(): Int = synchronized(lock) { filled }
+
+    /** 清空缓冲（每次新流开始时调用，避免上一次推流的残留和新流未填充区混在一起）。 */
+    fun clear() {
+        synchronized(lock) {
+            for (c in data.indices) {
+                data[c].fill(0f)
+            }
+            writePos = 0
+            filled = 0
+        }
+    }
 }

@@ -1,0 +1,357 @@
+<!DOCTYPE html>
+<html lang="zh-CN">
+<head>
+<meta charset="utf-8">
+<meta name="viewport" content="width=device-width, initial-scale=1, viewport-fit=cover">
+<title>Brainchair 上位机 B · 脑控轮椅全链路演示</title>
+<link rel="stylesheet" href="css/style.css">
+<script type="importmap">
+{ "imports": { "three": "./vendor/three.module.js" } }
+</script>
+</head>
+<body>
+<div class="app">
+
+  <!-- ══════════════ 顶栏 ══════════════ -->
+  <header class="topbar">
+    <div class="brand">
+      <div class="brand-mark">
+        <svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="1.6" stroke-linecap="round">
+          <circle cx="10" cy="17" r="5"></circle>
+          <path d="M10 17h6l2-6h-4"></path>
+          <path d="M13.5 6.5a1.6 1.6 0 1 0 0-3.2 1.6 1.6 0 0 0 0 3.2Z"></path>
+          <path d="M13.2 7.4 12 12l-1.6 3"></path>
+          <path d="M18 5h3"></path>
+        </svg>
+      </div>
+      <div class="brand-text">
+        <b>Brainchair</b>
+        <span>脑控轮椅 · 上位机 B</span>
+      </div>
+    </div>
+
+    <div class="chain" id="chain">
+      <span class="chain-node" id="nodeA"><i></i>A 信号源</span>
+      <span class="chain-link"><u></u></span>
+      <span class="chain-node" id="nodeB"><i></i>B 上位机</span>
+      <span class="chain-link"><u></u></span>
+      <span class="chain-node" id="nodeC"><i></i>C 虚拟轮椅</span>
+    </div>
+
+    <div class="top-actions">
+      <span class="pill" id="linkPill"><i></i><em>连接中…</em></span>
+      <button class="ghost-btn" id="btnHelp">
+        <svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="1.7"><circle cx="12" cy="12" r="9"/><path d="M9.6 9.4a2.5 2.5 0 1 1 3.3 2.4c-.6.2-.9.8-.9 1.4v.4"/><path d="M12 17h.01"/></svg>
+        演示脚本
+      </button>
+    </div>
+  </header>
+
+  <!-- ══════════════ 主区 ══════════════ -->
+  <main class="main">
+
+    <!-- ─────────── 手机：上位机 App ─────────── -->
+    <aside class="side">
+      <div class="phone">
+        <div class="phone-bar">
+          <span id="phClock">17:20</span>
+          <span class="ph-right">
+            <svg viewBox="0 0 20 12" width="15" height="9" fill="currentColor"><rect x="0" y="7" width="3" height="5" rx="1"/><rect x="4.5" y="5" width="3" height="7" rx="1"/><rect x="9" y="2.5" width="3" height="9.5" rx="1"/><rect x="13.5" y="0" width="3" height="12" rx="1" opacity=".35"/></svg>
+            <svg viewBox="0 0 16 12" width="13" height="9" fill="currentColor"><path d="M8 9.6 1 4.2A9.4 9.4 0 0 1 15 4.2Z" opacity=".9"/></svg>
+            <svg viewBox="0 0 26 12" width="20" height="9" fill="none" stroke="currentColor"><rect x=".8" y="1.4" width="19" height="9.2" rx="2.6" stroke-width="1.2" opacity=".5"/><rect x="2.6" y="3.2" width="14" height="5.6" rx="1.4" fill="currentColor" stroke="none"/><path d="M22 4.6v2.8" stroke-width="1.6" stroke-linecap="round" opacity=".6"/></svg>
+          </span>
+        </div>
+
+        <div class="phone-screen" id="phoneScreen">
+
+          <!-- ══════ 页 1：连接 ══════ -->
+          <section class="page" data-page="connect">
+            <div class="page-head">
+              <h2>连接</h2>
+              <p>接收 A 端原始脑电流，输出指令给 C 端执行</p>
+            </div>
+
+            <div class="card">
+              <div class="row between">
+                <span class="card-title">信号源 A · 脑电流</span>
+                <span class="tag" id="tagA">已连接</span>
+              </div>
+              <div class="kv"><span>地址</span><b>10.14.166.241:9000</b></div>
+              <div class="kv"><span>通道 / 采样</span><b>62 ch @ 1000 Hz</b></div>
+              <div class="kv"><span>吞吐</span><b id="kvTput">256 kB/s</b></div>
+              <div class="kv"><span>发现</span><b class="ok" id="kvDisc">ANNOUNCE 已应答</b></div>
+            </div>
+
+            <div class="card">
+              <div class="row between">
+                <span class="card-title">执行端 C · 虚拟轮椅</span>
+                <span class="tag" id="tagC">在线</span>
+              </div>
+              <div class="field-row">
+                <label class="field"><span>IP 地址</span><input id="inpIp" value="10.14.166.234" spellcheck="false"></label>
+                <label class="field narrow"><span>端口</span><input id="inpPort" value="9100" inputmode="numeric"></label>
+              </div>
+              <p class="hint">留空 → 广播自动发现；C 端每秒发信标，3 s 收不到视为下线</p>
+              <div class="btn-row">
+                <button class="btn ghost" id="btnDiscover">自动发现</button>
+                <button class="btn primary" id="btnConnect">断开</button>
+              </div>
+            </div>
+
+            <div class="card">
+              <p class="card-title">输入源</p>
+              <div class="chips">
+                <button class="chip on" id="srcWifi">WiFi 模拟</button>
+                <button class="chip" id="srcBt" disabled>蓝牙串口 · 预留</button>
+              </div>
+              <p class="hint">模拟阶段用 WiFi UDP 替代蓝牙段，A 手机即脑电帽</p>
+            </div>
+
+            <div class="card">
+              <p class="card-title">网络自检</p>
+              <ul class="check">
+                <li class="on">MulticastLock 已持有</li>
+                <li class="on">前台服务 · 常驻通知</li>
+                <li class="on">WifiLock HIGH_PERF</li>
+                <li class="on">CRC-32 逐包校验</li>
+              </ul>
+            </div>
+          </section>
+
+          <!-- ══════ 页 2：控制 ══════ -->
+          <section class="page active" data-page="control">
+            <div class="seg" id="modeSeg">
+              <button data-mode="brain" class="on">脑控</button>
+              <button data-mode="manual">手动</button>
+            </div>
+
+            <div class="card" id="srcCard">
+              <div class="row between">
+                <span class="card-title">脑电信号源</span>
+                <span class="tag mute" id="srcTag">内置模拟</span>
+              </div>
+              <div class="seg" id="srcSeg">
+                <button data-src="sim" class="on">内置模拟</button>
+                <button data-src="real">真实脑电</button>
+              </div>
+              <div id="eegBox" hidden>
+                <canvas id="eegCanvas"></canvas>
+                <div class="row between mini">
+                  <span id="eegWho">—</span>
+                  <b class="mono" id="eegSeq">—</b>
+                </div>
+                <div class="kv"><span>被试当时注视</span><b id="eegTrue">—</b></div>
+                <div class="kv"><span>解码输出</span><b id="eegPred">—</b></div>
+              </div>
+              <p class="hint" id="srcHint">当前用 <b class="mono">ρ(c)</b> 曲线合成脑机帧 —— 规则是真的，数据是编的。</p>
+            </div>
+
+            <div class="card" id="brainCard">
+              <div class="row between">
+                <span class="card-title">SSVEP 意图目标</span>
+                <span class="mini" id="targetHint">点选模拟注视</span>
+              </div>
+              <div class="targets" id="targets">
+                <button class="tgt" data-key="forward"><b>前进</b><i>12.00 Hz</i></button>
+                <button class="tgt" data-key="left"><b>左转</b><i>8.57 Hz</i></button>
+                <button class="tgt" data-key="stop"><b>停止</b><i>静息</i></button>
+                <button class="tgt" data-key="right"><b>右转</b><i>6.67 Hz</i></button>
+                <button class="tgt" data-key="backward"><b>后退</b><i>5.45 Hz</i></button>
+              </div>
+
+              <div class="win">
+                <div class="win-row"><span>3 s 锚定窗</span><b id="winText">0.0 / 3.0 s</b></div>
+                <div class="bar"><i id="winBar"></i></div>
+                <div class="win-row mini"><span id="nextDecide">下一判决 —</span><span id="voteInfo">投票 1/1</span></div>
+              </div>
+            </div>
+
+            <div class="card">
+              <div class="row between">
+                <span class="card-title">置信度 ρ <em class="mini">CCA 获胜相关</em></span>
+                <b class="rho-val" id="rhoVal">0.000</b>
+              </div>
+              <div class="bar rho"><i id="rhoBar"></i><u id="rhoMark"></u></div>
+              <div class="gates">
+                <span class="gate" id="gateA">绝对门 ρ &gt; 0.630</span>
+                <span class="gate" id="gateB">差值门 Δρ &gt; 0.171</span>
+              </div>
+              <div class="kv"><span>次高方向 ρ</span><b id="rho2Val">—</b></div>
+              <div class="kv"><span>目标速度</span><b id="cmdSpeedVal">0 %</b></div>
+            </div>
+
+            <div class="card" id="manualCard">
+              <div class="row between">
+                <span class="card-title">手动兜底</span>
+                <span class="tag" id="manualState">按住即生效</span>
+              </div>
+              <div class="dpad">
+                <button class="dp up" data-cmd="1">↑</button>
+                <button class="dp left" data-cmd="2">←</button>
+                <button class="dp mid" data-cmd="0">停</button>
+                <button class="dp right" data-cmd="3">→</button>
+                <button class="dp down" data-cmd="4">↓</button>
+              </div>
+              <p class="hint">手动操作瞬间关闭信号接收，30 s 无操作自动恢复脑控</p>
+            </div>
+
+            <div class="card">
+              <div class="row between">
+                <span class="card-title">A 端信号模拟（降质）</span>
+                <b class="mono" id="confVal">100 %</b>
+              </div>
+              <input type="range" id="confSlider" min="0" max="100" value="100">
+              <p class="hint">陷波降质：100 % 原样发送。拖低可验证「拒识」——判决应连续过渡到「停」，而不是判错方向。预计 ρ ≈ <b class="mono" id="confRho">0.740</b></p>
+            </div>
+          </section>
+
+          <!-- ══════ 页 3：状态 ══════ -->
+          <section class="page" data-page="status">
+            <div class="hero">
+              <div class="hero-left">
+                <div class="hero-speed"><b id="bigSpeed">0.00</b><span>m/s</span></div>
+                <div class="hero-sub"><span id="bigMode">脑控模式</span> · <span id="bigCmd">停止</span></div>
+              </div>
+              <div class="hero-gauge" id="heroGauge"><i></i></div>
+            </div>
+
+            <div class="badges">
+              <span class="badge ok" id="badgeLink">链路 · 正常</span>
+              <span class="badge ok" id="badgeDog">看门狗 · 正常</span>
+              <span class="badge" id="badgeScene">场景 · 平地</span>
+              <span class="badge" id="badgeSlope">坡度 · 0.0°</span>
+            </div>
+
+            <div class="card">
+              <div class="kv"><span>位置 z</span><b class="mono" id="posVal">12.0 m</b></div>
+              <div class="kv"><span>指令序列号</span><b class="mono" id="seqVal">0</b></div>
+              <div class="kv"><span>端到端时延</span><b class="mono" id="latVal">— ms</b></div>
+              <div class="kv"><span>丢包率</span><b class="mono" id="lossVal">0.0 %</b></div>
+            </div>
+
+            <div class="card">
+              <p class="card-title">B → C 指令帧 · 24 B</p>
+              <div class="hex" id="frameHex"></div>
+              <p class="hint">magic 0x47F0 · 指令码 <b class="mono" id="frameCmd">0</b> · crc32 覆盖 [0,20)</p>
+            </div>
+
+            <div class="card">
+              <div class="row between">
+                <span class="card-title">运行日志</span>
+                <button class="mini-btn" id="btnClearLog">清空</button>
+              </div>
+              <div class="log" id="logBox"></div>
+            </div>
+
+            <div class="card">
+              <p class="card-title">安全机制自测</p>
+              <div class="btn-row">
+                <button class="btn ghost" id="btnBreakLink">模拟断链 1.2 s</button>
+              </div>
+              <p class="hint">验证看门狗：1 s 收不到合法指令帧 → C 端自动停车</p>
+            </div>
+          </section>
+
+        </div>
+
+        <div class="estop-dock">
+          <button class="estop" id="btnEstop">
+            <span class="estop-ring"></span>
+            <b>急停 STOP</b>
+            <i>任何模式立即生效 · 0x06 ×3</i>
+          </button>
+          <button class="unlock" id="btnUnlock" hidden>解除锁止 · 恢复控制</button>
+        </div>
+
+        <nav class="tabs" id="tabs">
+          <button class="tab" data-goto="connect">
+            <svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="1.7"><path d="M9 7H7a5 5 0 0 0 0 10h2"/><path d="M15 7h2a5 5 0 0 1 0 10h-2"/><path d="M8 12h8"/></svg>
+            连接
+          </button>
+          <button class="tab active" data-goto="control">
+            <svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="1.7"><circle cx="12" cy="12" r="8"/><circle cx="12" cy="12" r="2.4"/><path d="M12 4v2M12 18v2M4 12h2M18 12h2"/></svg>
+            控制
+          </button>
+          <button class="tab" data-goto="status">
+            <svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="1.7"><path d="M4 18a8 8 0 1 1 16 0"/><path d="M12 14l4.2-4.2"/><circle cx="12" cy="14" r="1.4"/></svg>
+            状态
+          </button>
+        </nav>
+      </div>
+      <p class="side-note">上位机 B 端 · 三页一任务 · 急停常驻</p>
+    </aside>
+
+    <!-- ─────────── 3D 场景 ─────────── -->
+    <section class="stage" id="stage">
+      <canvas id="scene"></canvas>
+
+      <div class="hud hud-tl">
+        <div class="zone-pill"><i></i><b id="hudZone">平地</b><span id="hudSlope">0.0°</span></div>
+        <div class="hud-sub" id="hudNote">测试跑道 · 全程 93 m · 4 类地形</div>
+      </div>
+
+      <div class="hud hud-tr">
+        <div class="seg small" id="sceneSeg">
+          <button data-scene="flat" class="on">平地</button>
+          <button data-scene="pit">坑地</button>
+          <button data-scene="up">爬坡</button>
+          <button data-scene="down">下坡</button>
+          <button data-scene="steep">陡坡</button>
+        </div>
+        <div class="seg small" id="camSeg">
+          <button data-cam="follow" class="on">跟随</button>
+          <button data-cam="top">俯视</button>
+          <button data-cam="side">侧观</button>
+        </div>
+      </div>
+
+      <div class="hud hud-bl">
+        <div class="big-speed"><b id="hudSpeed">0.00</b><span>m/s</span></div>
+        <div class="dist"><span id="hudDist">12.0 m</span> <em>/ 93 m</em></div>
+      </div>
+
+      <div class="hud hud-br">
+        <div class="safety" id="hudSafety"><i></i><b>安全 · 正常</b></div>
+        <div class="safety-sub" id="hudSafetySub">看门狗待命</div>
+      </div>
+
+      <div class="banner" id="banner"></div>
+      <div class="stage-hint">拖拽旋转 · 滚轮缩放</div>
+    </section>
+  </main>
+</div>
+
+<!-- ══════════════ 演示脚本 ══════════════ -->
+<div class="modal" id="helpModal" hidden>
+  <div class="modal-card">
+    <button class="modal-close" id="closeHelp">×</button>
+    <h3>3 分钟演示脚本</h3>
+    <ol class="script">
+      <li><b>连接</b> · 连接页显示 A 信号源 62ch@1000Hz 已 Receiving，C 端信标在线；指针指着 256 kB/s。</li>
+      <li><b>脑控前进</b> · 控制页点「前进」→ 3 s 锚定窗填满 → ρ 抬到 0.74 → 双门控通过 → 轮椅起步。强调「一次意图要连续注视 ≥3 s」。</li>
+      <li><b>降质拒识</b> · 把 A 端滑块从 100 % 拖到 70 %，ρ 掉到 θ₁ 以下 → 判决变「停止」，车停但不乱判方向。</li>
+      <li><b>手动接管</b> · 点方向键，日志出现「信号接收已关闭」；松手 30 s 后自动恢复脑控。</li>
+      <li><b>安全三连</b> · 场景切「坑地」前进 → 自动停车；切「陡坡」→ 超坡度停车；点「断开」→ 1 s 看门狗停车。</li>
+      <li><b>急停</b> · 任何模式按红色急停 → 0x06 连发 3 次 → 锁止，必须手动解除。收尾讲协议帧 24 B。</li>
+      <li><b>真实脑电</b> · 控制页顶部信号源切「真实脑电」→ 波形出现 → 每 4 s 一个真实试次的判决。点「真实数据」标签旁的说明讲清数据集、被试数、准确率；判错时当场承认，别绕。</li>
+    </ol>
+    <h3>规则映射（答辩问答）</h3>
+    <table class="maptable">
+      <thead><tr><th>界面</th><th>依据</th></tr></thead>
+      <tbody>
+        <tr><td>三页分离 + 急停常驻</td><td>PRD · Look &amp; Feel / FR-02</td></tr>
+        <tr><td>3 s 锚定窗、θ₁ 0.63 / θ₂ 0.171</td><td>handover v1.4 §2.4 / §7.2</td></tr>
+        <tr><td>意图切换连续 3 帧确认</td><td>PRD · 冲突动作与接管</td></tr>
+        <tr><td>急停连发 3 次并锁止</td><td>PRD · FR-02 安全性</td></tr>
+        <tr><td>看门狗 1 s 自动停车</td><td>FR-03 / system-architecture §4.3</td></tr>
+        <tr><td>手动接管 30 s 后恢复</td><td>FR-02 手动兜底</td></tr>
+        <tr><td>坑地停车 / 超坡度 / 下坡限速</td><td>FR-03 场景安全</td></tr>
+        <tr><td>真实脑电信号源（Dong2023 公开数据集）</td><td>数据 DOI 10.82901/nemar.nm000128 · CC BY-NC 4.0</td></tr>
+      </tbody>
+    </table>
+  </div>
+</div>
+
+<script type="module" src="js/app.js"></script>
+</body>
+</html>

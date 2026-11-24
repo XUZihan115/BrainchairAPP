@@ -1,26 +1,27 @@
 <?xml version="1.0" encoding="utf-8"?>
 <resources>
-    <color name="bg_dark">#FF0B1220</color>
-    <color name="bg_card">#FF16233A</color>
-    <color name="bg_input">#FF0F1B2E</color>
+    <!-- 极简白主题：保留全部颜色名以免破坏 R.color 引用，值改为浅色调 -->
+    <color name="bg_dark">#FFFFFFFF</color>
+    <color name="bg_card">#FFFFFFFF</color>
+    <color name="bg_input">#FFFFFFFF</color>
 
-    <color name="primary">#FF38E1C8</color>
-    <color name="primary_dark">#FF0E7C6B</color>
-    <color name="accent">#FF38E1C8</color>
+    <color name="primary">#FF2563EB</color>
+    <color name="primary_dark">#FF1D4ED8</color>
+    <color name="accent">#FF2563EB</color>
 
-    <color name="text_primary">#FFE6EDF7</color>
-    <color name="text_secondary">#FF8FA3BF</color>
-    <color name="text_hint">#FF5C7392</color>
+    <color name="text_primary">#FF1F2937</color>
+    <color name="text_secondary">#FF6B7280</color>
+    <color name="text_hint">#FF9CA3AF</color>
 
-    <color name="btn_direction">#FF1E3350</color>
-    <color name="btn_direction_pressed">#FF2A4770</color>
-    <color name="btn_direction_stroke">#338FA3BF</color>
+    <color name="btn_direction">#FFF3F4F6</color>
+    <color name="btn_direction_pressed">#FFE0E7FF</color>
+    <color name="btn_direction_stroke">#FFE5E7EB</color>
 
-    <color name="btn_stop">#FFB3261E</color>
-    <color name="btn_stop_pressed">#FF8C1D18</color>
-    <color name="btn_stop_stroke">#66FF8A80</color>
+    <color name="btn_stop">#FFEF4444</color>
+    <color name="btn_stop_pressed">#FFDC2626</color>
+    <color name="btn_stop_stroke">#FFFCA5A5</color>
 
-    <color name="ok">#FF3DD68C</color>
-    <color name="warn">#FFF0B429</color>
-    <color name="error">#FFFF6B68</color>
+    <color name="ok">#FF16A34A</color>
+    <color name="warn">#FFD97706</color>
+    <color name="error">#FFEF4444</color>
 </resources>

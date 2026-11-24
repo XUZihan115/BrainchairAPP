@@ -70,6 +70,14 @@ class UdpEegSender(
 
         /** 推流异常中止。 */
         fun onStreamFailed(command: Int, message: String)
+
+        /**
+         * 每个 SAMPLE_BLOCK 发出前回调（推流线程上，**只读**）。
+         *
+         * [samples] 为待发送样本的 float32 小端字节（时间主序），仅用于屏幕展示。
+         * 调用方不得回写，否则会改变实际发出的码流。
+         */
+        fun onSamples(samples: ByteArray, sampleCount: Int, channelCount: Int)
     }
 
     private val running = AtomicBoolean(false)
@@ -373,6 +381,9 @@ class UdpEegSender(
                 if (stopRequested) break
 
                 val copied = source.copyLoop(region, position, samplesPerPacket, staging, 0)
+                if (live()) {
+                    listener.onSamples(staging, copied / source.bytesPerSample, source.channelCount)
+                }
                 val deviceTimeUs = epochBaseUs + sampleIndex * 1_000_000L / source.sampleRate
                 length = encoder.encodeSampleBlock(
                     seq++, sampleIndex, deviceTimeUs, samplesPerPacket, source.channelCount,

@@ -287,6 +287,89 @@
                 android:text="@string/cmd_backward" />
         </LinearLayout>
 
+        <!-- ===== 脑电波形预览（只影响显示，不改变推流数据） ===== -->
+        <LinearLayout
+            android:id="@+id/cardWave"
+            android:layout_width="match_parent"
+            android:layout_height="wrap_content"
+            android:layout_marginTop="12dp"
+            android:background="@drawable/bg_card"
+            android:orientation="vertical"
+            android:padding="10dp">
+
+            <!-- 第一行：去噪 / 频谱 -->
+            <LinearLayout
+                android:layout_width="match_parent"
+                android:layout_height="wrap_content"
+                android:gravity="center_vertical"
+                android:orientation="horizontal">
+
+                <TextView
+                    android:layout_width="0dp"
+                    android:layout_height="wrap_content"
+                    android:layout_weight="1"
+                    android:text="@string/label_wave"
+                    android:textColor="@color/text_secondary"
+                    android:textSize="12sp" />
+
+                <CheckBox
+                    android:id="@+id/cbDenoise"
+                    android:layout_width="wrap_content"
+                    android:layout_height="wrap_content"
+                    android:buttonTint="@color/primary"
+                    android:text="@string/wave_denoise"
+                    android:textColor="@color/text_primary"
+                    android:textSize="12sp" />
+
+                <CheckBox
+                    android:id="@+id/cbSpectrum"
+                    android:layout_width="wrap_content"
+                    android:layout_height="wrap_content"
+                    android:layout_marginStart="6dp"
+                    android:buttonTint="@color/primary"
+                    android:text="@string/wave_spectrum"
+                    android:textColor="@color/text_primary"
+                    android:textSize="12sp" />
+            </LinearLayout>
+
+            <!-- 第二行：9 个枕顶通道选项（代码动态生成，可横向滚动） -->
+            <HorizontalScrollView
+                android:layout_width="match_parent"
+                android:layout_height="wrap_content"
+                android:layout_marginTop="4dp"
+                android:scrollbars="none">
+
+                <LinearLayout
+                    android:id="@+id/llChannels"
+                    android:layout_width="wrap_content"
+                    android:layout_height="wrap_content"
+                    android:orientation="horizontal" />
+            </HorizontalScrollView>
+
+            <!-- 时域波形：每行左侧 +/− 调该行振幅 -->
+            <com.fifteen.eegsender.EegWaveformView
+                android:id="@+id/waveView"
+                android:layout_width="match_parent"
+                android:layout_height="240dp"
+                android:layout_marginTop="8dp" />
+
+            <!-- 频谱：勾选「频谱」后显示，含 4 条刺激频率刻度线 -->
+            <com.fifteen.eegsender.EegSpectrumView
+                android:id="@+id/spectrumView"
+                android:layout_width="match_parent"
+                android:layout_height="140dp"
+                android:layout_marginTop="6dp"
+                android:visibility="gone" />
+
+            <TextView
+                android:layout_width="match_parent"
+                android:layout_height="wrap_content"
+                android:layout_marginTop="6dp"
+                android:text="@string/wave_hint"
+                android:textColor="@color/text_hint"
+                android:textSize="11sp" />
+        </LinearLayout>
+
         <!-- ===== 日志 ===== -->
         <LinearLayout
             android:layout_width="match_parent"

@@ -48,6 +48,11 @@
     <string name="degrade_ready">降质中（%1$d/%2$d 个方向已预热）</string>
     <string name="degrade_failed">降质参数计算失败：%1$s</string>
 
+    <string name="label_wave">脑电波形</string>
+    <string name="wave_denoise">去噪</string>
+    <string name="wave_spectrum">频谱</string>
+    <string name="wave_hint">勾选通道显示对应波形；顶部「振幅 +/−」统一调所有行。去噪 = 显示层 4~45 Hz 带通，频谱 = 4~20 Hz 功率谱（标 5.45 / 6.67 / 8.57 / 12.0 Hz）。这些只影响屏幕，不改变推流数据。</string>
+
     <string name="label_log">发送日志</string>
     <string name="btn_clear_log">清空日志</string>
 </resources>

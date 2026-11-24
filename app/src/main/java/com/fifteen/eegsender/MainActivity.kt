@@ -7,8 +7,11 @@ import android.os.Bundle
 import android.os.Handler
 import android.os.Looper
 import android.view.MotionEvent
+import android.view.View
 import android.widget.Button
+import android.widget.CheckBox
 import android.widget.EditText
+import android.widget.LinearLayout
 import android.widget.SeekBar
 import android.widget.TextView
 import androidx.appcompat.app.AppCompatActivity
@@ -23,6 +26,8 @@ import com.fifteen.eegsender.protocol.UdpEegSender
 import java.io.File
 import java.io.PrintWriter
 import java.io.StringWriter
+import java.nio.ByteBuffer
+import java.nio.ByteOrder
 import java.text.SimpleDateFormat
 import java.util.Date
 import java.util.Locale
@@ -57,6 +62,19 @@ class MainActivity : AppCompatActivity(), UdpEegSender.Listener {
     private lateinit var sbConfidence: SeekBar
     private lateinit var tvConfidenceValue: TextView
     private lateinit var tvDegradeState: TextView
+
+    // ---- 波形预览（只影响显示，不改变推流数据）----
+    private lateinit var waveView: EegWaveformView
+    private lateinit var spectrumView: EegSpectrumView
+    private lateinit var llChannels: LinearLayout
+    private lateinit var cbDenoise: CheckBox
+    private lateinit var cbSpectrum: CheckBox
+
+    private var sampleRing: EegSampleRing? = null
+    private var waveNames: List<String> = emptyList()
+    private var waveChannelIndices: IntArray = IntArray(0)
+    private var sampleTmp = FloatArray(0)
+    private var waveRefreshPosted = false
 
     /** 五个指令按键，数据未载入完成前整体禁用。 */
     private val commandButtons = ArrayList<Button>()
@@ -120,6 +138,7 @@ class MainActivity : AppCompatActivity(), UdpEegSender.Listener {
         }
 
         bindDegradeControls()
+        bindWaveformControls()
 
         tvStream.text = getString(R.string.stream_idle)
         setStatus(getString(R.string.status_loading), R.color.warn)
@@ -159,6 +178,8 @@ class MainActivity : AppCompatActivity(), UdpEegSender.Listener {
     override fun onDestroy() {
         // 作废可能还在跑的自动发现，避免它回来时触碰已销毁的界面
         streamToken++
+        waveRefreshPosted = false
+        sampleRing = null
         sender?.shutdown()
         sender = null
         degradeExecutor.shutdownNow()
@@ -307,6 +328,110 @@ class MainActivity : AppCompatActivity(), UdpEegSender.Listener {
             SignalDegrade.notchAlphaFor(confidence),
             suffix
         )
+    }
+
+    // ------------------------------------------------------------ 波形预览
+
+    private fun bindWaveformControls() {
+        waveView = findViewById(R.id.waveView)
+        spectrumView = findViewById(R.id.spectrumView)
+        llChannels = findViewById(R.id.llChannels)
+        cbDenoise = findViewById(R.id.cbDenoise)
+        cbSpectrum = findViewById(R.id.cbSpectrum)
+
+        cbDenoise.setOnCheckedChangeListener { _, checked -> waveView.denoise = checked }
+        cbSpectrum.setOnCheckedChangeListener { _, checked ->
+            spectrumView.visibility = if (checked) View.VISIBLE else View.GONE
+        }
+    }
+
+    /** 数据集就绪后按通道名挑出 9 个枕顶通道，并生成通道选项。 */
+    private fun setupWaveform(data: EegSignalSource) {
+        val want = listOf("Pz", "O1", "Oz", "O2", "P1", "P2", "POz", "PO3", "PO4")
+        val names = ArrayList<String>()
+        val indices = ArrayList<Int>()
+        for (name in want) {
+            val i = data.channelNames.indexOf(name)
+            if (i >= 0) {
+                names.add(name)
+                indices.add(i)
+            }
+        }
+        if (names.isEmpty()) {
+            appendLog("波形预览：数据集中没有找到枕顶通道")
+            return
+        }
+
+        waveNames = names
+        waveChannelIndices = indices.toIntArray()
+        sampleTmp = FloatArray(names.size)
+
+        val ring = EegSampleRing(names.size, (data.sampleRate * 8).coerceAtLeast(2048))
+        sampleRing = ring
+        waveView.ring = ring
+        waveView.sampleRate = data.sampleRate
+        spectrumView.ring = ring
+        spectrumView.sampleRate = data.sampleRate
+
+        llChannels.removeAllViews()
+        val defaultOn = setOf("Oz", "O1", "O2", "Pz")
+        for (k in names.indices) {
+            val cb = CheckBox(this)
+            cb.text = names[k]
+            cb.textSize = 12f
+            cb.setTextColor(ContextCompat.getColor(this, R.color.text_primary))
+            cb.buttonTintList = ContextCompat.getColorStateList(this, R.color.primary)
+            cb.isChecked = names[k] in defaultOn
+            cb.setOnCheckedChangeListener { _, _ -> updateWaveChannels() }
+            val lp = LinearLayout.LayoutParams(
+                LinearLayout.LayoutParams.WRAP_CONTENT,
+                LinearLayout.LayoutParams.WRAP_CONTENT
+            )
+            lp.marginEnd = (4 * resources.displayMetrics.density).toInt()
+            llChannels.addView(cb, lp)
+        }
+
+        updateWaveChannels()
+        startWaveRefresh()
+        appendLog("波形预览就绪：${names.joinToString("/")}（勾选显示，左侧 +/− 调振幅）")
+    }
+
+    private fun updateWaveChannels() {
+        if (waveNames.isEmpty()) return
+        val selNames = ArrayList<String>()
+        val selRing = ArrayList<Int>()
+        for (k in 0 until llChannels.childCount) {
+            val cb = llChannels.getChildAt(k) as? CheckBox ?: continue
+            if (cb.isChecked) {
+                selNames.add(waveNames[k])
+                selRing.add(k)
+            }
+        }
+
+        val picked = selRing.toIntArray()
+        waveView.setChannels(selNames, picked)
+        spectrumView.ringChannel = if (picked.isNotEmpty()) picked[0] else 0
+
+        val rows = selNames.size.coerceAtLeast(1)
+        val heightDp = (rows * 84).coerceAtLeast(120)
+        val lp = waveView.layoutParams
+        lp.height = (heightDp * resources.displayMetrics.density).toInt()
+        waveView.layoutParams = lp
+    }
+
+    /** 约 30 FPS 刷新波形；推流结束后 ring 不再写入，画面自然定格。 */
+    private fun startWaveRefresh() {
+        if (waveRefreshPosted) return
+        waveRefreshPosted = true
+        val tick = object : Runnable {
+            override fun run() {
+                if (!waveRefreshPosted) return
+                waveView.invalidate()
+                if (spectrumView.visibility == View.VISIBLE) spectrumView.invalidate()
+                mainHandler.postDelayed(this, 33)
+            }
+        }
+        mainHandler.post(tick)
     }
 
     // ---------------------------------------------------------------- 触摸绑定
@@ -590,6 +715,7 @@ class MainActivity : AppCompatActivity(), UdpEegSender.Listener {
                     commandButtons.forEach { it.isEnabled = true }
                     setStatus(getString(R.string.status_ready), R.color.ok)
                     appendLog("数据集就绪：${loaded.summary()}")
+                    setupWaveform(loaded)
 
                     val names = loaded.channelNames
                     val shown = if (names.size <= 12) names else names.take(12) + "…"
@@ -713,6 +839,27 @@ class MainActivity : AppCompatActivity(), UdpEegSender.Listener {
             setStatus(getString(R.string.status_failed, message), R.color.error)
             appendLog("推流失败（${EegCommands.name(command)}）：$message")
             tvStream.text = getString(R.string.stream_idle)
+        }
+    }
+
+    /**
+     * 推流线程每个 SAMPLE_BLOCK 回调。只把 9 个枕顶通道解码进展示环形缓冲，
+     * **不碰 staging、不回写**，所以不影响实际发出的字节。
+     */
+    override fun onSamples(samples: ByteArray, sampleCount: Int, channelCount: Int) {
+        val ring = sampleRing ?: return
+        val n = ring.channelCount
+        if (n == 0 || waveChannelIndices.isEmpty()) return
+        if (sampleTmp.size < n) sampleTmp = FloatArray(n)
+
+        val buffer = ByteBuffer.wrap(samples).order(ByteOrder.LITTLE_ENDIAN)
+        val stride = channelCount * 4
+        for (s in 0 until sampleCount) {
+            val base = s * stride
+            for (k in 0 until n) {
+                sampleTmp[k] = buffer.getFloat(base + waveChannelIndices[k] * 4)
+            }
+            ring.push(sampleTmp)
         }
     }
 
